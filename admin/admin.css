@@ -1,0 +1,761 @@
+/* =====================================================
+   SAN MARTÍN
+   PANEL DE ADMINISTRACIÓN
+===================================================== */
+
+:root {
+
+    --verde: #173f35;
+    --verde-claro: #286052;
+    --dorado: #d8a63b;
+    --crema: #f5f1e6;
+    --blanco: #ffffff;
+    --gris: #69736f;
+    --borde: #e5e5df;
+
+}
+
+
+* {
+
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+
+}
+
+
+body {
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    background: var(--crema);
+
+    color: var(--verde);
+
+}
+
+
+/* =====================================================
+   UTILIDAD
+===================================================== */
+
+.hidden {
+
+    display: none !important;
+
+}
+
+
+/* =====================================================
+   LOGIN
+===================================================== */
+
+.login-section {
+
+    min-height: 100vh;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 20px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--verde),
+            var(--verde-claro)
+        );
+
+}
+
+
+.login-card {
+
+    width: 100%;
+
+    max-width: 420px;
+
+    background: var(--blanco);
+
+    padding: 40px;
+
+    border-radius: 20px;
+
+    box-shadow:
+        0 20px 60px
+        rgba(0,0,0,.20);
+
+}
+
+
+.logo-area {
+
+    text-align: center;
+
+    margin-bottom: 30px;
+
+}
+
+
+.logo-circle {
+
+    width: 70px;
+
+    height: 70px;
+
+    margin:
+        0 auto 15px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: var(--verde);
+
+    color: var(--dorado);
+
+    font-size: 24px;
+
+    font-weight: bold;
+
+}
+
+
+.logo-area h1 {
+
+    font-size: 28px;
+
+}
+
+
+.logo-area p {
+
+    margin-top: 6px;
+
+    color: var(--gris);
+
+}
+
+
+/* =====================================================
+   FORMULARIO
+===================================================== */
+
+.login-card label {
+
+    display: block;
+
+    margin-bottom: 7px;
+
+    font-weight: bold;
+
+}
+
+
+.login-card input {
+
+    width: 100%;
+
+    padding: 14px;
+
+    margin-bottom: 18px;
+
+    border: 1px solid var(--borde);
+
+    border-radius: 10px;
+
+    font-size: 15px;
+
+    outline: none;
+
+}
+
+
+.login-card input:focus {
+
+    border-color:
+        var(--verde-claro);
+
+    box-shadow:
+        0 0 0 3px
+        rgba(40,96,82,.12);
+
+}
+
+
+#loginButton {
+
+    width: 100%;
+
+    padding: 14px;
+
+    border: none;
+
+    border-radius: 10px;
+
+    background: var(--verde);
+
+    color: white;
+
+    font-size: 16px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+}
+
+
+#loginButton:hover {
+
+    background:
+        var(--verde-claro);
+
+}
+
+
+.message {
+
+    margin-top: 15px;
+
+    text-align: center;
+
+    color: #b3261e;
+
+}
+
+
+/* =====================================================
+   HEADER ADMIN
+===================================================== */
+
+.admin-header {
+
+    background: var(--verde);
+
+    color: white;
+
+    padding:
+        18px 30px;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    gap: 20px;
+
+}
+
+
+.admin-header h1 {
+
+    font-size: 24px;
+
+}
+
+
+.admin-header span {
+
+    color: #d8dfdc;
+
+    font-size: 13px;
+
+}
+
+
+.header-actions {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 15px;
+
+}
+
+
+.logout-button {
+
+    border: none;
+
+    background: var(--dorado);
+
+    color: var(--verde);
+
+    padding:
+        10px 15px;
+
+    border-radius: 8px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+}
+
+
+/* =====================================================
+   CONTENIDO
+===================================================== */
+
+.admin-main {
+
+    max-width: 1400px;
+
+    margin: auto;
+
+    padding: 30px;
+
+}
+
+
+/* =====================================================
+   ESTADÍSTICAS
+===================================================== */
+
+.stats {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 18px;
+
+    margin-bottom: 25px;
+
+}
+
+
+.stat-card {
+
+    background: white;
+
+    border:
+        1px solid var(--borde);
+
+    border-radius: 14px;
+
+    padding: 20px;
+
+}
+
+
+.stat-card span {
+
+    display: block;
+
+    color: var(--gris);
+
+    margin-bottom: 10px;
+
+}
+
+
+.stat-card strong {
+
+    font-size: 30px;
+
+}
+
+
+/* =====================================================
+   HERRAMIENTAS
+===================================================== */
+
+.toolbar {
+
+    display: flex;
+
+    gap: 12px;
+
+    margin-bottom: 20px;
+
+}
+
+
+.search-box {
+
+    flex: 1;
+
+}
+
+
+.search-box input {
+
+    width: 100%;
+
+    padding: 14px 16px;
+
+    border:
+        1px solid var(--borde);
+
+    border-radius: 10px;
+
+    font-size: 15px;
+
+    outline: none;
+
+}
+
+
+.refresh-button {
+
+    padding:
+        0 20px;
+
+    border: none;
+
+    border-radius: 10px;
+
+    background: var(--verde);
+
+    color: white;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+}
+
+
+/* =====================================================
+   MENSAJE
+===================================================== */
+
+.status-message {
+
+    min-height: 24px;
+
+    margin-bottom: 10px;
+
+    font-weight: bold;
+
+}
+
+
+/* =====================================================
+   TABLA
+===================================================== */
+
+.inventory-container {
+
+    background: white;
+
+    border-radius: 14px;
+
+    border:
+        1px solid var(--borde);
+
+    overflow: hidden;
+
+}
+
+
+.table-wrapper {
+
+    overflow-x: auto;
+
+}
+
+
+table {
+
+    width: 100%;
+
+    border-collapse: collapse;
+
+    min-width: 900px;
+
+}
+
+
+th {
+
+    background: var(--verde);
+
+    color: white;
+
+    text-align: left;
+
+    padding: 15px;
+
+    font-size: 14px;
+
+}
+
+
+td {
+
+    padding: 14px 15px;
+
+    border-bottom:
+        1px solid var(--borde);
+
+    vertical-align: middle;
+
+}
+
+
+.product-name {
+
+    font-weight: bold;
+
+}
+
+
+.product-description {
+
+    font-size: 12px;
+
+    color: var(--gris);
+
+    margin-top: 4px;
+
+}
+
+
+/* =====================================================
+   STOCK
+===================================================== */
+
+.stock-control {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+}
+
+
+.stock-button {
+
+    width: 34px;
+
+    height: 34px;
+
+    border: none;
+
+    border-radius: 7px;
+
+    background: #eef1ef;
+
+    color: var(--verde);
+
+    font-size: 18px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+}
+
+
+.stock-button:hover {
+
+    background: #dfe7e3;
+
+}
+
+
+.stock-input {
+
+    width: 70px;
+
+    padding: 8px;
+
+    text-align: center;
+
+    border:
+        1px solid var(--borde);
+
+    border-radius: 7px;
+
+    font-weight: bold;
+
+}
+
+
+/* =====================================================
+   ESTADOS
+===================================================== */
+
+.stock-status {
+
+    display: inline-block;
+
+    padding:
+        6px 10px;
+
+    border-radius: 20px;
+
+    font-size: 12px;
+
+    font-weight: bold;
+
+}
+
+
+.status-available {
+
+    background: #dff3e8;
+
+    color: #176b3a;
+
+}
+
+
+.status-low {
+
+    background: #fff1c7;
+
+    color: #856404;
+
+}
+
+
+.status-out {
+
+    background: #fde2e2;
+
+    color: #a32020;
+
+}
+
+
+/* =====================================================
+   BOTÓN GUARDAR
+===================================================== */
+
+.save-button {
+
+    border: none;
+
+    background: var(--dorado);
+
+    color: var(--verde);
+
+    padding:
+        9px 13px;
+
+    border-radius: 8px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+}
+
+
+.save-button:hover {
+
+    opacity: .85;
+
+}
+
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width: 900px) {
+
+    .stats {
+
+        grid-template-columns:
+            repeat(2, 1fr);
+
+    }
+
+}
+
+
+@media (max-width: 600px) {
+
+    .admin-header {
+
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        padding: 18px;
+
+    }
+
+
+    .header-actions {
+
+        width: 100%;
+
+        justify-content:
+            space-between;
+
+    }
+
+
+    .admin-main {
+
+        padding: 15px;
+
+    }
+
+
+    .stats {
+
+        grid-template-columns: 1fr 1fr;
+
+        gap: 10px;
+
+    }
+
+
+    .stat-card {
+
+        padding: 15px;
+
+    }
+
+
+    .stat-card strong {
+
+        font-size: 24px;
+
+    }
+
+
+    .toolbar {
+
+        flex-direction: column;
+
+    }
+
+
+    .refresh-button {
+
+        height: 46px;
+
+    }
+
+
+    .login-card {
+
+        padding: 28px 22px;
+
+    }
+
+}
