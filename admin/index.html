@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Administración | San Martín
+    </title>
+
+    <meta
+        name="robots"
+        content="noindex, nofollow"
+    >
+
+    <link
+        rel="stylesheet"
+        href="admin.css"
+    >
+
+</head>
+
+
+<body>
+
+    <!-- =================================================
+         LOGIN
+    ================================================== -->
+
+    <section
+        id="loginSection"
+        class="login-section"
+    >
+
+        <div class="login-card">
+
+            <div class="logo-area">
+
+                <div class="logo-circle">
+                    SM
+                </div>
+
+                <h1>
+                    San Martín
+                </h1>
+
+                <p>
+                    Panel de Administración
+                </p>
+
+            </div>
+
+
+            <form id="loginForm">
+
+                <label for="email">
+                    Correo electrónico
+                </label>
+
+                <input
+                    type="email"
+                    id="email"
+                    placeholder="Correo electrónico"
+                    autocomplete="email"
+                    required
+                >
+
+
+                <label for="password">
+                    Contraseña
+                </label>
+
+                <input
+                    type="password"
+                    id="password"
+                    placeholder="Contraseña"
+                    autocomplete="current-password"
+                    required
+                >
+
+
+                <button
+                    type="submit"
+                    id="loginButton"
+                >
+                    🔐 Iniciar sesión
+                </button>
+
+
+                <p
+                    id="loginMessage"
+                    class="message"
+                ></p>
+
+            </form>
+
+        </div>
+
+    </section>
+
+
+    <!-- =================================================
+         PANEL ADMINISTRATIVO
+    ================================================== -->
+
+    <section
+        id="adminSection"
+        class="admin-section hidden"
+    >
+
+        <!-- HEADER -->
+
+        <header class="admin-header">
+
+            <div>
+
+                <h1>
+                    San Martín
+                </h1>
+
+                <span>
+                    Administración de inventario
+                </span>
+
+            </div>
+
+
+            <div class="header-actions">
+
+                <span id="adminEmail">
+                </span>
+
+                <button
+                    id="logoutButton"
+                    class="logout-button"
+                >
+                    🚪 Salir
+                </button>
+
+            </div>
+
+        </header>
+
+
+        <!-- CONTENIDO -->
+
+        <main class="admin-main">
+
+
+            <!-- =========================================
+                 RESUMEN
+            ========================================== -->
+
+            <section class="stats">
+
+                <div class="stat-card">
+
+                    <span>
+                        📦 Productos
+                    </span>
+
+                    <strong id="totalProducts">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <span>
+                        🟢 Disponibles
+                    </span>
+
+                    <strong id="availableProducts">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <span>
+                        🟡 Pocas unidades
+                    </span>
+
+                    <strong id="lowStockProducts">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <span>
+                        🔴 Agotados
+                    </span>
+
+                    <strong id="outOfStockProducts">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <div class="stat-card reorder-stat-card">
+
+                    <span>
+                        🛒 Por comprar
+                    </span>
+
+                    <strong id="reorderProducts">
+                        0
+                    </strong>
+
+                </div>
+
+            </section>
+
+
+            <!-- =========================================
+                 HERRAMIENTAS
+            ========================================== -->
+
+            <section class="toolbar">
+
+                <div class="search-box">
+
+                    <input
+                        type="search"
+                        id="adminSearch"
+                        placeholder="🔎 Buscar por código, nombre o marca..."
+                    >
+
+                </div>
+
+
+                <button
+                    id="refreshButton"
+                    class="refresh-button"
+                >
+                    🔄 Actualizar
+                </button>
+
+            </section>
+
+
+            <!-- =========================================
+                 MENSAJE
+            ========================================== -->
+
+            <div
+                id="statusMessage"
+                class="status-message"
+            ></div>
+
+
+            <!-- =========================================
+                 PRODUCTOS POR COMPRAR
+            ========================================== -->
+
+            <section
+                id="purchaseSection"
+                class="purchase-section"
+            >
+
+                <div class="purchase-header">
+
+                    <div>
+
+                        <h2>
+                            🛒 Productos por comprar
+                        </h2>
+
+                        <p>
+                            Aquí aparecen los productos cuyo stock actual es igual o menor al 30% de su stock máximo.
+                        </p>
+
+                    </div>
+
+
+                    <div
+                        id="purchaseCount"
+                        class="purchase-count"
+                    >
+                        0 productos
+                    </div>
+
+                </div>
+
+
+                <!-- SIN PRODUCTOS -->
+
+                <div
+                    id="purchaseEmpty"
+                    class="purchase-empty"
+                >
+
+                    <div class="purchase-empty-icon">
+                        ✅
+                    </div>
+
+                    <strong>
+                        No hay productos pendientes de compra
+                    </strong>
+
+                    <span>
+                        No hay productos que hayan llegado al nivel de reposición.
+                    </span>
+
+                </div>
+
+
+                <!-- TABLA DE COMPRAS -->
+
+                <div
+                    id="purchaseTableContainer"
+                    class="purchase-table-container hidden"
+                >
+
+                    <div class="table-wrapper">
+
+                        <table>
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        Producto
+                                    </th>
+
+                                    <th>
+                                        Marca
+                                    </th>
+
+                                    <th>
+                                        Código
+                                    </th>
+
+                                    <th>
+                                        Stock actual
+                                    </th>
+
+                                    <th>
+                                        Stock máximo
+                                    </th>
+
+                                    <th>
+                                        30% máximo
+                                    </th>
+
+                                    <th>
+                                        Comprar
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody id="purchaseTable">
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- =========================================
+                 INVENTARIO
+            ========================================== -->
+
+            <section class="inventory-section">
+
+                <div class="section-title">
+
+                    <div>
+
+                        <h2>
+                            📦 Inventario
+                        </h2>
+
+                        <p>
+                            Administra el stock actual y establece el stock máximo de cada producto.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <section class="inventory-container">
+
+                    <div class="table-wrapper">
+
+                        <table>
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        Producto
+                                    </th>
+
+                                    <th>
+                                        Marca
+                                    </th>
+
+                                    <th>
+                                        Código
+                                    </th>
+
+                                    <th>
+                                        Stock actual
+                                    </th>
+
+                                    <th>
+                                        Stock máximo
+                                    </th>
+
+                                    <th>
+                                        Nivel 30%
+                                    </th>
+
+                                    <th>
+                                        Estado
+                                    </th>
+
+                                    <th>
+                                        Acción
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody id="inventoryTable">
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </section>
+
+            </section>
+
+
+        </main>
+
+    </section>
+
+
+    <!-- =================================================
+         SUPABASE
+    ================================================== -->
+
+    <script
+        src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+    ></script>
+
+
+    <script
+        src="admin.js"
+    ></script>
+
+</body>
+
+</html>
