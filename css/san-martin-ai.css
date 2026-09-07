@@ -1,0 +1,593 @@
+/* =========================================================
+   SAN MARTÍN IA
+   ASISTENTE VIRTUAL DE COMPRAS
+========================================================= */
+
+
+/* =========================================================
+   BOTÓN FLOTANTE
+========================================================= */
+
+.san-martin-ai-button {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 9998;
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 13px 18px;
+
+    border: none;
+    border-radius: 50px;
+
+    background: #111827;
+    color: #ffffff;
+
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 10px 30px rgba(0, 0, 0, 0.20);
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.san-martin-ai-button:hover {
+    transform: translateY(-3px);
+
+    box-shadow:
+        0 14px 35px rgba(0, 0, 0, 0.28);
+}
+
+.san-martin-ai-button:active {
+    transform: translateY(-1px);
+}
+
+.san-martin-ai-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 30px;
+    height: 30px;
+
+    font-size: 20px;
+}
+
+.san-martin-ai-button-text {
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   VENTANA PRINCIPAL
+========================================================= */
+
+.san-martin-ai {
+    position: fixed;
+
+    right: 24px;
+    bottom: 90px;
+
+    z-index: 9999;
+
+    width: min(390px, calc(100vw - 32px));
+    height: min(620px, calc(100vh - 120px));
+
+    display: flex;
+    flex-direction: column;
+
+    overflow: hidden;
+
+    background: #ffffff;
+
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 22px;
+
+    box-shadow:
+        0 25px 70px rgba(0, 0, 0, 0.22);
+
+    font-family: inherit;
+
+    animation: sanMartinIAEntrada 0.22s ease;
+}
+
+@keyframes sanMartinIAEntrada {
+
+    from {
+        opacity: 0;
+        transform: translateY(15px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+
+/* =========================================================
+   ENCABEZADO
+========================================================= */
+
+.san-martin-ai-header {
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 16px 18px;
+
+    background: #111827;
+    color: #ffffff;
+}
+
+.san-martin-ai-header-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.san-martin-ai-avatar {
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: rgba(255, 255, 255, 0.12);
+
+    font-size: 23px;
+}
+
+.san-martin-ai-header-info strong {
+    display: block;
+
+    font-size: 16px;
+    line-height: 1.2;
+}
+
+.san-martin-ai-header-info span {
+    display: block;
+
+    margin-top: 3px;
+
+    color: rgba(255, 255, 255, 0.72);
+
+    font-size: 12px;
+}
+
+.san-martin-ai-close {
+    width: 36px;
+    height: 36px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: none;
+    border-radius: 50%;
+
+    background: transparent;
+    color: #ffffff;
+
+    font-size: 27px;
+    line-height: 1;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease;
+}
+
+.san-martin-ai-close:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+
+/* =========================================================
+   ÁREA DE MENSAJES
+========================================================= */
+
+.san-martin-ai-messages {
+    flex: 1;
+
+    overflow-y: auto;
+
+    padding: 20px 16px;
+
+    background: #f8fafc;
+
+    scroll-behavior: smooth;
+}
+
+
+/* =========================================================
+   MENSAJE DEL BOT
+========================================================= */
+
+.san-martin-ai-message {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+
+    margin-bottom: 16px;
+}
+
+.san-martin-ai-message-avatar {
+    flex-shrink: 0;
+
+    width: 32px;
+    height: 32px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: #111827;
+
+    font-size: 17px;
+}
+
+.san-martin-ai-message-content {
+    max-width: 82%;
+
+    padding: 11px 13px;
+
+    background: #ffffff;
+
+    border: 1px solid #e5e7eb;
+    border-radius: 4px 16px 16px 16px;
+
+    color: #1f2937;
+
+    font-size: 14px;
+    line-height: 1.5;
+
+    box-shadow:
+        0 2px 7px rgba(0, 0, 0, 0.04);
+}
+
+.san-martin-ai-message-content p {
+    margin: 0 0 8px;
+}
+
+.san-martin-ai-message-content p:last-child {
+    margin-bottom: 0;
+}
+
+
+/* =========================================================
+   ACCIONES RÁPIDAS
+========================================================= */
+
+.san-martin-ai-quick-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    margin-top: 8px;
+}
+
+.san-martin-ai-quick-actions button {
+    width: 100%;
+
+    padding: 11px 13px;
+
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+
+    background: #ffffff;
+    color: #1f2937;
+
+    text-align: left;
+
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.2s ease;
+}
+
+.san-martin-ai-quick-actions button:hover {
+    background: #f1f5f9;
+
+    border-color: #cbd5e1;
+
+    transform: translateX(2px);
+}
+
+
+/* =========================================================
+   INDICADOR "PENSANDO"
+========================================================= */
+
+.san-martin-ai-typing {
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    gap: 5px;
+
+    padding: 7px 16px;
+
+    background: #ffffff;
+
+    color: #64748b;
+
+    font-size: 12px;
+}
+
+.san-martin-ai-typing span {
+    width: 6px;
+    height: 6px;
+
+    border-radius: 50%;
+
+    background: #64748b;
+
+    animation: sanMartinIAPuntos 1.2s infinite ease-in-out;
+}
+
+.san-martin-ai-typing span:nth-child(2) {
+    animation-delay: 0.15s;
+}
+
+.san-martin-ai-typing span:nth-child(3) {
+    animation-delay: 0.30s;
+}
+
+@keyframes sanMartinIAPuntos {
+
+    0%,
+    60%,
+    100% {
+        transform: translateY(0);
+        opacity: 0.45;
+    }
+
+    30% {
+        transform: translateY(-3px);
+        opacity: 1;
+    }
+}
+
+.san-martin-ai-typing small {
+    margin-left: 4px;
+}
+
+
+/* =========================================================
+   FORMULARIO
+========================================================= */
+
+.san-martin-ai-form {
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    padding: 12px;
+
+    background: #ffffff;
+
+    border-top: 1px solid #e5e7eb;
+}
+
+.san-martin-ai-form input {
+    flex: 1;
+
+    min-width: 0;
+
+    height: 44px;
+
+    padding: 0 14px;
+
+    border: 1px solid #d1d5db;
+    border-radius: 13px;
+
+    outline: none;
+
+    background: #f8fafc;
+    color: #111827;
+
+    font-family: inherit;
+    font-size: 14px;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.san-martin-ai-form input::placeholder {
+    color: #94a3b8;
+}
+
+.san-martin-ai-form input:focus {
+    border-color: #64748b;
+
+    box-shadow:
+        0 0 0 3px rgba(100, 116, 139, 0.12);
+}
+
+.san-martin-ai-form button {
+    flex-shrink: 0;
+
+    width: 44px;
+    height: 44px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: none;
+    border-radius: 13px;
+
+    background: #111827;
+    color: #ffffff;
+
+    font-size: 19px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.2s ease,
+        opacity 0.2s ease;
+}
+
+.san-martin-ai-form button:hover {
+    transform: translateY(-2px);
+}
+
+.san-martin-ai-form button:active {
+    transform: translateY(0);
+}
+
+.san-martin-ai-form button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+.san-martin-ai-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+.san-martin-ai-messages::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.san-martin-ai-messages::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 768px) {
+
+    .san-martin-ai-button {
+        right: 18px;
+        bottom: 18px;
+    }
+
+    .san-martin-ai {
+        right: 18px;
+        bottom: 78px;
+
+        width: min(390px, calc(100vw - 36px));
+    }
+}
+
+
+/* =========================================================
+   TELÉFONO
+========================================================= */
+
+@media (max-width: 480px) {
+
+    .san-martin-ai-button {
+        right: 14px;
+        bottom: 14px;
+
+        width: 52px;
+        height: 52px;
+
+        padding: 0;
+
+        justify-content: center;
+    }
+
+    .san-martin-ai-button-text {
+        display: none;
+    }
+
+    .san-martin-ai-icon {
+        width: auto;
+        height: auto;
+
+        font-size: 23px;
+    }
+
+    .san-martin-ai {
+        right: 8px;
+        bottom: 76px;
+
+        width: calc(100vw - 16px);
+        height: min(650px, calc(100vh - 95px));
+
+        border-radius: 20px;
+    }
+
+    .san-martin-ai-header {
+        padding: 14px;
+    }
+
+    .san-martin-ai-messages {
+        padding: 16px 12px;
+    }
+
+    .san-martin-ai-form {
+        padding: 9px;
+    }
+}
+
+
+/* =========================================================
+   TELÉFONO MUY PEQUEÑO
+========================================================= */
+
+@media (max-width: 360px) {
+
+    .san-martin-ai {
+        right: 5px;
+        width: calc(100vw - 10px);
+    }
+
+    .san-martin-ai-message-content {
+        max-width: 86%;
+
+        font-size: 13px;
+    }
+
+    .san-martin-ai-quick-actions button {
+        font-size: 12px;
+    }
+}
+
+/* =========================================================
+   CONTROL DE VISIBILIDAD
+========================================================= */
+
+.san-martin-ai[hidden] {
+    display: none !important;
+}

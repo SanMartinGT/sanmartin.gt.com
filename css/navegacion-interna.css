@@ -1,0 +1,177 @@
+/* =====================================================
+   SAN MARTÍN · NAVEGACIÓN INTERNA
+   Vistas independientes para Nosotros y Mi cuenta
+===================================================== */
+
+:root {
+    --sm-navy: #102f4b;
+    --sm-blue: #1d5f8f;
+    --sm-ink: #17202a;
+    --sm-muted: #65717d;
+    --sm-surface: #ffffff;
+    --sm-page: #f4f7fa;
+    --sm-border: rgba(16, 47, 75, 0.12);
+    --sm-shadow: 0 18px 48px rgba(16, 47, 75, 0.11);
+}
+
+/* El atributo hidden lo controla navegacion-interna.js. */
+#nosotros[hidden],
+#cuenta[hidden],
+[data-vista-inicio][hidden] {
+    display: none !important;
+}
+
+body.vista-interna-activa {
+    background: var(--sm-page);
+}
+
+.pagina-interna {
+    position: relative;
+    min-height: calc(100vh - 10rem);
+    padding: clamp(2rem, 5vw, 4.75rem) 0 clamp(3.5rem, 7vw, 6rem);
+    overflow: hidden;
+}
+
+.pagina-interna::before {
+    position: absolute;
+    z-index: 0;
+    top: -15rem;
+    right: -11rem;
+    width: 32rem;
+    height: 32rem;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(29, 95, 143, 0.13), transparent 68%);
+    content: "";
+    pointer-events: none;
+}
+
+.pagina-interna > * {
+    position: relative;
+    z-index: 1;
+}
+
+.vista-interna-encabezado {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    max-width: 1120px;
+    margin: 0 auto clamp(1.5rem, 3vw, 2.5rem);
+    padding: 0 1.25rem;
+}
+
+.vista-interna-volver {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-height: 2.75rem;
+    padding: 0.65rem 1rem;
+    border: 1px solid var(--sm-border);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.88);
+    color: var(--sm-navy);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 5px 16px rgba(16, 47, 75, 0.06);
+    transition: background-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.vista-interna-volver:hover {
+    background: #ffffff;
+    box-shadow: 0 10px 24px rgba(16, 47, 75, 0.12);
+    transform: translateY(-1px);
+}
+
+.vista-interna-volver:focus-visible {
+    outline: 3px solid rgba(29, 95, 143, 0.34);
+    outline-offset: 3px;
+}
+
+.vista-interna-ruta {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0;
+    color: var(--sm-muted);
+    font-size: 0.9rem;
+}
+
+.vista-interna-ruta strong {
+    color: var(--sm-navy);
+}
+
+.pagina-interna .section-header {
+    margin-top: 0;
+}
+
+#nosotros.pagina-interna .about-content {
+    max-width: 780px;
+    margin: 1.5rem auto 0;
+    padding: clamp(1.5rem, 4vw, 3rem);
+    border: 1px solid var(--sm-border);
+    border-radius: 1.5rem;
+    background: var(--sm-surface);
+    color: var(--sm-ink);
+    box-shadow: var(--sm-shadow);
+}
+
+#nosotros.pagina-interna .about-content p {
+    max-width: 65ch;
+    margin: 0 auto;
+    font-size: clamp(1rem, 1.5vw, 1.12rem);
+    line-height: 1.8;
+}
+
+#nosotros.pagina-interna .about-content p + p {
+    margin-top: 1.1rem;
+    padding-top: 1.1rem;
+    border-top: 1px solid var(--sm-border);
+}
+
+#cuenta.pagina-interna .cuenta-container {
+    max-width: 760px;
+    margin: 0 auto;
+    border: 1px solid var(--sm-border);
+    border-radius: 1.5rem;
+    background: var(--sm-surface);
+    box-shadow: var(--sm-shadow);
+}
+
+header nav a[aria-current="page"] {
+    color: var(--sm-navy);
+    font-weight: 800;
+}
+
+@media (max-width: 640px) {
+    .pagina-interna {
+        min-height: calc(100vh - 8rem);
+        padding-top: 1.25rem;
+    }
+
+    .vista-interna-encabezado {
+        align-items: flex-start;
+        flex-direction: column-reverse;
+        margin-bottom: 1.25rem;
+    }
+
+    .vista-interna-ruta {
+        padding-left: 0.2rem;
+    }
+
+    .vista-interna-volver {
+        width: 100%;
+        justify-content: center;
+    }
+
+    #nosotros.pagina-interna .about-content,
+    #cuenta.pagina-interna .cuenta-container {
+        border-radius: 1rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .vista-interna-volver {
+        transition: none;
+    }
+}
