@@ -444,7 +444,6 @@
 
             input.disabled = false;
 
-            input.focus();
 
         }
 
