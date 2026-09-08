@@ -378,7 +378,7 @@
             if (
                 !data ||
                 data.success !== true ||
-                !data.message
+                !data.response
             ) {
 
                 console.error(
@@ -405,7 +405,7 @@
             ============================================= */
 
             agregarMensajeBot(
-                data.message
+                data.response
             );
 
 
