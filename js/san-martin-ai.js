@@ -1,114 +1,202 @@
 /* =========================================================
-   SAN MARTÍN IA
-   ASISTENTE VIRTUAL DE COMPRAS
-   CONECTADO A SUPABASE EDGE FUNCTION + OPENAI
+   SAN MARTÍN AGENT
+   AGENTE INTELIGENTE DE COMPRAS Y VENTAS
 
-   VERSIÓN:
-   - Memoria conversacional durante la sesión
-   - Envía historial a Supabase Edge Function
-   - Mantiene apertura/cierre original con hidden
-   - Mantiene acciones rápidas
-   - Mantiene búsqueda exacta
-   - Compatible con data.response
-========================================================= */
+   ARQUITECTURA:
+
+   TIENDA
+      ↓
+   SAN MARTÍN AGENT
+      ↓
+   SUPABASE EDGE FUNCTION
+      ↓
+   GEMINI INTERACTIONS API
+      ↓
+   GEMINI FUNCTION CALLING
+      ↓
+   DATOS Y FUNCIONES REALES
+
+   IMPORTANTE:
+
+   - Gemini NO se ejecuta directamente en el navegador.
+   - La API Key NO está aquí.
+   - El estado de conversación usa interaction_id.
+   - El agente puede solicitar acciones reales.
+   - El frontend ejecuta únicamente acciones permitidas.
+   - Preparado para carrito, productos, pedidos,
+     recomendaciones, comparación, presupuesto, etc.
+
+   ========================================================= */
 
 (function () {
 
     "use strict";
 
 
-    /* =====================================================
-       CONFIGURACIÓN
-    ===================================================== */
+    /* =========================================================
+       CONFIGURACIÓN GENERAL
+    ========================================================= */
 
-    const SAN_MARTIN_AI_FUNCTION =
-        "san-martin-ai";
+    const SAN_MARTIN_AGENT_FUNCTION =
+        "san-martin-agent";
 
 
     /*
-       Cantidad máxima de mensajes anteriores
-       que se enviarán a la Edge Function.
+       Versión del protocolo entre:
 
-       10 mensajes = aproximadamente 5 turnos
-       Cliente + San Martín IA.
+       FRONTEND
+       ↕
+       EDGE FUNCTION
+       ↕
+       GEMINI
     */
 
-    const MAX_HISTORIAL =
-        10;
+    const AGENT_PROTOCOL_VERSION =
+        "1.0";
 
-
-    /* =====================================================
-       MEMORIA CONVERSACIONAL
-    ===================================================== */
 
     /*
-       Esta memoria vive únicamente mientras la página
-       permanezca abierta.
+       Máximo de caracteres que permitiremos enviar
+       en una sola consulta.
 
-       Ejemplo:
-
-       Cliente:
-       necesito una caja de marcadores
-
-       IA:
-       Claro 😊 ...
-
-       Cliente:
-       tengo Q80
-
-       Al segundo mensaje se enviará:
-
-       history:
-       [
-           {
-               role: "user",
-               content: "necesito una caja de marcadores"
-           },
-           {
-               role: "assistant",
-               content: "Claro 😊 ..."
-           }
-       ]
-
-       message:
-       "tengo Q80"
+       Evita entradas gigantescas.
     */
 
-    let historialConversacion = [];
+    const MAX_MESSAGE_LENGTH =
+        4000;
 
 
-    /* =====================================================
-       ELEMENTOS DEL HTML
-    ===================================================== */
+    /*
+       Máximo de acciones que el navegador aceptará
+       en una sola respuesta.
+
+       Seguridad adicional.
+    */
+
+    const MAX_ACTIONS_PER_RESPONSE =
+        20;
+
+
+    /*
+       ID de sesión del agente.
+
+       Sirve para identificar esta conversación
+       aunque todavía no haya una interacción Gemini.
+    */
+
+    const SESSION_STORAGE_KEY =
+        "san_martin_agent_session";
+
+
+    /*
+       ID de interacción de Gemini.
+
+       Interactions API permite continuar una conversación
+       mediante previous_interaction_id.
+    */
+
+    const INTERACTION_STORAGE_KEY =
+        "san_martin_gemini_interaction_id";
+
+
+    /* =========================================================
+       ESTADO DEL AGENTE
+    ========================================================= */
+
+    let interactionId =
+        sessionStorage.getItem(
+            INTERACTION_STORAGE_KEY
+        ) || null;
+
+
+    let sessionId =
+        sessionStorage.getItem(
+            SESSION_STORAGE_KEY
+        );
+
+
+    /*
+       Si no existe una sesión, creamos una.
+    */
+
+    if (!sessionId) {
+
+        sessionId =
+            generarIdSeguro();
+
+        sessionStorage.setItem(
+            SESSION_STORAGE_KEY,
+            sessionId
+        );
+    }
+
+
+    /*
+       Estado local del agente.
+
+       NO sustituye la base de datos.
+
+       Solamente contiene información útil de interfaz.
+    */
+
+    let agenteOcupado = false;
+
+
+    /* =========================================================
+       ELEMENTOS DEL HTML EXISTENTE
+    ========================================================= */
 
     const btnAbrir =
-        document.getElementById("btnSanMartinIA");
+        document.getElementById(
+            "btnSanMartinIA"
+        );
+
 
     const btnCerrar =
-        document.getElementById("btnCerrarSanMartinIA");
+        document.getElementById(
+            "btnCerrarSanMartinIA"
+        );
+
 
     const ventana =
-        document.getElementById("sanMartinIA");
+        document.getElementById(
+            "sanMartinIA"
+        );
+
 
     const mensajes =
-        document.getElementById("sanMartinAIMensajes");
+        document.getElementById(
+            "sanMartinAIMensajes"
+        );
+
 
     const formulario =
-        document.getElementById("sanMartinAIForm");
+        document.getElementById(
+            "sanMartinAIForm"
+        );
+
 
     const input =
-        document.getElementById("sanMartinAIInput");
+        document.getElementById(
+            "sanMartinAIInput"
+        );
+
 
     const btnEnviar =
-        document.getElementById("btnEnviarSanMartinIA");
+        document.getElementById(
+            "btnEnviarSanMartinIA"
+        );
+
 
     const typing =
-        document.getElementById("sanMartinAITyping");
+        document.getElementById(
+            "sanMartinAITyping"
+        );
 
 
-    /* =====================================================
-       COMPROBAR ELEMENTOS
-    ===================================================== */
+    /* =========================================================
+       VALIDAR INTERFAZ
+    ========================================================= */
 
     if (
         !btnAbrir ||
@@ -120,17 +208,17 @@
         !btnEnviar
     ) {
 
-        console.warn(
-            "San Martín IA: no se encontraron todos los elementos necesarios."
+        console.error(
+            "San Martín Agent: faltan elementos del HTML."
         );
 
         return;
     }
 
 
-    /* =====================================================
-       COMPROBAR SUPABASE
-    ===================================================== */
+    /* =========================================================
+       VALIDAR SUPABASE
+    ========================================================= */
 
     if (
         typeof supabaseClient === "undefined" ||
@@ -138,32 +226,45 @@
     ) {
 
         console.error(
-            "San Martín IA: supabaseClient no está disponible."
+            "San Martín Agent: supabaseClient no está disponible."
         );
 
         return;
     }
 
 
-    /* =====================================================
-       ABRIR SAN MARTÍN IA
-    ===================================================== */
+    /* =========================================================
+       GENERAR ID SEGURO
+    ========================================================= */
 
-    function abrirSanMartinIA() {
+    function generarIdSeguro() {
 
-        /*
-           IMPORTANTE:
+        if (
+            window.crypto &&
+            typeof window.crypto.randomUUID === "function"
+        ) {
 
-           Conservamos exactamente el sistema original
-           que ya sabemos que funciona.
+            return window.crypto.randomUUID();
 
-           NO usamos:
-           .activo
-           .open
-           .active
+        }
 
-           Solamente hidden.
-        */
+
+        return (
+            "sm-" +
+            Date.now() +
+            "-" +
+            Math.random()
+                .toString(36)
+                .substring(2, 12)
+        );
+    }
+
+
+    /* =========================================================
+       ABRIR AGENTE
+    ========================================================= */
+
+    function abrirSanMartinAgent() {
 
         ventana.hidden = false;
 
@@ -174,32 +275,60 @@
     }
 
 
-    /* =====================================================
-       CERRAR SAN MARTÍN IA
-    ===================================================== */
+    /* =========================================================
+       CERRAR AGENTE
+    ========================================================= */
 
-    function cerrarSanMartinIA() {
-
-        /*
-           Conservamos exactamente el cierre original.
-        */
+    function cerrarSanMartinAgent() {
 
         ventana.hidden = true;
 
     }
 
 
-    /* =====================================================
-       AGREGAR MENSAJE DEL USUARIO
-    ===================================================== */
+    /* =========================================================
+       NUEVA CONVERSACIÓN
+    =========================================================
+
+       Esta función será útil más adelante para:
+
+       "Nueva conversación"
+
+       No elimina carrito.
+       No elimina cuenta.
+       No elimina pedidos.
+
+       Solamente reinicia la conversación de IA.
+    */
+
+    function nuevaConversacionAgent() {
+
+        interactionId = null;
+
+        sessionStorage.removeItem(
+            INTERACTION_STORAGE_KEY
+        );
+
+        console.log(
+            "🤖 San Martín Agent: nueva conversación."
+        );
+
+    }
+
+
+    /* =========================================================
+       AGREGAR MENSAJE DEL CLIENTE
+    ========================================================= */
 
     function agregarMensajeUsuario(texto) {
 
         const mensaje =
             document.createElement("div");
 
+
         mensaje.className =
             "san-martin-ai-message san-martin-ai-message-user";
+
 
         mensaje.innerHTML = `
             <div class="san-martin-ai-message-content">
@@ -207,24 +336,30 @@
             </div>
         `;
 
-        mensajes.appendChild(mensaje);
+
+        mensajes.appendChild(
+            mensaje
+        );
+
 
         desplazarMensajesAlFinal();
 
     }
 
 
-    /* =====================================================
-       AGREGAR MENSAJE DEL ASISTENTE
-    ===================================================== */
+    /* =========================================================
+       AGREGAR MENSAJE DEL AGENTE
+    ========================================================= */
 
     function agregarMensajeBot(texto) {
 
         const mensaje =
             document.createElement("div");
 
+
         mensaje.className =
             "san-martin-ai-message san-martin-ai-message-bot";
+
 
         mensaje.innerHTML = `
             <div class="san-martin-ai-message-avatar">
@@ -236,32 +371,53 @@
             </div>
         `;
 
-        mensajes.appendChild(mensaje);
+
+        mensajes.appendChild(
+            mensaje
+        );
+
 
         desplazarMensajesAlFinal();
 
     }
 
 
-    /* =====================================================
+    /* =========================================================
        FORMATEAR RESPUESTA
-
-       Convierte saltos de línea en <br>
-       y evita HTML peligroso.
-    ===================================================== */
+    ========================================================= */
 
     function formatearRespuesta(texto) {
 
         return escaparHTML(
             String(texto || "")
-        ).replace(/\n/g, "<br>");
+        )
+        .replace(/\n/g, "<br>");
 
     }
 
 
-    /* =====================================================
-       MOSTRAR INDICADOR "PENSANDO"
-    ===================================================== */
+    /* =========================================================
+       ESCAPAR HTML
+    ========================================================= */
+
+    function escaparHTML(texto) {
+
+        const div =
+            document.createElement("div");
+
+
+        div.textContent =
+            String(texto || "");
+
+
+        return div.innerHTML;
+
+    }
+
+
+    /* =========================================================
+       MOSTRAR TYPING
+    ========================================================= */
 
     function mostrarTyping() {
 
@@ -271,14 +427,15 @@
 
         }
 
+
         desplazarMensajesAlFinal();
 
     }
 
 
-    /* =====================================================
-       OCULTAR INDICADOR "PENSANDO"
-    ===================================================== */
+    /* =========================================================
+       OCULTAR TYPING
+    ========================================================= */
 
     function ocultarTyping() {
 
@@ -291,9 +448,9 @@
     }
 
 
-    /* =====================================================
-       DESPLAZAR CHAT AL FINAL
-    ===================================================== */
+    /* =========================================================
+       SCROLL
+    ========================================================= */
 
     function desplazarMensajesAlFinal() {
 
@@ -307,39 +464,154 @@
     }
 
 
-    /* =====================================================
-       ESCAPAR HTML
-    ===================================================== */
+    /* =========================================================
+       OBTENER CONTEXTO REAL DE LA APLICACIÓN
+    =========================================================
 
-    function escaparHTML(texto) {
+       Aquí NO mandamos toda la aplicación.
 
-        const div =
-            document.createElement("div");
+       Solamente información útil para el agente.
 
-        div.textContent =
-            String(texto || "");
+       Esta función irá creciendo conforme conectemos:
 
-        return div.innerHTML;
+       - carrito
+       - usuario
+       - filtros
+       - producto seleccionado
+       - checkout
+       - etc.
+    */
+
+    function obtenerContextoAplicacion() {
+
+        const contexto = {
+
+            session_id:
+                sessionId,
+
+            pagina:
+                window.location.pathname,
+
+            url:
+                window.location.href,
+
+            idioma:
+                document.documentElement.lang || "es",
+
+            moneda:
+                "GTQ",
+
+            tienda:
+                "San Martín | Papelería y Librería"
+
+        };
+
+
+        /*
+           Intentamos detectar usuario de Supabase.
+
+           Si no está disponible, simplemente continúa.
+        */
+
+        try {
+
+            if (
+                supabaseClient &&
+                supabaseClient.auth
+            ) {
+
+                contexto.auth =
+                    "supabase_auth_available";
+
+            }
+
+        } catch (error) {
+
+            console.warn(
+                "No se pudo obtener contexto de autenticación.",
+                error
+            );
+
+        }
+
+
+        /*
+           Si posteriormente tenemos una función global
+           para obtener el carrito real, podremos conectarla aquí.
+
+           Ejemplo futuro:
+
+           contexto.carrito =
+               window.obtenerCarritoActual();
+        */
+
+
+        return contexto;
 
     }
 
 
-    /* =====================================================
-       AGREGAR MENSAJE A LA MEMORIA
-    ===================================================== */
+    /* =========================================================
+       CONSTRUIR PAYLOAD DEL AGENTE
+    ========================================================= */
 
-    function agregarAlHistorial(
-        role,
-        content
+    function construirPayload(mensaje) {
+
+        return {
+
+            protocol_version:
+                AGENT_PROTOCOL_VERSION,
+
+            session_id:
+                sessionId,
+
+            interaction_id:
+                interactionId,
+
+            message:
+                mensaje,
+
+            context:
+                obtenerContextoAplicacion()
+
+        };
+
+    }
+
+
+    /* =========================================================
+       EJECUTAR ACCIONES DEL AGENTE
+    =========================================================
+
+       GEMINI puede decidir:
+
+       "agregar este producto al carrito"
+
+       Pero Gemini NO manipula directamente el DOM.
+
+       Devuelve una acción estructurada.
+
+       Ejemplo:
+
+       {
+          type: "add_to_cart",
+          payload: {
+             product_id: "...",
+             quantity: 3
+          }
+       }
+
+       Esta capa ejecutará únicamente acciones
+       expresamente permitidas.
+    */
+
+    async function ejecutarAccionesAgente(
+        acciones
     ) {
 
-        /*
-           Solo aceptamos mensajes válidos.
-        */
-
         if (
-            !role ||
-            !content
+            !Array.isArray(acciones) ||
+            acciones.length === 0
         ) {
 
             return;
@@ -347,97 +619,853 @@
         }
 
 
-        historialConversacion.push({
-
-            role:
-                role,
-
-            content:
-                String(content)
-
-        });
+        const accionesSeguras =
+            acciones.slice(
+                0,
+                MAX_ACTIONS_PER_RESPONSE
+            );
 
 
-        /*
-           Conservamos solamente los últimos
-           mensajes permitidos.
-        */
-
-        if (
-            historialConversacion.length >
-            MAX_HISTORIAL
+        for (
+            const accion
+            of accionesSeguras
         ) {
 
-            historialConversacion =
-                historialConversacion.slice(
-                    -MAX_HISTORIAL
+            try {
+
+                await ejecutarAccion(
+                    accion
                 );
+
+            } catch (error) {
+
+                console.error(
+                    "❌ Error ejecutando acción del agente:",
+                    accion,
+                    error
+                );
+
+            }
 
         }
 
     }
 
 
-    /* =====================================================
-       OBTENER HISTORIAL PARA ENVIAR
-    ===================================================== */
+    /* =========================================================
+       ROUTER DE ACCIONES
+    ========================================================= */
 
-    function obtenerHistorialParaEnviar() {
+    async function ejecutarAccion(
+        accion
+    ) {
 
-        /*
-           Creamos una copia para no modificar
-           directamente la memoria original.
-        */
+        if (
+            !accion ||
+            typeof accion !== "object"
+        ) {
 
-        return historialConversacion
-            .slice(-MAX_HISTORIAL)
-            .map(function (mensaje) {
+            return;
 
-                return {
+        }
 
-                    role:
-                        mensaje.role,
 
-                    content:
-                        mensaje.content
+        const tipo =
+            String(
+                accion.type || ""
+            );
 
-                };
 
-            });
+        const payload =
+            accion.payload || {};
+
+
+        console.log(
+            "🤖 San Martín Agent → acción:",
+            tipo,
+            payload
+        );
+
+
+        switch (tipo) {
+
+
+            /* =============================================
+               AGREGAR AL CARRITO
+            ============================================= */
+
+            case "add_to_cart":
+
+                await accionAgregarAlCarrito(
+                    payload
+                );
+
+                break;
+
+
+            /* =============================================
+               ELIMINAR DEL CARRITO
+            ============================================= */
+
+            case "remove_from_cart":
+
+                await accionEliminarDelCarrito(
+                    payload
+                );
+
+                break;
+
+
+            /* =============================================
+               ACTUALIZAR CANTIDAD
+            ============================================= */
+
+            case "update_cart_quantity":
+
+                await accionActualizarCantidadCarrito(
+                    payload
+                );
+
+                break;
+
+
+            /* =============================================
+               ABRIR CARRITO
+            ============================================= */
+
+            case "open_cart":
+
+                accionAbrirCarrito();
+
+                break;
+
+
+            /* =============================================
+               ABRIR PRODUCTO
+            ============================================= */
+
+            case "open_product":
+
+                accionAbrirProducto(
+                    payload
+                );
+
+                break;
+
+
+            /* =============================================
+               BUSCAR PRODUCTO EN TIENDA
+            ============================================= */
+
+            case "search_products":
+
+                accionBuscarProductos(
+                    payload
+                );
+
+                break;
+
+
+            /* =============================================
+               APLICAR FILTRO
+            ============================================= */
+
+            case "apply_catalog_filter":
+
+                accionAplicarFiltro(
+                    payload
+                );
+
+                break;
+
+
+            /* =============================================
+               SCROLL HACIA CATÁLOGO
+            ============================================= */
+
+            case "go_to_catalog":
+
+                accionIrCatalogo();
+
+                break;
+
+
+            /* =============================================
+               NO HACER NADA
+            ============================================= */
+
+            case "none":
+
+                break;
+
+
+            /* =============================================
+               ACCIÓN DESCONOCIDA
+            ============================================= */
+
+            default:
+
+                console.warn(
+                    "San Martín Agent: acción no permitida:",
+                    tipo
+                );
+
+                break;
+
+        }
 
     }
 
 
-    /* =====================================================
-       MOSTRAR ERROR
-    ===================================================== */
+    /* =========================================================
+       ACCIÓN: AGREGAR AL CARRITO
+    =========================================================
 
-    function mostrarErrorIA() {
+       IMPORTANTE:
 
-        agregarMensajeBot(
-            "⚠️ Lo siento, en este momento no pude conectarme con San Martín IA. Intenta nuevamente en unos segundos."
+       Todavía no inventamos el nombre de la función
+       real de tu carrito.
+
+       Primero intentamos detectar funciones comunes.
+
+       Después conectaremos esto directamente con
+       tu sistema real de carrito.
+    */
+
+    async function accionAgregarAlCarrito(
+        payload
+    ) {
+
+        const productoId =
+            payload.product_id ||
+            payload.producto_id ||
+            payload.id;
+
+
+        const cantidad =
+            Number(
+                payload.quantity ||
+                payload.cantidad ||
+                1
+            );
+
+
+        if (!productoId) {
+
+            console.warn(
+                "add_to_cart sin product_id."
+            );
+
+            return;
+
+        }
+
+
+        /*
+           Adaptador futuro.
+
+           Cuando conectemos tu carrito real,
+           aquí utilizaremos la función exacta
+           de tu aplicación.
+        */
+
+        if (
+            typeof window.agregarProductoAlCarrito ===
+            "function"
+        ) {
+
+            await window.agregarProductoAlCarrito(
+                productoId,
+                cantidad
+            );
+
+            return;
+
+        }
+
+
+        /*
+           Segundo nombre posible.
+        */
+
+        if (
+            typeof window.agregarAlCarrito ===
+            "function"
+        ) {
+
+            await window.agregarAlCarrito(
+                productoId,
+                cantidad
+            );
+
+            return;
+
+        }
+
+
+        /*
+           Si todavía no existe la función,
+           no hacemos una modificación falsa.
+        */
+
+        console.warn(
+            "San Martín Agent: el adaptador del carrito aún no está conectado.",
+            payload
         );
 
     }
 
 
-    /* =====================================================
+    /* =========================================================
+       ACCIÓN: ELIMINAR DEL CARRITO
+    ========================================================= */
+
+    async function accionEliminarDelCarrito(
+        payload
+    ) {
+
+        const productoId =
+            payload.product_id ||
+            payload.producto_id ||
+            payload.id;
+
+
+        if (!productoId) {
+
+            return;
+
+        }
+
+
+        if (
+            typeof window.eliminarProductoDelCarrito ===
+            "function"
+        ) {
+
+            await window.eliminarProductoDelCarrito(
+                productoId
+            );
+
+            return;
+
+        }
+
+
+        if (
+            typeof window.eliminarDelCarrito ===
+            "function"
+        ) {
+
+            await window.eliminarDelCarrito(
+                productoId
+            );
+
+            return;
+
+        }
+
+
+        console.warn(
+            "San Martín Agent: función de eliminar carrito no conectada."
+        );
+
+    }
+
+
+    /* =========================================================
+       ACCIÓN: ACTUALIZAR CANTIDAD
+    ========================================================= */
+
+    async function accionActualizarCantidadCarrito(
+        payload
+    ) {
+
+        const productoId =
+            payload.product_id ||
+            payload.producto_id ||
+            payload.id;
+
+
+        const cantidad =
+            Number(
+                payload.quantity ||
+                payload.cantidad
+            );
+
+
+        if (
+            !productoId ||
+            !Number.isFinite(cantidad)
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            typeof window.actualizarCantidadCarrito ===
+            "function"
+        ) {
+
+            await window.actualizarCantidadCarrito(
+                productoId,
+                cantidad
+            );
+
+            return;
+
+        }
+
+
+        console.warn(
+            "San Martín Agent: función de cantidad de carrito no conectada."
+        );
+
+    }
+
+
+    /* =========================================================
+       ACCIÓN: ABRIR CARRITO
+    ========================================================= */
+
+    function accionAbrirCarrito() {
+
+        const posiblesSelectores = [
+
+            "#cartPanel",
+
+            "#carritoPanel",
+
+            "#cart",
+
+            ".cart-panel",
+
+            ".carrito-panel"
+
+        ];
+
+
+        for (
+            const selector
+            of posiblesSelectores
+        ) {
+
+            const elemento =
+                document.querySelector(
+                    selector
+                );
+
+
+            if (elemento) {
+
+                elemento.hidden = false;
+
+                elemento.classList.add(
+                    "active"
+                );
+
+                elemento.classList.add(
+                    "open"
+                );
+
+                return;
+
+            }
+
+        }
+
+
+        console.warn(
+            "San Martín Agent: no se encontró el panel del carrito."
+        );
+
+    }
+
+
+    /* =========================================================
+       ACCIÓN: ABRIR PRODUCTO
+    ========================================================= */
+
+    function accionAbrirProducto(
+        payload
+    ) {
+
+        const productoId =
+            payload.product_id ||
+            payload.producto_id ||
+            payload.id;
+
+
+        if (!productoId) {
+
+            return;
+
+        }
+
+
+        if (
+            typeof window.abrirProducto ===
+            "function"
+        ) {
+
+            window.abrirProducto(
+                productoId
+            );
+
+            return;
+
+        }
+
+
+        console.log(
+            "San Martín Agent: abrir producto solicitado:",
+            productoId
+        );
+
+    }
+
+
+    /* =========================================================
+       ACCIÓN: BUSCAR PRODUCTOS
+    ========================================================= */
+
+    function accionBuscarProductos(
+        payload
+    ) {
+
+        const consulta =
+            payload.query ||
+            payload.search ||
+            payload.text ||
+            "";
+
+
+        if (!consulta) {
+
+            return;
+
+        }
+
+
+        /*
+           Intentamos conectar con funciones
+           existentes de búsqueda.
+        */
+
+        if (
+            typeof window.buscarProductos ===
+            "function"
+        ) {
+
+            window.buscarProductos(
+                consulta
+            );
+
+            return;
+
+        }
+
+
+        const buscadores = [
+
+            "#searchInput",
+
+            "#buscador",
+
+            "#catalogSearch",
+
+            "input[type='search']"
+
+        ];
+
+
+        for (
+            const selector
+            of buscadores
+        ) {
+
+            const buscador =
+                document.querySelector(
+                    selector
+                );
+
+
+            if (buscador) {
+
+                buscador.value =
+                    consulta;
+
+
+                buscador.dispatchEvent(
+                    new Event(
+                        "input",
+                        {
+                            bubbles: true
+                        }
+                    )
+                );
+
+
+                return;
+
+            }
+
+        }
+
+
+        console.warn(
+            "San Martín Agent: buscador no conectado."
+        );
+
+    }
+
+
+    /* =========================================================
+       ACCIÓN: APLICAR FILTRO
+    ========================================================= */
+
+    function accionAplicarFiltro(
+        payload
+    ) {
+
+        const categoria =
+            payload.category ||
+            payload.categoria;
+
+
+        if (!categoria) {
+
+            return;
+
+        }
+
+
+        if (
+            typeof window.aplicarFiltroCategoria ===
+            "function"
+        ) {
+
+            window.aplicarFiltroCategoria(
+                categoria
+            );
+
+            return;
+
+        }
+
+
+        console.log(
+            "San Martín Agent: filtro solicitado:",
+            categoria
+        );
+
+    }
+
+
+    /* =========================================================
+       ACCIÓN: IR AL CATÁLOGO
+    ========================================================= */
+
+    function accionIrCatalogo() {
+
+        const catalogo =
+            document.getElementById(
+                "catalogo"
+            );
+
+
+        if (catalogo) {
+
+            catalogo.scrollIntoView({
+                behavior: "smooth"
+            });
+
+            return;
+
+        }
+
+
+        const catalog =
+            document.querySelector(
+                "[data-section='catalogo']"
+            );
+
+
+        if (catalog) {
+
+            catalog.scrollIntoView({
+                behavior: "smooth"
+            });
+
+        }
+
+    }
+
+
+    /* =========================================================
+       PROCESAR RESPUESTA DEL AGENTE
+    ========================================================= */
+
+    async function procesarRespuestaAgente(
+        data
+    ) {
+
+        if (
+            !data ||
+            data.success !== true
+        ) {
+
+            throw new Error(
+                "Respuesta inválida del agente."
+            );
+
+        }
+
+
+        /*
+           Guardar interaction_id.
+
+           Este es uno de los cambios más importantes
+           respecto al sistema anterior.
+        */
+
+        if (
+            data.interaction_id
+        ) {
+
+            interactionId =
+                data.interaction_id;
+
+
+            sessionStorage.setItem(
+                INTERACTION_STORAGE_KEY,
+                interactionId
+            );
+
+        }
+
+
+        /*
+           Ejecutar acciones reales de la aplicación.
+        */
+
+        if (
+            Array.isArray(
+                data.actions
+            )
+        ) {
+
+            await ejecutarAccionesAgente(
+                data.actions
+            );
+
+        }
+
+
+        /*
+           Mostrar respuesta final.
+        */
+
+        const respuesta =
+            data.response ||
+            data.output_text ||
+            data.message;
+
+
+        if (respuesta) {
+
+            agregarMensajeBot(
+                respuesta
+            );
+
+        }
+
+
+        /*
+           Información de depuración.
+
+           Solo consola.
+        */
+
+        console.log(
+            "🤖 San Martín Agent:",
+            {
+                interaction_id:
+                    data.interaction_id,
+
+                actions:
+                    data.actions || [],
+
+                response:
+                    respuesta
+            }
+        );
+
+    }
+
+
+    /* =========================================================
+       ENVIAR MENSAJE AL AGENTE
+    ========================================================= */
+
+    async function enviarAlAgente(
+        texto
+    ) {
+
+        const payload =
+            construirPayload(
+                texto
+            );
+
+
+        console.log(
+            "🤖 San Martín Agent → Edge Function:",
+            payload
+        );
+
+
+        const resultado =
+            await supabaseClient.functions.invoke(
+                SAN_MARTIN_AGENT_FUNCTION,
+                {
+                    body:
+                        payload
+                }
+            );
+
+
+        if (
+            resultado.error
+        ) {
+
+            throw resultado.error;
+
+        }
+
+
+        return resultado.data;
+
+    }
+
+
+    /* =========================================================
        PROCESAR MENSAJE
-    ===================================================== */
+    ========================================================= */
 
-    async function procesarMensaje(texto) {
-
-        /* -------------------------------------------------
-           LIMPIAR TEXTO
-        ------------------------------------------------- */
+    async function procesarMensaje(
+        texto
+    ) {
 
         texto =
-            String(texto || "").trim();
+            String(
+                texto || ""
+            ).trim();
 
 
-        /* -------------------------------------------------
-           NO ENVIAR MENSAJES VACÍOS
-        ------------------------------------------------- */
+        /*
+           Mensaje vacío.
+        */
 
         if (!texto) {
 
@@ -448,327 +1476,154 @@
         }
 
 
-        /* =================================================
-           GUARDAR EL HISTORIAL ANTERIOR
+        /*
+           Limitar tamaño.
+        */
 
-           IMPORTANTE:
+        if (
+            texto.length >
+            MAX_MESSAGE_LENGTH
+        ) {
 
-           Tomamos el historial ANTES de agregar el mensaje
-           actual.
+            agregarMensajeBot(
+                "⚠️ El mensaje es demasiado largo. Intenta resumir lo que necesitas."
+            );
 
-           Esto evita enviar dos veces:
+            return;
 
-           "tengo Q80"
-
-           a la Edge Function.
-        ================================================= */
-
-        const historialAnterior =
-            obtenerHistorialParaEnviar();
-
-
-        console.log(
-            "🤖 San Martín IA: historial anterior:",
-            historialAnterior
-        );
+        }
 
 
-        /* -------------------------------------------------
-           MOSTRAR MENSAJE DEL CLIENTE
-        ------------------------------------------------- */
+        /*
+           Evitar doble envío.
+        */
 
-        agregarMensajeUsuario(texto);
+        if (agenteOcupado) {
+
+            return;
+
+        }
 
 
-        /* -------------------------------------------------
-           AGREGAR MENSAJE ACTUAL A LA MEMORIA
-        ------------------------------------------------- */
+        agenteOcupado =
+            true;
 
-        agregarAlHistorial(
-            "user",
+
+        /*
+           Mostrar usuario.
+        */
+
+        agregarMensajeUsuario(
             texto
         );
 
 
-        /* -------------------------------------------------
-           LIMPIAR INPUT
-        ------------------------------------------------- */
+        /*
+           Limpiar input.
+        */
 
-        input.value = "";
-
-
-        /* -------------------------------------------------
-           BLOQUEAR CONTROLES
-        ------------------------------------------------- */
-
-        btnEnviar.disabled = true;
-
-        input.disabled = true;
+        input.value =
+            "";
 
 
-        /* -------------------------------------------------
-           MOSTRAR "PENSANDO"
-        ------------------------------------------------- */
+        /*
+           Bloquear interfaz.
+        */
+
+        btnEnviar.disabled =
+            true;
+
+        input.disabled =
+            true;
+
+
+        /*
+           Mostrar pensamiento.
+        */
 
         mostrarTyping();
 
 
         try {
 
-            /* =============================================
-               ENVIAR MENSAJE A SUPABASE EDGE FUNCTION
-
-               Se envían DOS cosas:
-
-               1. message
-                  → mensaje actual
-
-               2. history
-                  → conversación anterior
-            ============================================= */
-
-            console.log(
-                "🤖 San Martín IA: enviando mensaje..."
-            );
-
-
-            console.log(
-                "🤖 San Martín IA: mensaje actual:",
-                texto
-            );
-
-
-            console.log(
-                "🤖 San Martín IA: enviando historial:",
-                historialAnterior
-            );
-
-
-            const resultado =
-                await supabaseClient.functions.invoke(
-                    SAN_MARTIN_AI_FUNCTION,
-                    {
-                        body: {
-
-                            message:
-                                texto,
-
-                            history:
-                                historialAnterior
-
-                        }
-                    }
+            const data =
+                await enviarAlAgente(
+                    texto
                 );
 
 
-            /* =============================================
-               EXTRAER RESPUESTA
-            ============================================= */
-
-            const data =
-                resultado?.data;
-
-            const error =
-                resultado?.error;
-
-
-            console.log(
-                "🤖 San Martín IA: respuesta recibida",
+            await procesarRespuestaAgente(
                 data
             );
 
-
-            /* =============================================
-               COMPROBAR ERROR DE SUPABASE
-            ============================================= */
-
-            if (error) {
-
-                console.error(
-                    "San Martín IA - Error Supabase Functions:",
-                    error
-                );
-
-                throw error;
-
-            }
-
-
-            /* =============================================
-               COMPROBAR RESPUESTA
-
-               La Edge Function actual devuelve:
-
-               {
-                   success: true,
-                   response: "..."
-               }
-
-               NO:
-
-               {
-                   message: "..."
-               }
-            ============================================= */
-
-            if (
-                !data ||
-                data.success !== true ||
-                !data.response
-            ) {
-
-                console.error(
-                    "San Martín IA - Respuesta inválida:",
-                    data
-                );
-
-                throw new Error(
-                    "La IA no devolvió una respuesta válida."
-                );
-
-            }
-
-
-            /* =============================================
-               OCULTAR "PENSANDO"
-            ============================================= */
-
-            ocultarTyping();
-
-
-            /* =============================================
-               GUARDAR RESPUESTA DEL ASISTENTE
-               EN LA MEMORIA
-            ============================================= */
-
-            agregarAlHistorial(
-                "assistant",
-                data.response
-            );
-
-
-            /* =============================================
-               MOSTRAR RESPUESTA DE OPENAI
-            ============================================= */
-
-            agregarMensajeBot(
-                data.response
-            );
-
-
-            /* =============================================
-               MOSTRAR HISTORIAL ACTUAL EN CONSOLA
-
-               Esto nos servirá durante las pruebas.
-            ============================================= */
-
-            console.log(
-                "🤖 San Martín IA: memoria actual:",
-                historialConversacion
-            );
-
-
         } catch (error) {
 
-            /* =============================================
-               MOSTRAR ERROR EN CONSOLA
-            ============================================= */
-
             console.error(
-                "❌ San Martín IA - Error:",
+                "❌ San Martín Agent:",
                 error
             );
 
 
-            /* =============================================
-               OCULTAR "PENSANDO"
-            ============================================= */
+            agregarMensajeBot(
+                "⚠️ No pude conectarme con San Martín Agent en este momento. Intenta nuevamente."
+            );
+
+        } finally {
 
             ocultarTyping();
 
 
-            /* =============================================
-               ELIMINAR DEL HISTORIAL EL MENSAJE DEL
-               USUARIO QUE FALLÓ
-
-               Así no dejamos una conversación incompleta
-               en la memoria.
-            ============================================= */
-
-            if (
-                historialConversacion.length > 0
-            ) {
-
-                const ultimoMensaje =
-                    historialConversacion[
-                        historialConversacion.length - 1
-                    ];
+            agenteOcupado =
+                false;
 
 
-                if (
-                    ultimoMensaje.role === "user" &&
-                    ultimoMensaje.content === texto
-                ) {
+            btnEnviar.disabled =
+                false;
 
-                    historialConversacion.pop();
+            input.disabled =
+                false;
 
-                }
-
-            }
-
-
-            /* =============================================
-               MOSTRAR ERROR AL CLIENTE
-            ============================================= */
-
-            mostrarErrorIA();
-
-        } finally {
-
-            /* =============================================
-               VOLVER A ACTIVAR CONTROLES
-            ============================================= */
-
-            btnEnviar.disabled = false;
-
-            input.disabled = false;
 
             input.focus();
+
+
+            desplazarMensajesAlFinal();
 
         }
 
     }
 
 
-    /* =====================================================
+    /* =========================================================
        BOTÓN ABRIR
-    ===================================================== */
+    ========================================================= */
 
     btnAbrir.addEventListener(
         "click",
-        abrirSanMartinIA
+        abrirSanMartinAgent
     );
 
 
-    /* =====================================================
+    /* =========================================================
        BOTÓN CERRAR
-    ===================================================== */
+    ========================================================= */
 
     btnCerrar.addEventListener(
         "click",
-        cerrarSanMartinIA
+        cerrarSanMartinAgent
     );
 
 
-    /* =====================================================
+    /* =========================================================
        FORMULARIO
-    ===================================================== */
+    ========================================================= */
 
     formulario.addEventListener(
         "submit",
         function (evento) {
 
             evento.preventDefault();
+
 
             procesarMensaje(
                 input.value
@@ -778,9 +1633,9 @@
     );
 
 
-    /* =====================================================
+    /* =========================================================
        ACCIONES RÁPIDAS
-    ===================================================== */
+    ========================================================= */
 
     const botonesRapidos =
         document.querySelectorAll(
@@ -808,7 +1663,7 @@
                     }
 
 
-                    abrirSanMartinIA();
+                    abrirSanMartinAgent();
 
 
                     procesarMensaje(
@@ -822,9 +1677,9 @@
     );
 
 
-    /* =====================================================
-       CERRAR CON ESC
-    ===================================================== */
+    /* =========================================================
+       ESCAPE
+    ========================================================= */
 
     document.addEventListener(
         "keydown",
@@ -835,7 +1690,7 @@
                 !ventana.hidden
             ) {
 
-                cerrarSanMartinIA();
+                cerrarSanMartinAgent();
 
             }
 
@@ -843,12 +1698,77 @@
     );
 
 
-    /* =====================================================
+    /* =========================================================
+       API PÚBLICA DEL AGENTE
+    =========================================================
+
+       Esto permitirá que otras partes de la tienda
+       puedan comunicarse con San Martín Agent.
+
+       Ejemplo futuro:
+
+       window.SanMartinAgent.open();
+
+       window.SanMartinAgent.ask(
+           "Busca crayones baratos"
+       );
+
+       window.SanMartinAgent.newConversation();
+    */
+
+    window.SanMartinAgent = {
+
+        open:
+            abrirSanMartinAgent,
+
+        close:
+            cerrarSanMartinAgent,
+
+        ask:
+            procesarMensaje,
+
+        newConversation:
+            nuevaConversacionAgent,
+
+        getInteractionId:
+            function () {
+
+                return interactionId;
+
+            },
+
+        getSessionId:
+            function () {
+
+                return sessionId;
+
+            }
+
+    };
+
+
+    /* =========================================================
        INICIO
-    ===================================================== */
+    ========================================================= */
 
     console.log(
-        "🤖 San Martín IA: interfaz conectada con Supabase Edge Function + memoria conversacional."
+        "🤖 San Martín Agent 1.0 iniciado."
     );
+
+
+    console.log(
+        "🧠 Motor: Gemini Interactions API"
+    );
+
+
+    console.log(
+        "🔧 Arquitectura: Function Calling + Supabase"
+    );
+
+
+    console.log(
+        "🛒 Preparado para funciones reales de la aplicación."
+    );
+
 
 })();
