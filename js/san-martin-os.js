@@ -52,7 +52,7 @@
     ========================================================= */
 
     const SAN_MARTIN_OS_FUNCTION =
-        "san-martin-ai";
+        "san-martin-os-inventario";
 
 
     const OS_PROTOCOL_VERSION =
@@ -367,6 +367,70 @@
             )
         )
         .replace(/\n/g, "<br>");
+
+    }
+
+
+    /* =========================================================
+       RESPUESTA DE INVENTARIO
+
+       La Edge Function san-martin-os-inventario devuelve datos
+       reales en `productos`; este navegador solo los presenta.
+    ========================================================= */
+
+    function formatearRespuestaInventario(
+        data
+    ) {
+
+        const productos =
+            Array.isArray(data.productos)
+                ? data.productos
+                : [];
+
+
+        if (productos.length === 0) {
+
+            return "No encontré productos activos que coincidan con tu búsqueda.";
+
+        }
+
+
+        const partes = [];
+
+
+        partes.push(
+            `Encontré ${data.total ?? productos.length} producto(s) en el inventario:`
+        );
+
+
+        productos.forEach(
+            function (producto) {
+
+                const nombre =
+                    producto.nombre ||
+                    "Producto sin nombre";
+
+                const precio =
+                    producto.precio === null ||
+                    producto.precio === undefined
+                        ? "Precio no disponible"
+                        : `Q${Number(producto.precio).toFixed(2)}`;
+
+                const stock =
+                    Number(producto.stock || 0);
+
+                partes.push(
+                    `• ${nombre}` +
+                    `${producto.marca ? ` — ${producto.marca}` : ""}` +
+                    ` — ${precio}` +
+                    ` — ${stock > 0 ? `${stock} en stock` : "Agotado"}`
+                );
+
+            }
+        );
+
+
+        return partes.join("\n");
 
     }
 
@@ -690,24 +754,12 @@
         }
 
 
-        /*
-           La nueva Edge Function devuelve:
-
-           {
-               success,
-               version,
-               response,
-               analysis,
-               actions
-           }
-
-           No necesitamos interaction_id.
-        */
-
-
         const respuesta =
-            data.response ||
-            "No pude generar una respuesta.";
+            Array.isArray(data.productos)
+                ? formatearRespuestaInventario(data)
+                : data.response ||
+                  data.message ||
+                  "No pude consultar el inventario.";
 
 
         /*
@@ -725,22 +777,14 @@
            No se muestra al cliente.
         */
 
-        log(
-            "🧠 Análisis:",
-            data.analysis
-        );
+        log("🗄️ Fuente:", data.source || "sin especificar");
 
 
         /*
            Acciones futuras.
 
-           La Fase 1 actualmente devuelve:
-
-           actions: []
-
-           Cuando conectemos carrito,
-           navegación y compras,
-           esta función podrá procesarlas.
+           La consulta de inventario no devuelve acciones. Esta
+           estructura queda disponible para futuras funciones.
         */
 
         if (
