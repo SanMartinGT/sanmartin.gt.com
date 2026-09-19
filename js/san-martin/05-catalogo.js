@@ -1186,41 +1186,95 @@ botonesFiltro.forEach(boton => {
 
 /* =====================================================
    BUSCADOR
-   Comportamiento optimizado para computadora y teléfono
+   Búsqueda en tiempo real + scroll solamente con ENTER
 ===================================================== */
-
-// Controla si ya llevamos al usuario al catálogo
-let buscadorYaDesplazado = false;
 
 
 /* =====================================================
-   AL ENTRAR AL BUSCADOR
+   BUSCAR MIENTRAS ESCRIBE
 ===================================================== */
 
-buscador.addEventListener(
-    "focus",
-    () => {
+if (buscador) {
 
-        /*
-           En teléfono llevamos al usuario al catálogo
-           una sola vez al tocar el buscador.
-        */
+    buscador.addEventListener(
+        "input",
+        () => {
 
-        if (
-            window.matchMedia(
-                "(max-width: 768px)"
-            ).matches
-        ) {
+            /*
+               Actualizamos los resultados mientras
+               el usuario escribe.
 
-            const catalogo =
-                document.getElementById(
-                    "catalogo"
-                );
+               IMPORTANTE:
+               Aquí NO hacemos scroll.
+            */
 
-            if (!catalogo) return;
+            paginaActual = 1;
 
+            mostrarProductos();
+
+        }
+    );
+
+
+    /* =================================================
+       ENTER EN EL BUSCADOR
+    ================================================= */
+
+    buscador.addEventListener(
+        "keydown",
+        evento => {
+
+            if (
+                evento.key !== "Enter"
+            ) {
+                return;
+            }
+
+
+            /*
+               Evitar que el formulario,
+               si existe, se envíe.
+            */
+
+            evento.preventDefault();
+
+
+            /*
+               Reiniciar paginación.
+            */
+
+            paginaActual = 1;
+
+
+            /*
+               Ejecutar búsqueda.
+            */
+
+            mostrarProductos();
+
+
+            /*
+               Esperamos un momento para que el DOM
+               termine de actualizar los productos.
+            */
 
             setTimeout(() => {
+
+                const catalogo =
+                    document.getElementById(
+                        "catalogo"
+                    );
+
+
+                if (!catalogo) {
+                    return;
+                }
+
+
+                /*
+                   Altura del encabezado fijo,
+                   si existe.
+                */
 
                 const header =
                     document.querySelector(
@@ -1234,13 +1288,26 @@ buscador.addEventListener(
                         : 0;
 
 
+                /*
+                   Posición real del catálogo.
+                */
+
                 const posicion =
                     catalogo.getBoundingClientRect().top +
                     window.pageYOffset;
 
 
-                const margen = 15;
+                /*
+                   Pequeño espacio visual debajo
+                   del encabezado.
+                */
 
+                const margen = 20;
+
+
+                /*
+                   Scroll suave hacia el catálogo.
+                */
 
                 window.scrollTo({
 
@@ -1253,12 +1320,12 @@ buscador.addEventListener(
 
                 });
 
-            }, 100);
+            }, 50);
 
         }
+    );
 
-    }
-);
+}
 
 /* =====================================================
    LIMPIAR TODOS LOS FILTROS
