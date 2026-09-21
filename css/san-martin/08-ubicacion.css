@@ -1,0 +1,1058 @@
+/* =========================================================
+   SAN MARTÍN — UBICACIÓN Y CONTACTO
+   Archivo: 08-ubicacion.css
+
+   RESPONSABILIDAD:
+   - Sección de ubicación
+   - Información de contacto
+   - Tarjetas de contacto
+   - Dirección
+   - Horarios
+   - Teléfono
+   - WhatsApp
+   - Mapa
+   - Contenedor del iframe
+   - Responsive
+========================================================= */
+
+
+/* =========================================================
+   1. SECCIÓN PRINCIPAL
+========================================================= */
+
+.location {
+
+    position: relative;
+
+    overflow: hidden;
+
+    color: var(--blanco);
+
+    background:
+        linear-gradient(
+            145deg,
+            #173f35 0%,
+            #205347 55%,
+            #286052 100%
+        );
+}
+
+
+/* =========================================================
+   2. DECORACIÓN SUPERIOR IZQUIERDA
+========================================================= */
+
+.location::before {
+
+    content: "";
+
+    position: absolute;
+
+    top: -150px;
+    left: -120px;
+
+    width: 380px;
+    height: 380px;
+
+    border: 1px solid
+        rgba(216, 166, 59, 0.16);
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(216, 166, 59, 0.13),
+            transparent 68%
+        );
+
+    box-shadow:
+        0 0 0 28px rgba(216, 166, 59, 0.025),
+        0 0 0 58px rgba(216, 166, 59, 0.018);
+
+    pointer-events: none;
+}
+
+
+/* =========================================================
+   3. DECORACIÓN INFERIOR DERECHA
+========================================================= */
+
+.location::after {
+
+    content: "";
+
+    position: absolute;
+
+    right: -150px;
+    bottom: -180px;
+
+    width: 430px;
+    height: 430px;
+
+    border: 1px solid
+        rgba(255, 255, 255, 0.08);
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(216, 166, 59, 0.12),
+            transparent 68%
+        );
+
+    box-shadow:
+        0 0 0 30px rgba(216, 166, 59, 0.025),
+        0 0 0 65px rgba(255, 255, 255, 0.015);
+
+    pointer-events: none;
+}
+
+
+/* =========================================================
+   4. CONTENEDOR PRINCIPAL
+========================================================= */
+
+.location .container {
+
+    position: relative;
+
+    z-index: 1;
+}
+
+
+/* =========================================================
+   5. GRID DE UBICACIÓN
+========================================================= */
+
+.location-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 0.82fr)
+        minmax(0, 1.18fr);
+
+    gap: 30px;
+
+    align-items: stretch;
+
+    margin-top: var(--espacio-8);
+}
+
+
+/* =========================================================
+   6. TÍTULOS DE LA SECCIÓN
+========================================================= */
+
+.location .section-label {
+
+    color: var(--dorado-claro);
+
+    font-weight: 900;
+
+    letter-spacing: 0.08em;
+
+    text-transform: uppercase;
+}
+
+
+.location h2 {
+
+    color: var(--blanco);
+
+    text-shadow:
+        0 2px 12px rgba(0, 0, 0, 0.12);
+}
+
+
+.location p {
+
+    color:
+        rgba(255, 255, 255, 0.82);
+}
+
+
+/* =========================================================
+   7. BLOQUE DE INFORMACIÓN
+========================================================= */
+
+.location-info {
+
+    display: flex;
+
+    flex-direction: column;
+
+    min-width: 0;
+
+    padding: 28px;
+
+    border: 1px solid
+        rgba(255, 255, 255, 0.15);
+
+    border-radius: var(--radio-xl);
+
+    background:
+        rgba(255, 255, 255, 0.055);
+
+    box-shadow:
+        0 18px 45px
+        rgba(0, 0, 0, 0.12);
+
+    backdrop-filter: blur(10px);
+
+    -webkit-backdrop-filter: blur(10px);
+}
+
+
+/* =========================================================
+   8. DESCRIPCIÓN
+========================================================= */
+
+.location-description {
+
+    margin: 0 0 22px;
+
+    color:
+        rgba(255, 255, 255, 0.82);
+
+    font-size: 0.9rem;
+
+    line-height: 1.7;
+}
+
+
+/* =========================================================
+   9. INFORMACIÓN DE CONTACTO
+========================================================= */
+
+.contact-info {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 10px;
+
+    margin-top: 2px;
+}
+
+
+/* =========================================================
+   10. TARJETA DE CONTACTO
+========================================================= */
+
+.contact-item {
+
+    position: relative;
+
+    display: grid;
+
+    grid-template-columns:
+        46px minmax(0, 1fr);
+
+    align-items: center;
+
+    gap: 13px;
+
+    padding: 13px;
+
+    border: 1px solid
+        rgba(255, 255, 255, 0.12);
+
+    border-radius: 15px;
+
+    background:
+        rgba(255, 255, 255, 0.075);
+
+    box-shadow:
+        inset 0 1px 0
+        rgba(255, 255, 255, 0.035);
+
+    transition:
+        border-color var(--transicion-normal),
+        background var(--transicion-normal),
+        box-shadow var(--transicion-normal),
+        transform var(--transicion-normal);
+}
+
+
+/* =========================================================
+   11. BARRA LATERAL DORADA
+========================================================= */
+
+.contact-item::before {
+
+    content: "";
+
+    position: absolute;
+
+    top: 14px;
+    bottom: 14px;
+
+    left: 0;
+
+    width: 3px;
+
+    border-radius:
+        0 999px 999px 0;
+
+    background: var(--dorado-claro);
+
+    opacity: 0;
+
+    transition:
+        opacity var(--transicion-rapida);
+}
+
+
+/* =========================================================
+   12. HOVER TARJETA
+========================================================= */
+
+.contact-item:hover {
+
+    border-color:
+        rgba(216, 166, 59, 0.35);
+
+    background:
+        rgba(255, 255, 255, 0.105);
+
+    box-shadow:
+        0 10px 28px
+        rgba(0, 0, 0, 0.13);
+
+    transform:
+        translateX(3px);
+}
+
+
+.contact-item:hover::before {
+
+    opacity: 1;
+}
+
+
+/* =========================================================
+   13. ICONO
+========================================================= */
+
+.contact-item-icon {
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 46px;
+    height: 46px;
+
+    border: 1px solid
+        rgba(216, 166, 59, 0.22);
+
+    border-radius: 14px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(216, 166, 59, 0.18),
+            rgba(255, 255, 255, 0.09)
+        );
+
+    color: var(--dorado-claro);
+
+    font-size: 1.15rem;
+
+    box-shadow:
+        inset 0 0 0 1px
+        rgba(255, 255, 255, 0.035);
+
+    transition:
+        transform var(--transicion-normal),
+        background var(--transicion-normal),
+        border-color var(--transicion-normal);
+}
+
+
+/* =========================================================
+   14. HOVER ICONO
+========================================================= */
+
+.contact-item:hover .contact-item-icon {
+
+    transform:
+        scale(1.07)
+        rotate(-2deg);
+
+    border-color:
+        rgba(216, 166, 59, 0.45);
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(216, 166, 59, 0.28),
+            rgba(255, 255, 255, 0.10)
+        );
+}
+
+
+/* =========================================================
+   15. CONTENIDO DE CONTACTO
+========================================================= */
+
+.contact-item-content {
+
+    min-width: 0;
+}
+
+
+/* =========================================================
+   16. TÍTULO DE CONTACTO
+========================================================= */
+
+.contact-item-title {
+
+    display: block;
+
+    margin-bottom: 3px;
+
+    color:
+        var(--dorado-claro);
+
+    font-size: 0.76rem;
+
+    font-weight: 900;
+
+    letter-spacing: 0.025em;
+}
+
+
+/* =========================================================
+   17. TEXTO DE CONTACTO
+========================================================= */
+
+.contact-item-text {
+
+    display: block;
+
+    color:
+        rgba(255, 255, 255, 0.82);
+
+    font-size: 0.8rem;
+
+    font-weight: 600;
+
+    line-height: 1.5;
+
+    overflow-wrap: anywhere;
+}
+
+
+/* =========================================================
+   18. ENLACES DE CONTACTO
+========================================================= */
+
+.contact-item a {
+
+    color:
+        rgba(255, 255, 255, 0.86);
+
+    text-decoration: none;
+
+    transition:
+        color var(--transicion-rapida);
+}
+
+
+.contact-item a:hover {
+
+    color:
+        var(--dorado-claro);
+}
+
+
+/* =========================================================
+   19. WHATSAPP
+========================================================= */
+
+.contact-item.whatsapp a,
+.contact-item a[href*="wa.me"] {
+
+    color:
+        #bde8d2;
+
+    font-weight: 800;
+}
+
+
+.contact-item.whatsapp:hover a,
+.contact-item a[href*="wa.me"]:hover {
+
+    color:
+        #d5f4e3;
+}
+
+
+/* =========================================================
+   20. TELÉFONO
+========================================================= */
+
+.contact-item a[href^="tel:"] {
+
+    color:
+        var(--dorado-claro);
+
+    font-weight: 800;
+}
+
+
+/* =========================================================
+   21. MAPA
+========================================================= */
+
+.location-map {
+
+    position: relative;
+
+    min-height: 500px;
+
+    overflow: hidden;
+
+    border: 5px solid
+        rgba(255, 255, 255, 0.92);
+
+    border-radius: var(--radio-xl);
+
+    background:
+        var(--blanco);
+
+    box-shadow:
+        0 22px 55px
+        rgba(0, 0, 0, 0.18);
+
+    isolation: isolate;
+}
+
+
+/* =========================================================
+   22. LÍNEA DECORATIVA SUPERIOR DEL MAPA
+========================================================= */
+
+.location-map::before {
+
+    content: "";
+
+    position: absolute;
+
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    height: 4px;
+
+    background:
+        linear-gradient(
+            90deg,
+            var(--verde),
+            var(--dorado),
+            var(--verde-claro)
+        );
+
+    z-index: 3;
+
+    pointer-events: none;
+}
+
+
+/* =========================================================
+   23. IFRAME MAPA
+========================================================= */
+
+.location-map iframe {
+
+    display: block;
+
+    width: 100%;
+    height: 100%;
+
+    min-height: 500px;
+
+    border: 0;
+
+    filter:
+        saturate(0.88)
+        contrast(0.98);
+
+    transition:
+        filter var(--transicion-normal);
+}
+
+
+/* =========================================================
+   24. HOVER MAPA
+========================================================= */
+
+.location-map:hover iframe {
+
+    filter:
+        saturate(1)
+        contrast(1);
+}
+
+
+/* =========================================================
+   25. ETIQUETA SOBRE EL MAPA
+========================================================= */
+
+.location-map::after {
+
+    content: "📍 San Martín";
+
+    position: absolute;
+
+    left: 18px;
+    bottom: 18px;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-height: 38px;
+
+    padding: 8px 13px;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.75);
+
+    border-radius: 999px;
+
+    background:
+        rgba(23, 63, 53, 0.94);
+
+    color: var(--blanco);
+
+    font-size: 0.76rem;
+
+    font-weight: 800;
+
+    box-shadow:
+        0 8px 22px
+        rgba(0, 0, 0, 0.24);
+
+    backdrop-filter: blur(8px);
+
+    -webkit-backdrop-filter: blur(8px);
+
+    pointer-events: none;
+
+    z-index: 4;
+}
+
+
+/* =========================================================
+   26. BOTÓN / ENLACE DE DIRECCIONES
+========================================================= */
+
+.location-directions {
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    align-self: flex-start;
+
+    min-height: 44px;
+
+    margin-top: 18px;
+
+    padding: 10px 16px;
+
+    border:
+        1px solid
+        rgba(216, 166, 59, 0.45);
+
+    border-radius: var(--radio-md);
+
+    background:
+        linear-gradient(
+            135deg,
+            #d8a63b,
+            #e8c46a
+        );
+
+    color:
+        #173f35;
+
+    font-size: 0.8rem;
+
+    font-weight: 900;
+
+    text-decoration: none;
+
+    box-shadow:
+        0 8px 20px
+        rgba(0, 0, 0, 0.16);
+
+    transition:
+        background var(--transicion-rapida),
+        box-shadow var(--transicion-rapida),
+        transform var(--transicion-rapida);
+}
+
+
+.location-directions:hover {
+
+    background:
+        linear-gradient(
+            135deg,
+            #e8c46a,
+            #d8a63b
+        );
+
+    box-shadow:
+        0 11px 25px
+        rgba(0, 0, 0, 0.22);
+
+    transform:
+        translateY(-2px);
+}
+
+
+/* =========================================================
+   27. HORARIOS
+========================================================= */
+
+.contact-item.horario .contact-item-text,
+.contact-item.horarios .contact-item-text {
+
+    color:
+        rgba(255, 255, 255, 0.92);
+
+    font-weight: 800;
+}
+
+
+/* =========================================================
+   28. DIRECCIÓN
+========================================================= */
+
+.contact-item.direccion .contact-item-text,
+.contact-item.address .contact-item-text {
+
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   29. TELÉFONO
+========================================================= */
+
+.contact-item.telefono .contact-item-text,
+.contact-item.phone .contact-item-text {
+
+    font-weight: 800;
+}
+
+
+/* =========================================================
+   30. PRIMERA TARJETA DESTACADA
+========================================================= */
+
+.contact-item:first-child {
+
+    border-color:
+        rgba(216, 166, 59, 0.28);
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(216, 166, 59, 0.12),
+            rgba(255, 255, 255, 0.065)
+        );
+}
+
+
+/* =========================================================
+   31. ESTADOS DE FOCO
+========================================================= */
+
+.contact-item a:focus-visible,
+.location-directions:focus-visible {
+
+    outline:
+        3px solid
+        rgba(216, 166, 59, 0.45);
+
+    outline-offset: 3px;
+}
+
+
+/* =========================================================
+   32. TABLET
+========================================================= */
+
+@media (max-width: 1000px) {
+
+    .location-grid {
+
+        grid-template-columns:
+            minmax(0, 1fr)
+            minmax(0, 1fr);
+
+        gap: 22px;
+    }
+
+
+    .location-info {
+
+        padding: 22px;
+    }
+
+
+    .location-map {
+
+        min-height: 450px;
+    }
+
+
+    .location-map iframe {
+
+        min-height: 450px;
+    }
+}
+
+
+/* =========================================================
+   33. TABLET PEQUEÑA
+========================================================= */
+
+@media (max-width: 800px) {
+
+    .location-grid {
+
+        grid-template-columns: 1fr;
+
+        gap: 20px;
+    }
+
+
+    .location-info {
+
+        padding: 22px;
+    }
+
+
+    .location-map {
+
+        min-height: 420px;
+    }
+
+
+    .location-map iframe {
+
+        min-height: 420px;
+    }
+}
+
+
+/* =========================================================
+   34. MÓVIL
+========================================================= */
+
+@media (max-width: 560px) {
+
+    .location-grid {
+
+        margin-top: var(--espacio-6);
+
+        gap: 15px;
+    }
+
+
+    .location-info {
+
+        padding: 17px;
+
+        border-radius: 18px;
+    }
+
+
+    .location-description {
+
+        margin-bottom: 17px;
+
+        font-size: 0.82rem;
+
+        line-height: 1.65;
+    }
+
+
+    .contact-info {
+
+        gap: 8px;
+    }
+
+
+    .contact-item {
+
+        grid-template-columns:
+            40px minmax(0, 1fr);
+
+        gap: 10px;
+
+        padding: 11px;
+
+        border-radius: 13px;
+    }
+
+
+    .contact-item::before {
+
+        top: 11px;
+        bottom: 11px;
+    }
+
+
+    .contact-item-icon {
+
+        width: 40px;
+        height: 40px;
+
+        border-radius: 12px;
+
+        font-size: 1rem;
+    }
+
+
+    .contact-item-title {
+
+        font-size: 0.7rem;
+    }
+
+
+    .contact-item-text {
+
+        font-size: 0.72rem;
+    }
+
+
+    .location-directions {
+
+        width: 100%;
+
+        margin-top: 15px;
+    }
+
+
+    .location-map {
+
+        min-height: 340px;
+
+        border-width: 4px;
+
+        border-radius: 18px;
+    }
+
+
+    .location-map iframe {
+
+        min-height: 340px;
+    }
+
+
+    .location-map::after {
+
+        left: 12px;
+        bottom: 12px;
+
+        min-height: 34px;
+
+        padding: 7px 10px;
+
+        font-size: 0.68rem;
+    }
+}
+
+
+/* =========================================================
+   35. MÓVIL MUY PEQUEÑO
+========================================================= */
+
+@media (max-width: 380px) {
+
+    .location-info {
+
+        padding: 14px;
+    }
+
+
+    .contact-item {
+
+        grid-template-columns:
+            36px minmax(0, 1fr);
+
+        padding: 9px;
+    }
+
+
+    .contact-item-icon {
+
+        width: 36px;
+        height: 36px;
+
+        border-radius: 10px;
+
+        font-size: 0.9rem;
+    }
+
+
+    .contact-item-title {
+
+        font-size: 0.66rem;
+    }
+
+
+    .contact-item-text {
+
+        font-size: 0.67rem;
+    }
+
+
+    .location-map {
+
+        min-height: 300px;
+    }
+
+
+    .location-map iframe {
+
+        min-height: 300px;
+    }
+}
+
+
+/* =========================================================
+   36. REDUCIR MOVIMIENTO
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .contact-item,
+    .contact-item-icon,
+    .location-directions,
+    .location-map iframe {
+
+        transition: none;
+    }
+}
+
+
+/* =========================================================
+   FIN — 08-UBICACION.CSS
+========================================================= */

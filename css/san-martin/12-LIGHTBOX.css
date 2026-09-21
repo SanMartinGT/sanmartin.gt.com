@@ -1,0 +1,1747 @@
+/* =========================================================
+   SAN MARTÍN
+   VISOR / LIGHTBOX PROFESIONAL DE PRODUCTOS
+========================================================= */
+
+
+/* =========================================================
+   VARIABLES
+========================================================= */
+
+:root {
+
+    --sm-verde: #173f35;
+    --sm-verde-claro: #286052;
+    --sm-dorado: #d8a63b;
+    --sm-dorado-claro: #e8c46a;
+
+    --sm-crema: #f5f1e8;
+    --sm-blanco: #ffffff;
+
+    --sm-negro: #0b0f0e;
+    --sm-negro-suave: #121817;
+
+    --sm-texto: #1b2522;
+    --sm-texto-suave: #69736f;
+
+    --sm-borde: rgba(216, 166, 59, 0.25);
+
+    --sm-sombra:
+        0 30px 80px rgba(0, 0, 0, 0.45);
+
+    --sm-transicion:
+        0.25s cubic-bezier(.2,.8,.2,1);
+
+}
+
+
+/* =========================================================
+   BLOQUEAR SCROLL DE LA PÁGINA
+========================================================= */
+
+body.lightbox-open {
+
+    overflow: hidden;
+
+}
+
+
+/* =========================================================
+   CONTENEDOR PRINCIPAL
+========================================================= */
+
+.san-martin-lightbox {
+
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 999999;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 24px;
+
+    visibility: hidden;
+
+    opacity: 0;
+
+    pointer-events: none;
+
+    transition:
+        opacity .28s ease,
+        visibility .28s ease;
+
+}
+
+
+/* =========================================================
+   VISOR VISIBLE
+========================================================= */
+
+.san-martin-lightbox.visible {
+
+    visibility: visible;
+
+    opacity: 1;
+
+    pointer-events: auto;
+
+}
+
+
+/* =========================================================
+   FONDO OSCURO
+========================================================= */
+
+.lightbox-backdrop {
+
+    position: absolute;
+
+    inset: 0;
+
+    background:
+        radial-gradient(
+            circle at center,
+            rgba(38, 66, 58, 0.30),
+            rgba(4, 7, 6, 0.94) 72%
+        );
+
+    backdrop-filter:
+        blur(10px);
+
+    -webkit-backdrop-filter:
+        blur(10px);
+
+}
+
+
+/* =========================================================
+   CONTENEDOR DEL VISOR
+========================================================= */
+
+.lightbox-container {
+
+    position: relative;
+
+    z-index: 2;
+
+    width: min(
+        1280px,
+        96vw
+    );
+
+    max-height: 94vh;
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1.45fr)
+        minmax(300px, .55fr);
+
+    grid-template-rows:
+        minmax(0, 1fr)
+        auto
+        auto;
+
+    gap: 18px;
+
+    padding: 20px;
+
+    overflow: hidden;
+
+    border:
+        1px solid
+        rgba(255,255,255,.10);
+
+    border-radius: 28px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255,255,255,.98),
+            rgba(245,241,232,.97)
+        );
+
+    box-shadow:
+        0 40px 120px
+        rgba(0,0,0,.55);
+
+    transform:
+        translateY(18px)
+        scale(.97);
+
+    opacity: 0;
+
+    transition:
+        transform .35s cubic-bezier(.2,.8,.2,1),
+        opacity .3s ease;
+
+}
+
+
+/* =========================================================
+   ANIMACIÓN AL ABRIR
+========================================================= */
+
+.san-martin-lightbox.visible
+.lightbox-container {
+
+    transform:
+        translateY(0)
+        scale(1);
+
+    opacity: 1;
+
+}
+
+
+/* =========================================================
+   BOTÓN CERRAR
+========================================================= */
+
+.lightbox-close {
+
+    position: absolute;
+
+    top: 14px;
+
+    right: 14px;
+
+    z-index: 30;
+
+    width: 46px;
+
+    height: 46px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border: 1px solid
+        rgba(255,255,255,.18);
+
+    border-radius: 50%;
+
+    background:
+        rgba(15,22,20,.78);
+
+    color: #ffffff;
+
+    font-size: 30px;
+
+    line-height: 1;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 8px 25px
+        rgba(0,0,0,.25);
+
+    transition:
+        transform var(--sm-transicion),
+        background var(--sm-transicion),
+        color var(--sm-transicion),
+        box-shadow var(--sm-transicion);
+
+}
+
+
+.lightbox-close:hover {
+
+    transform:
+        rotate(90deg)
+        scale(1.08);
+
+    background:
+        var(--sm-dorado);
+
+    color:
+        var(--sm-negro);
+
+    box-shadow:
+        0 10px 30px
+        rgba(216,166,59,.35);
+
+}
+
+
+.lightbox-close:active {
+
+    transform:
+        scale(.94);
+
+}
+
+
+/* =========================================================
+   ÁREA DE IMAGEN
+========================================================= */
+
+.lightbox-image-area {
+
+    position: relative;
+
+    min-width: 0;
+
+    min-height: 420px;
+
+    height: 100%;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    overflow: hidden;
+
+    border-radius: 22px;
+
+    background:
+
+        radial-gradient(
+            circle at center,
+            #ffffff 0%,
+            #f2f0ea 48%,
+            #dedbd3 100%
+        );
+
+    border:
+        1px solid
+        rgba(23,63,53,.10);
+
+    touch-action: none;
+
+    isolation: isolate;
+
+}
+
+
+/* =========================================================
+   DECORACIÓN DEL ÁREA DE IMAGEN
+========================================================= */
+
+.lightbox-image-area::before {
+
+    content: "";
+
+    position: absolute;
+
+    inset: 0;
+
+    z-index: -1;
+
+    opacity: .35;
+
+    background-image:
+
+        linear-gradient(
+            45deg,
+            rgba(23,63,53,.035) 25%,
+            transparent 25%
+        ),
+        linear-gradient(
+            -45deg,
+            rgba(23,63,53,.035) 25%,
+            transparent 25%
+        );
+
+    background-size:
+        32px 32px;
+
+    background-position:
+        0 0,
+        16px 16px;
+
+}
+
+
+/* =========================================================
+   IMAGEN PRINCIPAL
+========================================================= */
+
+.lightbox-image {
+
+    position: relative;
+
+    z-index: 3;
+
+    display: block;
+
+    max-width: 88%;
+
+    max-height: 88%;
+
+    width: auto;
+
+    height: auto;
+
+    object-fit: contain;
+
+    user-select: none;
+
+    -webkit-user-select: none;
+
+    -webkit-user-drag: none;
+
+    cursor: zoom-in;
+
+    transform:
+        translate3d(0,0,0)
+        scale(1);
+
+    transform-origin: center center;
+
+    will-change:
+        transform,
+        opacity;
+
+    transition:
+        transform .18s ease,
+        opacity .15s ease;
+
+    filter:
+        drop-shadow(
+            0 20px 25px
+            rgba(0,0,0,.13)
+        );
+
+}
+
+
+/* =========================================================
+   CURSOR CUANDO HAY ZOOM
+========================================================= */
+
+.lightbox-image:active {
+
+    cursor: grabbing;
+
+}
+
+
+/* =========================================================
+   FLECHAS DE GALERÍA
+========================================================= */
+
+.lightbox-gallery-arrow {
+
+    position: absolute;
+
+    top: 50%;
+
+    z-index: 15;
+
+    width: 52px;
+
+    height: 52px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border: 1px solid
+        rgba(255,255,255,.25);
+
+    border-radius: 50%;
+
+    background:
+        rgba(23,63,53,.88);
+
+    color: #ffffff;
+
+    font-size: 42px;
+
+    line-height: 1;
+
+    cursor: pointer;
+
+    transform:
+        translateY(-50%);
+
+    box-shadow:
+        0 10px 30px
+        rgba(0,0,0,.22);
+
+    transition:
+        transform var(--sm-transicion),
+        background var(--sm-transicion),
+        box-shadow var(--sm-transicion);
+
+    user-select: none;
+
+}
+
+
+.lightbox-gallery-arrow:hover {
+
+    background:
+        var(--sm-dorado);
+
+    color:
+        var(--sm-negro);
+
+    box-shadow:
+        0 12px 35px
+        rgba(216,166,59,.35);
+
+}
+
+
+.lightbox-gallery-arrow:active {
+
+    transform:
+        translateY(-50%)
+        scale(.92);
+
+}
+
+
+.lightbox-gallery-prev {
+
+    left: 16px;
+
+}
+
+
+.lightbox-gallery-next {
+
+    right: 16px;
+
+}
+
+
+.lightbox-gallery-arrow:disabled {
+
+    opacity: .35;
+
+    pointer-events: none;
+
+}
+
+
+/* =========================================================
+   CONTADOR
+========================================================= */
+
+.lightbox-gallery-counter {
+
+    position: absolute;
+
+    top: 18px;
+
+    left: 50%;
+
+    z-index: 20;
+
+    transform:
+        translateX(-50%);
+
+    padding:
+        7px 14px;
+
+    border:
+        1px solid
+        rgba(255,255,255,.20);
+
+    border-radius: 999px;
+
+    background:
+        rgba(15,22,20,.78);
+
+    color:
+        #ffffff;
+
+    font-size: 13px;
+
+    font-weight: 700;
+
+    letter-spacing: .4px;
+
+    backdrop-filter:
+        blur(8px);
+
+    -webkit-backdrop-filter:
+        blur(8px);
+
+    box-shadow:
+        0 6px 20px
+        rgba(0,0,0,.18);
+
+}
+
+
+/* =========================================================
+   MINIATURAS
+========================================================= */
+
+.lightbox-thumbnails {
+
+    grid-column:
+        1 / 2;
+
+    min-width: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 10px;
+
+    padding:
+        8px 4px;
+
+    overflow-x: auto;
+
+    scrollbar-width: thin;
+
+    scrollbar-color:
+        var(--sm-dorado)
+        transparent;
+
+}
+
+
+/* =========================================================
+   MINIATURA
+========================================================= */
+
+.lightbox-thumbnail {
+
+    flex:
+        0 0 70px;
+
+    width: 70px;
+
+    height: 70px;
+
+    padding: 4px;
+
+    border:
+        2px solid
+        transparent;
+
+    border-radius: 14px;
+
+    background:
+        #ffffff;
+
+    cursor: pointer;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 5px 15px
+        rgba(0,0,0,.10);
+
+    transition:
+        transform var(--sm-transicion),
+        border-color var(--sm-transicion),
+        box-shadow var(--sm-transicion);
+
+}
+
+
+.lightbox-thumbnail:hover {
+
+    transform:
+        translateY(-3px);
+
+    border-color:
+        rgba(216,166,59,.65);
+
+}
+
+
+.lightbox-thumbnail.active {
+
+    border-color:
+        var(--sm-dorado);
+
+    box-shadow:
+        0 0 0 3px
+        rgba(216,166,59,.18),
+        0 8px 20px
+        rgba(0,0,0,.15);
+
+    transform:
+        translateY(-2px);
+
+}
+
+
+.lightbox-thumbnail img {
+
+    width: 100%;
+
+    height: 100%;
+
+    object-fit: cover;
+
+    display: block;
+
+    border-radius: 9px;
+
+    user-select: none;
+
+    -webkit-user-drag: none;
+
+}
+
+
+/* =========================================================
+   CONTROLES DE ZOOM
+========================================================= */
+
+.lightbox-zoom-controls {
+
+    position: absolute;
+
+    left: 24px;
+
+    bottom: 24px;
+
+    z-index: 25;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 5px;
+
+    padding: 5px;
+
+    border:
+        1px solid
+        rgba(255,255,255,.18);
+
+    border-radius: 999px;
+
+    background:
+        rgba(15,22,20,.84);
+
+    color:
+        #ffffff;
+
+    backdrop-filter:
+        blur(10px);
+
+    -webkit-backdrop-filter:
+        blur(10px);
+
+    box-shadow:
+        0 10px 30px
+        rgba(0,0,0,.25);
+
+}
+
+
+/* =========================================================
+   BOTONES ZOOM
+========================================================= */
+
+.lightbox-zoom-controls button {
+
+    width: 38px;
+
+    height: 38px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border: none;
+
+    border-radius: 50%;
+
+    background:
+        transparent;
+
+    color:
+        #ffffff;
+
+    font-size: 24px;
+
+    line-height: 1;
+
+    cursor: pointer;
+
+    transition:
+        background var(--sm-transicion),
+        color var(--sm-transicion),
+        transform var(--sm-transicion);
+
+}
+
+
+.lightbox-zoom-controls button:hover {
+
+    background:
+        var(--sm-dorado);
+
+    color:
+        var(--sm-negro);
+
+}
+
+
+.lightbox-zoom-controls button:active {
+
+    transform:
+        scale(.88);
+
+}
+
+
+/* =========================================================
+   PORCENTAJE
+========================================================= */
+
+#sanMartinZoomPercentage {
+
+    min-width: 55px;
+
+    text-align: center;
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    letter-spacing: .3px;
+
+}
+
+
+/* =========================================================
+   INFORMACIÓN DEL PRODUCTO
+========================================================= */
+
+.lightbox-product-info {
+
+    position: relative;
+
+    grid-column:
+        2 / 3;
+
+    grid-row:
+        1 / 3;
+
+    min-width: 0;
+
+    align-self: stretch;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+    padding:
+        32px 26px;
+
+    overflow-y: auto;
+
+    border-radius: 22px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #ffffff,
+            #f5f1e8
+        );
+
+    border:
+        1px solid
+        rgba(23,63,53,.08);
+
+    box-shadow:
+        inset 0 1px 0
+        rgba(255,255,255,.8);
+
+}
+
+
+/* =========================================================
+   CATEGORÍA
+========================================================= */
+
+.lightbox-category {
+
+    display: inline-flex;
+
+    align-self: flex-start;
+
+    margin-bottom: 10px;
+
+    padding:
+        6px 11px;
+
+    border-radius: 999px;
+
+    background:
+        rgba(23,63,53,.09);
+
+    color:
+        var(--sm-verde);
+
+    font-size: 11px;
+
+    font-weight: 800;
+
+    text-transform: uppercase;
+
+    letter-spacing: 1px;
+
+}
+
+
+/* =========================================================
+   NOMBRE
+========================================================= */
+
+#lightboxProductName {
+
+    margin:
+        0 0 10px;
+
+    color:
+        var(--sm-verde);
+
+    font-size:
+        clamp(24px, 2.3vw, 38px);
+
+    line-height:
+        1.12;
+
+    font-weight:
+        800;
+
+}
+
+
+/* =========================================================
+   MARCA
+========================================================= */
+
+.lightbox-brand {
+
+    margin-bottom: 16px;
+
+    color:
+        var(--sm-texto-suave);
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+}
+
+
+/* =========================================================
+   DESCRIPCIÓN
+========================================================= */
+
+.lightbox-description {
+
+    margin-bottom: 20px;
+
+    color:
+        var(--sm-texto);
+
+    font-size: 14px;
+
+    line-height: 1.65;
+
+}
+
+
+/* =========================================================
+   PRECIO
+========================================================= */
+
+.lightbox-price {
+
+    margin:
+        4px 0 14px;
+
+    color:
+        var(--sm-verde);
+
+    font-size:
+        clamp(28px, 3vw, 42px);
+
+    line-height: 1;
+
+    font-weight:
+        900;
+
+}
+
+
+/* =========================================================
+   CÓDIGO
+========================================================= */
+
+.lightbox-code {
+
+    margin-bottom: 8px;
+
+    color:
+        var(--sm-texto-suave);
+
+    font-size: 12px;
+
+    font-family:
+        ui-monospace,
+        SFMono-Regular,
+        Menlo,
+        Monaco,
+        Consolas,
+        monospace;
+
+}
+
+
+/* =========================================================
+   STOCK
+========================================================= */
+
+.lightbox-stock {
+
+    margin-bottom: 22px;
+
+    color:
+        var(--sm-texto);
+
+    font-size: 13px;
+
+    font-weight: 700;
+
+}
+
+
+/* =========================================================
+   WHATSAPP
+========================================================= */
+
+.lightbox-whatsapp {
+
+    width: 100%;
+
+    min-height: 50px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 8px;
+
+    padding:
+        12px 18px;
+
+    border: none;
+
+    border-radius: 14px;
+
+    background:
+        var(--sm-verde);
+
+    color:
+        #ffffff;
+
+    font-size: 14px;
+
+    font-weight: 800;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 8px 20px
+        rgba(23,63,53,.20);
+
+    transition:
+        transform var(--sm-transicion),
+        background var(--sm-transicion),
+        box-shadow var(--sm-transicion);
+
+}
+
+
+.lightbox-whatsapp:hover {
+
+    background:
+        var(--sm-verde-claro);
+
+    transform:
+        translateY(-2px);
+
+    box-shadow:
+        0 12px 28px
+        rgba(23,63,53,.28);
+
+}
+
+
+.lightbox-whatsapp:active {
+
+    transform:
+        translateY(0)
+        scale(.98);
+
+}
+
+
+/* =========================================================
+   AYUDA
+========================================================= */
+
+.lightbox-help {
+
+    position: absolute;
+
+    left: 50%;
+
+    bottom: 14px;
+
+    z-index: 40;
+
+    transform:
+        translateX(-50%);
+
+    padding:
+        7px 13px;
+
+    border-radius:
+        999px;
+
+    background:
+        rgba(15,22,20,.80);
+
+    color:
+        rgba(255,255,255,.92);
+
+    font-size:
+        11px;
+
+    white-space:
+        nowrap;
+
+    backdrop-filter:
+        blur(8px);
+
+    -webkit-backdrop-filter:
+        blur(8px);
+
+    transition:
+        opacity .3s ease,
+        transform .3s ease;
+
+}
+
+
+.lightbox-help.hidden {
+
+    opacity: 0;
+
+    pointer-events: none;
+
+    transform:
+        translateX(-50%)
+        translateY(8px);
+
+}
+
+
+/* =========================================================
+   FOCUS
+========================================================= */
+
+.lightbox-close:focus-visible,
+.lightbox-gallery-arrow:focus-visible,
+.lightbox-thumbnail:focus-visible,
+.lightbox-zoom-controls button:focus-visible,
+.lightbox-whatsapp:focus-visible {
+
+    outline:
+        3px solid
+        var(--sm-dorado);
+
+    outline-offset:
+        3px;
+
+}
+
+
+/* =========================================================
+   SCROLLBAR INFORMACIÓN
+========================================================= */
+
+.lightbox-product-info::-webkit-scrollbar,
+.lightbox-thumbnails::-webkit-scrollbar {
+
+    width: 6px;
+
+    height: 6px;
+
+}
+
+
+.lightbox-product-info::-webkit-scrollbar-track,
+.lightbox-thumbnails::-webkit-scrollbar-track {
+
+    background:
+        transparent;
+
+}
+
+
+.lightbox-product-info::-webkit-scrollbar-thumb,
+.lightbox-thumbnails::-webkit-scrollbar-thumb {
+
+    background:
+        rgba(23,63,53,.30);
+
+    border-radius:
+        999px;
+
+}
+
+
+.lightbox-product-info::-webkit-scrollbar-thumb:hover,
+.lightbox-thumbnails::-webkit-scrollbar-thumb:hover {
+
+    background:
+        var(--sm-dorado);
+
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1000px) {
+
+    .san-martin-lightbox {
+
+        padding:
+            16px;
+
+    }
+
+
+    .lightbox-container {
+
+        width:
+            min(96vw, 900px);
+
+        max-height:
+            95vh;
+
+        grid-template-columns:
+            1fr;
+
+        grid-template-rows:
+            minmax(380px, 1fr)
+            auto
+            auto;
+
+        gap:
+            12px;
+
+        padding:
+            14px;
+
+        border-radius:
+            22px;
+
+    }
+
+
+    .lightbox-image-area {
+
+        grid-column:
+            1;
+
+        grid-row:
+            1;
+
+        min-height:
+            420px;
+
+    }
+
+
+    .lightbox-product-info {
+
+        grid-column:
+            1;
+
+        grid-row:
+            3;
+
+        max-height:
+            260px;
+
+        padding:
+            22px;
+
+    }
+
+
+    .lightbox-thumbnails {
+
+        grid-column:
+            1;
+
+        grid-row:
+            2;
+
+    }
+
+
+    .lightbox-help {
+
+        display:
+            none;
+
+    }
+
+}
+
+
+/* =========================================================
+   MÓVIL
+========================================================= */
+
+@media (max-width: 650px) {
+
+    .san-martin-lightbox {
+
+        padding:
+            0;
+
+        align-items:
+            stretch;
+
+    }
+
+
+    .lightbox-container {
+
+        width:
+            100%;
+
+        max-width:
+            none;
+
+        height:
+            100dvh;
+
+        max-height:
+            none;
+
+        display:
+            grid;
+
+        grid-template-columns:
+            1fr;
+
+        grid-template-rows:
+            minmax(0, 1fr)
+            auto
+            auto;
+
+        gap:
+            8px;
+
+        padding:
+            8px;
+
+        border-radius:
+            0;
+
+    }
+
+
+    .lightbox-image-area {
+
+        min-height:
+            0;
+
+        border-radius:
+            16px;
+
+    }
+
+
+    .lightbox-image {
+
+        max-width:
+            82%;
+
+        max-height:
+            78%;
+
+    }
+
+
+    .lightbox-close {
+
+        top:
+            10px;
+
+        right:
+            10px;
+
+        width:
+            42px;
+
+        height:
+            42px;
+
+        font-size:
+            27px;
+
+    }
+
+
+    .lightbox-gallery-arrow {
+
+        width:
+            42px;
+
+        height:
+            42px;
+
+        font-size:
+            34px;
+
+    }
+
+
+    .lightbox-gallery-prev {
+
+        left:
+            8px;
+
+    }
+
+
+    .lightbox-gallery-next {
+
+        right:
+            8px;
+
+    }
+
+
+    .lightbox-gallery-counter {
+
+        top:
+            10px;
+
+        font-size:
+            11px;
+
+        padding:
+            6px 11px;
+
+    }
+
+
+    .lightbox-thumbnails {
+
+        justify-content:
+            flex-start;
+
+        padding:
+            3px 4px;
+
+        gap:
+            7px;
+
+    }
+
+
+    .lightbox-thumbnail {
+
+        flex-basis:
+            58px;
+
+        width:
+            58px;
+
+        height:
+            58px;
+
+        border-radius:
+            11px;
+
+    }
+
+
+    .lightbox-product-info {
+
+        max-height:
+            30dvh;
+
+        min-height:
+            0;
+
+        padding:
+            15px;
+
+        border-radius:
+            16px;
+
+    }
+
+
+    .lightbox-category {
+
+        margin-bottom:
+            6px;
+
+        padding:
+            5px 9px;
+
+        font-size:
+            9px;
+
+    }
+
+
+    #lightboxProductName {
+
+        margin-bottom:
+            6px;
+
+        font-size:
+            21px;
+
+    }
+
+
+    .lightbox-brand {
+
+        margin-bottom:
+            8px;
+
+        font-size:
+            12px;
+
+    }
+
+
+    .lightbox-description {
+
+        margin-bottom:
+            10px;
+
+        font-size:
+            12px;
+
+        line-height:
+            1.45;
+
+    }
+
+
+    .lightbox-price {
+
+        margin:
+            5px 0 8px;
+
+        font-size:
+            27px;
+
+    }
+
+
+    .lightbox-code {
+
+        margin-bottom:
+            5px;
+
+        font-size:
+            10px;
+
+    }
+
+
+    .lightbox-stock {
+
+        margin-bottom:
+            10px;
+
+        font-size:
+            11px;
+
+    }
+
+
+    .lightbox-whatsapp {
+
+        min-height:
+            43px;
+
+        padding:
+            9px 12px;
+
+        border-radius:
+            11px;
+
+        font-size:
+            12px;
+
+    }
+
+
+    .lightbox-zoom-controls {
+
+        left:
+            12px;
+
+        bottom:
+            12px;
+
+    }
+
+
+    .lightbox-zoom-controls button {
+
+        width:
+            34px;
+
+        height:
+            34px;
+
+        font-size:
+            21px;
+
+    }
+
+
+    #sanMartinZoomPercentage {
+
+        min-width:
+            48px;
+
+        font-size:
+            11px;
+
+    }
+
+}
+
+
+/* =========================================================
+   TELÉFONOS MUY PEQUEÑOS
+========================================================= */
+
+@media (max-width: 400px) {
+
+    .lightbox-product-info {
+
+        max-height:
+            28dvh;
+
+        padding:
+            12px;
+
+    }
+
+
+    #lightboxProductName {
+
+        font-size:
+            18px;
+
+    }
+
+
+    .lightbox-description {
+
+        display:
+            -webkit-box;
+
+        -webkit-line-clamp:
+            2;
+
+        -webkit-box-orient:
+            vertical;
+
+        overflow:
+            hidden;
+
+    }
+
+
+    .lightbox-thumbnail {
+
+        flex-basis:
+            52px;
+
+        width:
+            52px;
+
+        height:
+            52px;
+
+    }
+
+
+    .lightbox-gallery-arrow {
+
+        width:
+            38px;
+
+        height:
+            38px;
+
+        font-size:
+            30px;
+
+    }
+
+}
+
+
+/* =========================================================
+   REDUCIR ANIMACIONES
+   ACCESIBILIDAD
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .san-martin-lightbox,
+    .lightbox-container,
+    .lightbox-image,
+    .lightbox-close,
+    .lightbox-gallery-arrow,
+    .lightbox-thumbnail,
+    .lightbox-whatsapp,
+    .lightbox-help {
+
+        transition:
+            none !important;
+
+    }
+
+}

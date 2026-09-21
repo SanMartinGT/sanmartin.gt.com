@@ -1,0 +1,1798 @@
+/* =========================================================
+   SAN MARTÍN — 05 CATÁLOGO
+   Catálogo compacto, elegante y responsive
+
+   RESPONSABILIDAD:
+   - Encabezado del catálogo
+   - Filtros por categoría
+   - Selector móvil
+   - Filtros activos
+   - Filtro de precios
+   - Ordenamiento
+   - Contador de resultados
+   - Paginación
+========================================================= */
+
+
+/* =========================================================
+   1. SECCIÓN CATÁLOGO
+========================================================= */
+
+.catalog {
+
+    position: relative;
+
+    overflow: hidden;
+
+    background:
+        linear-gradient(
+            180deg,
+            var(--blanco) 0%,
+            var(--crema-claro) 100%
+        );
+
+}
+
+
+/* =========================================================
+   2. DECORACIÓN
+========================================================= */
+
+.catalog::before {
+
+    content: "";
+
+    position: absolute;
+
+    top: 0;
+    left: 0;
+
+    width: 180px;
+    height: 180px;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(216, 166, 59, 0.065),
+            transparent 68%
+        );
+
+    pointer-events: none;
+
+}
+
+
+.catalog::after {
+
+    content: "";
+
+    position: absolute;
+
+    right: -110px;
+    bottom: -130px;
+
+    width: 280px;
+    height: 280px;
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(40, 96, 82, 0.055),
+            transparent 70%
+        );
+
+    pointer-events: none;
+
+}
+
+
+/* =========================================================
+   3. CONTENEDOR
+========================================================= */
+
+.catalog .container {
+
+    position: relative;
+
+    z-index: 1;
+
+}
+
+
+/* =========================================================
+   4. FILTROS PRINCIPALES
+========================================================= */
+
+.catalog-filters {
+
+    margin-top: 24px;
+
+}
+
+
+/* =========================================================
+   5. CONTENEDOR DE FILTROS
+========================================================= */
+
+.filters {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex-wrap: wrap;
+
+    gap: 7px;
+
+    padding: 10px;
+
+    border:
+        1px solid
+        var(--borde-suave);
+
+    border-radius: var(--radio-lg);
+
+    background:
+        rgba(255, 255, 255, 0.90);
+
+    box-shadow:
+        0 3px 14px rgba(23, 63, 53, 0.055);
+
+    backdrop-filter: blur(10px);
+
+}
+
+
+/* =========================================================
+   6. BOTONES DE CATEGORÍA
+========================================================= */
+
+.filter {
+
+    position: relative;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    min-height: 37px;
+
+    padding:
+        7px 14px;
+
+    border:
+        1px solid
+        var(--borde);
+
+    border-radius: 999px;
+
+    background: var(--blanco);
+
+    color: var(--texto-secundario);
+
+    font-family: inherit;
+
+    font-size: 0.81rem;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        color var(--transicion-rapida),
+        background var(--transicion-rapida),
+        border-color var(--transicion-rapida),
+        box-shadow var(--transicion-rapida),
+        transform var(--transicion-rapida);
+
+}
+
+
+.filter::before {
+
+    content: "";
+
+    position: absolute;
+
+    left: 50%;
+    bottom: 0;
+
+    width: 0;
+    height: 2px;
+
+    border-radius: 999px;
+
+    background: var(--dorado);
+
+    transform: translateX(-50%);
+
+    transition:
+        width var(--transicion-rapida);
+
+}
+
+
+.filter:hover {
+
+    color: var(--verde);
+
+    border-color: var(--borde-verde);
+
+    background: var(--verde-muy-suave);
+
+    box-shadow: var(--sombra-xs);
+
+    transform: translateY(-1px);
+
+}
+
+
+.filter:hover::before {
+
+    width: 24px;
+
+}
+
+
+.filter.active {
+
+    color: var(--blanco);
+
+    border-color: var(--verde);
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--verde),
+            var(--verde-claro)
+        );
+
+    box-shadow:
+        0 5px 14px rgba(23, 63, 53, 0.15);
+
+    transform: translateY(-1px);
+
+}
+
+
+.filter.active::before {
+
+    width: 28px;
+
+    background: var(--dorado-claro);
+
+}
+
+
+.filter.active:hover {
+
+    color: var(--blanco);
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--verde-claro),
+            var(--verde)
+        );
+
+    transform: translateY(-2px);
+
+}
+
+
+/* =========================================================
+   7. FILTRO MÓVIL
+========================================================= */
+
+.mobile-filter {
+
+    display: none;
+
+    margin-top: 10px;
+
+    padding: 11px;
+
+    border:
+        1px solid
+        var(--borde-suave);
+
+    border-radius: var(--radio-lg);
+
+    background: var(--blanco);
+
+    box-shadow: var(--sombra-xs);
+
+}
+
+
+/* Etiqueta */
+
+.mobile-filter::before {
+
+    content: "Categoría";
+
+    display: block;
+
+    margin-bottom: 6px;
+
+    color: var(--texto-secundario);
+
+    font-size: 0.68rem;
+
+    font-weight: 800;
+
+    letter-spacing: 0.07em;
+
+    text-transform: uppercase;
+
+}
+
+
+/* Select */
+
+#mobileCategoryFilter {
+
+    width: 100%;
+
+    min-height: 42px;
+
+    padding:
+        8px 38px 8px 12px;
+
+    border:
+        1px solid
+        var(--borde);
+
+    border-radius: var(--radio-md);
+
+    background-color: var(--crema-claro);
+
+    background-image:
+        linear-gradient(
+            45deg,
+            transparent 50%,
+            var(--verde) 50%
+        ),
+        linear-gradient(
+            135deg,
+            var(--verde) 50%,
+            transparent 50%
+        );
+
+    background-position:
+        calc(100% - 17px) 18px,
+        calc(100% - 12px) 18px;
+
+    background-size:
+        5px 5px,
+        5px 5px;
+
+    background-repeat: no-repeat;
+
+    color: var(--texto);
+
+    font-family: inherit;
+
+    font-size: 0.84rem;
+
+    font-weight: 700;
+
+    appearance: none;
+
+    cursor: pointer;
+
+    transition:
+        border-color var(--transicion-rapida),
+        box-shadow var(--transicion-rapida),
+        background-color var(--transicion-rapida);
+
+}
+
+
+#mobileCategoryFilter:hover {
+
+    border-color: var(--borde-verde);
+
+    background-color: var(--verde-muy-suave);
+
+}
+
+
+#mobileCategoryFilter:focus {
+
+    outline: none;
+
+    border-color: var(--verde);
+
+    box-shadow:
+        0 0 0 3px rgba(23, 63, 53, 0.09);
+
+}
+
+
+/* =========================================================
+   8. FILTROS ACTIVOS
+========================================================= */
+
+.active-filters {
+
+    display: none;
+
+    margin-top: 10px;
+
+    padding:
+        11px 13px;
+
+    border:
+        1px solid
+        var(--borde-dorado);
+
+    border-radius: var(--radio-lg);
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(248, 239, 217, 0.65),
+            rgba(255, 255, 255, 0.95)
+        );
+
+    box-shadow: var(--sombra-xs);
+
+}
+
+
+.active-filters.visible {
+
+    display: block;
+
+    animation:
+        catalogFadeIn 0.25s ease both;
+
+}
+
+
+/* Título */
+
+.active-filters-title {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    margin:
+        0 0 8px;
+
+    color: var(--verde);
+
+    font-size: 0.72rem;
+
+    font-weight: 800;
+
+    letter-spacing: 0.04em;
+
+    text-transform: uppercase;
+
+}
+
+
+.active-filters-title::before {
+
+    content: "✓";
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    width: 19px;
+    height: 19px;
+
+    border-radius: 50%;
+
+    background: var(--verde);
+
+    color: var(--blanco);
+
+    font-size: 0.63rem;
+
+    font-weight: 900;
+
+}
+
+
+/* Lista */
+
+.active-filter-list {
+
+    display: flex;
+
+    align-items: center;
+
+    flex-wrap: wrap;
+
+    gap: 6px;
+
+}
+
+
+/* =========================================================
+   9. ETIQUETAS ACTIVAS
+========================================================= */
+
+.active-filter-tag {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    min-height: 29px;
+
+    padding:
+        4px 7px 4px 10px;
+
+    border:
+        1px solid
+        rgba(23, 63, 53, 0.13);
+
+    border-radius: 999px;
+
+    background: var(--blanco);
+
+    color: var(--verde);
+
+    font-size: 0.75rem;
+
+    font-weight: 700;
+
+    box-shadow:
+        0 2px 7px rgba(23, 63, 53, 0.045);
+
+    animation:
+        catalogTagIn 0.2s ease both;
+
+}
+
+
+/* Botón eliminar */
+
+.active-filter-remove {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    width: 20px;
+    height: 20px;
+
+    padding: 0;
+
+    border: none;
+
+    border-radius: 50%;
+
+    background: var(--verde-muy-suave);
+
+    color: var(--verde);
+
+    font-family: inherit;
+
+    font-size: 0.74rem;
+
+    font-weight: 900;
+
+    cursor: pointer;
+
+    transition:
+        background var(--transicion-rapida),
+        color var(--transicion-rapida),
+        transform var(--transicion-rapida);
+
+}
+
+
+.active-filter-remove:hover {
+
+    background: var(--error);
+
+    color: var(--blanco);
+
+    transform: rotate(90deg);
+
+}
+
+
+/* Botón limpiar */
+
+.clear-all-filters {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    min-height: 29px;
+
+    margin-left: auto;
+
+    padding:
+        5px 11px;
+
+    border:
+        1px solid
+        rgba(179, 58, 58, 0.18);
+
+    border-radius: 999px;
+
+    background: var(--error-suave);
+
+    color: var(--error);
+
+    font-family: inherit;
+
+    font-size: 0.71rem;
+
+    font-weight: 800;
+
+    cursor: pointer;
+
+    transition:
+        background var(--transicion-rapida),
+        color var(--transicion-rapida),
+        transform var(--transicion-rapida);
+
+}
+
+
+.clear-all-filters:hover {
+
+    background: var(--error);
+
+    color: var(--blanco);
+
+    transform: translateY(-1px);
+
+}
+
+
+/* =========================================================
+   10. PANEL PRECIO
+========================================================= */
+
+.price-filter {
+
+    margin-top: 10px;
+
+    padding:
+        14px 16px;
+
+    border:
+        1px solid
+        var(--borde-suave);
+
+    border-radius: var(--radio-lg);
+
+    background: var(--blanco);
+
+    box-shadow:
+        0 3px 13px rgba(23, 63, 53, 0.05);
+
+}
+
+
+/* Cabecera */
+
+.price-filter-header {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 9px;
+
+    margin-bottom: 10px;
+
+}
+
+
+.price-filter-icon {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    width: 34px;
+    height: 34px;
+
+    flex: 0 0 34px;
+
+    border-radius: 10px;
+
+    background: var(--dorado-suave);
+
+    color: var(--dorado);
+
+    font-size: 0.95rem;
+
+}
+
+
+.price-filter-title {
+
+    margin: 0;
+
+    color: var(--verde);
+
+    font-size: 0.88rem;
+
+    font-weight: 800;
+
+}
+
+
+/* =========================================================
+   11. CONTROLES DE PRECIO
+========================================================= */
+
+.price-filter-controls {
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(120px, 1fr)
+        minmax(120px, 1fr)
+        auto
+        auto;
+
+    align-items: end;
+
+    gap: 8px;
+
+}
+
+
+.price-input-group {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 4px;
+
+}
+
+
+.price-input-group label {
+
+    color: var(--texto-secundario);
+
+    font-size: 0.68rem;
+
+    font-weight: 800;
+
+}
+
+
+/* Inputs */
+
+.price-input {
+
+    width: 100%;
+
+    min-height: 39px;
+
+    padding:
+        7px 11px;
+
+    border:
+        1px solid
+        var(--borde);
+
+    border-radius: var(--radio-md);
+
+    background: var(--crema-claro);
+
+    color: var(--texto);
+
+    font-family: inherit;
+
+    font-size: 0.82rem;
+
+    font-weight: 700;
+
+    transition:
+        border-color var(--transicion-rapida),
+        box-shadow var(--transicion-rapida),
+        background-color var(--transicion-rapida);
+
+}
+
+
+.price-input:hover {
+
+    border-color: var(--borde-verde);
+
+}
+
+
+.price-input:focus {
+
+    outline: none;
+
+    border-color: var(--verde);
+
+    background: var(--blanco);
+
+    box-shadow:
+        0 0 0 3px rgba(23, 63, 53, 0.08);
+
+}
+
+
+/* Quitar flechas */
+
+.price-input::-webkit-outer-spin-button,
+.price-input::-webkit-inner-spin-button {
+
+    margin: 0;
+
+    appearance: none;
+
+}
+
+
+.price-input[type="number"] {
+
+    appearance: textfield;
+
+}
+
+
+/* =========================================================
+   12. BOTONES PRECIO
+========================================================= */
+
+#applyPriceFilter,
+#clearPriceFilter {
+
+    min-height: 39px;
+
+    padding-inline: 14px;
+
+    border-radius: var(--radio-md);
+
+    font-family: inherit;
+
+    font-size: 0.76rem;
+
+    font-weight: 800;
+
+    cursor: pointer;
+
+    transition:
+        background var(--transicion-rapida),
+        border-color var(--transicion-rapida),
+        color var(--transicion-rapida),
+        box-shadow var(--transicion-rapida),
+        transform var(--transicion-rapida);
+
+}
+
+
+#applyPriceFilter {
+
+    border:
+        1px solid
+        var(--verde);
+
+    background: var(--verde);
+
+    color: var(--blanco);
+
+    box-shadow:
+        0 4px 11px rgba(23, 63, 53, 0.13);
+
+}
+
+
+#applyPriceFilter:hover {
+
+    background: var(--verde-claro);
+
+    box-shadow:
+        0 7px 15px rgba(23, 63, 53, 0.17);
+
+    transform: translateY(-1px);
+
+}
+
+
+#applyPriceFilter:active {
+
+    transform: translateY(0);
+
+}
+
+
+#clearPriceFilter {
+
+    border:
+        1px solid
+        var(--borde);
+
+    background: var(--blanco);
+
+    color: var(--texto-secundario);
+
+}
+
+
+#clearPriceFilter:hover {
+
+    border-color: var(--borde-verde);
+
+    background: var(--verde-muy-suave);
+
+    color: var(--verde);
+
+    transform: translateY(-1px);
+
+}
+
+
+/* =========================================================
+   13. MENSAJE PRECIO
+========================================================= */
+
+.price-filter-message {
+
+    min-height: 17px;
+
+    margin:
+        7px 0 0;
+
+    color: var(--texto-secundario);
+
+    font-size: 0.74rem;
+
+    font-weight: 600;
+
+}
+
+
+.price-filter-message:empty {
+
+    display: none;
+
+}
+
+
+/* =========================================================
+   14. RESULTADOS
+========================================================= */
+
+.product-results-info {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 12px;
+
+    margin-top: 16px;
+
+    margin-bottom: 12px;
+
+    padding:
+        9px 13px;
+
+    border:
+        1px solid
+        var(--borde-suave);
+
+    border-radius: var(--radio-md);
+
+    background:
+        rgba(255, 255, 255, 0.82);
+
+    color: var(--texto-secundario);
+
+    font-size: 0.78rem;
+
+    font-weight: 700;
+
+    box-shadow:
+        0 2px 8px rgba(23, 63, 53, 0.035);
+
+}
+
+
+/* =========================================================
+   15. ORDENAMIENTO
+========================================================= */
+
+.sort-control {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: flex-end;
+
+    gap: 8px;
+
+    margin-bottom: 12px;
+
+}
+
+
+.sort-control label {
+
+    color: var(--texto-secundario);
+
+    font-size: 0.73rem;
+
+    font-weight: 800;
+
+}
+
+
+#sortPrice {
+
+    min-width: 175px;
+
+    min-height: 38px;
+
+    padding:
+        7px 35px 7px 11px;
+
+    border:
+        1px solid
+        var(--borde);
+
+    border-radius: var(--radio-md);
+
+    background-color: var(--blanco);
+
+    color: var(--texto);
+
+    font-family: inherit;
+
+    font-size: 0.77rem;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    appearance: none;
+
+    background-image:
+        linear-gradient(
+            45deg,
+            transparent 50%,
+            var(--verde) 50%
+        ),
+        linear-gradient(
+            135deg,
+            var(--verde) 50%,
+            transparent 50%
+        );
+
+    background-position:
+        calc(100% - 16px) 15px,
+        calc(100% - 11px) 15px;
+
+    background-size:
+        5px 5px,
+        5px 5px;
+
+    background-repeat: no-repeat;
+
+    transition:
+        border-color var(--transicion-rapida),
+        box-shadow var(--transicion-rapida),
+        background-color var(--transicion-rapida);
+
+}
+
+
+#sortPrice:hover {
+
+    border-color: var(--borde-verde);
+
+    background-color: var(--verde-muy-suave);
+
+}
+
+
+#sortPrice:focus {
+
+    outline: none;
+
+    border-color: var(--verde);
+
+    box-shadow:
+        0 0 0 3px rgba(23, 63, 53, 0.08);
+
+}
+
+
+/* =========================================================
+   16. PAGINACIÓN
+========================================================= */
+
+.pagination {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex-wrap: wrap;
+
+    gap: 5px;
+
+    margin-top: 24px;
+
+    padding-top: 17px;
+
+    border-top:
+        1px solid
+        var(--borde-suave);
+
+}
+
+
+.pagination-btn {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    min-width: 37px;
+
+    height: 37px;
+
+    padding:
+        0 9px;
+
+    border:
+        1px solid
+        var(--borde);
+
+    border-radius: 10px;
+
+    background: var(--blanco);
+
+    color: var(--texto-secundario);
+
+    font-family: inherit;
+
+    font-size: 0.78rem;
+
+    font-weight: 800;
+
+    cursor: pointer;
+
+    transition:
+        background var(--transicion-rapida),
+        color var(--transicion-rapida),
+        border-color var(--transicion-rapida),
+        box-shadow var(--transicion-rapida),
+        transform var(--transicion-rapida);
+
+}
+
+
+.pagination-btn:hover:not(:disabled):not(.active) {
+
+    border-color: var(--borde-verde);
+
+    background: var(--verde-muy-suave);
+
+    color: var(--verde);
+
+    transform: translateY(-1px);
+
+}
+
+
+.pagination-btn.active {
+
+    border-color: var(--verde);
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--verde),
+            var(--verde-claro)
+        );
+
+    color: var(--blanco);
+
+    box-shadow:
+        0 5px 13px rgba(23, 63, 53, 0.15);
+
+    cursor: default;
+
+}
+
+
+.pagination-prev,
+.pagination-next {
+
+    min-width: 78px;
+
+    padding-inline: 11px;
+
+}
+
+
+.pagination-btn:disabled {
+
+    opacity: 0.42;
+
+    cursor: not-allowed;
+
+    box-shadow: none;
+
+    transform: none;
+
+}
+
+
+.pagination-ellipsis {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    min-width: 28px;
+
+    height: 37px;
+
+    color: var(--texto-suave);
+
+    font-size: 0.82rem;
+
+    font-weight: 800;
+
+    user-select: none;
+
+}
+
+
+/* =========================================================
+   17. FOCUS
+========================================================= */
+
+.filter:focus-visible,
+.active-filter-remove:focus-visible,
+.clear-all-filters:focus-visible,
+.pagination-btn:focus-visible,
+#applyPriceFilter:focus-visible,
+#clearPriceFilter:focus-visible {
+
+    outline:
+        3px solid
+        rgba(216, 166, 59, 0.30);
+
+    outline-offset: 2px;
+
+}
+
+
+/* =========================================================
+   18. ANIMACIONES
+========================================================= */
+
+@keyframes catalogFadeIn {
+
+    from {
+
+        opacity: 0;
+
+        transform: translateY(-5px);
+
+    }
+
+    to {
+
+        opacity: 1;
+
+        transform: translateY(0);
+
+    }
+
+}
+
+
+@keyframes catalogTagIn {
+
+    from {
+
+        opacity: 0;
+
+        transform: scale(0.94);
+
+    }
+
+    to {
+
+        opacity: 1;
+
+        transform: scale(1);
+
+    }
+
+}
+
+
+/* =========================================================
+   19. TABLET
+========================================================= */
+
+@media (max-width: 950px) {
+
+    .catalog-filters {
+
+        margin-top: 20px;
+
+    }
+
+
+    .filters {
+
+        justify-content: flex-start;
+
+        padding: 9px;
+
+        gap: 6px;
+
+    }
+
+
+    .filter {
+
+        min-height: 35px;
+
+        padding-inline: 12px;
+
+        font-size: 0.77rem;
+
+    }
+
+
+    .price-filter {
+
+        padding: 13px;
+
+    }
+
+
+    .price-filter-controls {
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+    }
+
+
+    #applyPriceFilter,
+    #clearPriceFilter {
+
+        width: 100%;
+
+    }
+
+
+    .product-results-info {
+
+        margin-top: 14px;
+
+    }
+
+}
+
+
+/* =========================================================
+   20. TABLET PEQUEÑA
+========================================================= */
+
+@media (max-width: 720px) {
+
+    .filters {
+
+        display: none;
+
+    }
+
+
+    .mobile-filter {
+
+        display: block;
+
+    }
+
+
+    .active-filters {
+
+        padding: 11px;
+
+    }
+
+
+    .active-filter-list {
+
+        align-items: flex-start;
+
+    }
+
+
+    .clear-all-filters {
+
+        margin-left: 0;
+
+    }
+
+
+    .product-results-info {
+
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        gap: 3px;
+
+    }
+
+
+    .sort-control {
+
+        justify-content: stretch;
+
+        flex-direction: column;
+
+        align-items: stretch;
+
+        gap: 5px;
+
+    }
+
+
+    #sortPrice {
+
+        width: 100%;
+
+    }
+
+
+    .pagination {
+
+        gap: 5px;
+
+    }
+
+
+    .pagination-prev,
+    .pagination-next {
+
+        min-width: 72px;
+
+    }
+
+}
+
+
+/* =========================================================
+   21. MÓVIL
+========================================================= */
+
+@media (max-width: 560px) {
+
+    .catalog-filters {
+
+        margin-top: 16px;
+
+    }
+
+
+    .mobile-filter {
+
+        padding: 10px;
+
+    }
+
+
+    #mobileCategoryFilter {
+
+        min-height: 42px;
+
+        font-size: 0.82rem;
+
+    }
+
+
+    .active-filters {
+
+        margin-top: 9px;
+
+        padding: 10px;
+
+    }
+
+
+    .active-filters-title {
+
+        font-size: 0.70rem;
+
+    }
+
+
+    .active-filter-tag {
+
+        font-size: 0.73rem;
+
+    }
+
+
+    .price-filter {
+
+        margin-top: 9px;
+
+        padding: 12px;
+
+    }
+
+
+    .price-filter-header {
+
+        margin-bottom: 9px;
+
+    }
+
+
+    .price-filter-icon {
+
+        width: 33px;
+        height: 33px;
+
+        flex-basis: 33px;
+
+    }
+
+
+    .price-filter-title {
+
+        font-size: 0.84rem;
+
+    }
+
+
+    .price-filter-controls {
+
+        grid-template-columns: 1fr;
+
+        gap: 8px;
+
+    }
+
+
+    .price-input {
+
+        min-height: 42px;
+
+    }
+
+
+    #applyPriceFilter,
+    #clearPriceFilter {
+
+        min-height: 42px;
+
+    }
+
+
+    .product-results-info {
+
+        margin-top: 14px;
+
+        margin-bottom: 10px;
+
+        padding:
+            9px 11px;
+
+        font-size: 0.75rem;
+
+    }
+
+
+    .sort-control {
+
+        margin-bottom: 10px;
+
+    }
+
+
+    #sortPrice {
+
+        min-height: 40px;
+
+    }
+
+
+    .pagination {
+
+        margin-top: 20px;
+
+        padding-top: 15px;
+
+    }
+
+
+    .pagination-btn {
+
+        min-width: 36px;
+
+        height: 36px;
+
+        padding-inline: 8px;
+
+        border-radius: 9px;
+
+        font-size: 0.75rem;
+
+    }
+
+
+    .pagination-prev,
+    .pagination-next {
+
+        min-width: 67px;
+
+    }
+
+
+    .pagination-ellipsis {
+
+        min-width: 23px;
+
+        height: 36px;
+
+    }
+
+}
+
+
+/* =========================================================
+   22. MÓVIL MUY PEQUEÑO
+========================================================= */
+
+@media (max-width: 390px) {
+
+    .catalog-filters {
+
+        margin-top: 13px;
+
+    }
+
+
+    .mobile-filter {
+
+        padding: 9px;
+
+    }
+
+
+    .price-filter {
+
+        padding: 10px;
+
+    }
+
+
+    .price-filter-title {
+
+        font-size: 0.81rem;
+
+    }
+
+
+    .active-filter-list {
+
+        gap: 5px;
+
+    }
+
+
+    .active-filter-tag {
+
+        max-width: 100%;
+
+        font-size: 0.71rem;
+
+    }
+
+
+    .pagination {
+
+        gap: 4px;
+
+    }
+
+
+    .pagination-prev,
+    .pagination-next {
+
+        min-width: 60px;
+
+        padding-inline: 6px;
+
+        font-size: 0.70rem;
+
+    }
+
+
+    .pagination-btn {
+
+        min-width: 34px;
+
+        height: 34px;
+
+        padding-inline: 6px;
+
+    }
+
+
+    .pagination-ellipsis {
+
+        min-width: 19px;
+
+        height: 34px;
+
+    }
+
+}
+
+/* =========================================================
+   SAN MARTÍN — CATEGORÍAS MÓVIL
+   Solo mostrar el selector desplegable en teléfonos
+========================================================= */
+
+@media (max-width: 720px) {
+
+    .catalog .catalog-filters .filters {
+        display: none !important;
+    }
+
+    .catalog .catalog-filters .mobile-filter {
+        display: block !important;
+    }
+
+}
+
+/* =========================================================
+   FIN — 05-CATALOGO.CSS
+========================================================= */

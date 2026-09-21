@@ -1,0 +1,1561 @@
+/* =====================================================
+   SAN MARTÍN — PRODUCTOS
+   Archivo: 06-productos.css
+
+   RESPONSABILIDAD:
+   - Cuadrícula de productos
+   - Tarjetas de producto
+   - Imagen del producto
+   - Favoritos
+   - Categoría / marca
+   - Nombre / descripción
+   - Precio
+   - Código
+   - Stock
+   - Acciones
+   - Productos en oferta
+   - Estados sin resultados
+===================================================== */
+
+
+/* =====================================================
+   1. CUADRÍCULA DE PRODUCTOS
+===================================================== */
+
+.products {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+    gap: 22px;
+
+    width: 100%;
+}
+
+
+/* =====================================================
+   2. TARJETA DE PRODUCTO
+===================================================== */
+
+.product {
+    position: relative;
+
+    display: flex;
+    flex-direction: column;
+
+    min-width: 0;
+
+    overflow: hidden;
+
+    border: 1px solid var(--borde-suave);
+    border-radius: var(--radio-xl);
+
+    background: var(--blanco);
+
+    box-shadow: var(--sombra-sm);
+
+    transition:
+        transform var(--transicion-normal),
+        box-shadow var(--transicion-normal),
+        border-color var(--transicion-normal);
+}
+
+
+/* Línea superior decorativa */
+
+.product::before {
+    content: "";
+
+    position: absolute;
+    top: 0;
+    left: 50%;
+
+    width: 0;
+    height: 3px;
+
+    border-radius: 0 0 999px 999px;
+
+    background:
+        linear-gradient(
+            90deg,
+            var(--dorado),
+            var(--dorado-claro)
+        );
+
+    transform: translateX(-50%);
+
+    transition: width var(--transicion-normal);
+
+    z-index: 3;
+}
+
+
+/* Hover */
+
+.product:hover {
+    border-color: rgba(23, 63, 53, 0.12);
+
+    box-shadow:
+        0 18px 42px rgba(23, 63, 53, 0.13);
+
+    transform: translateY(-7px);
+}
+
+
+.product:hover::before {
+    width: 72%;
+}
+
+
+/* =====================================================
+   3. ÁREA DE IMAGEN
+===================================================== */
+
+.product-image {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 100%;
+
+    min-height: 235px;
+
+    overflow: hidden;
+
+    background:
+        linear-gradient(
+            145deg,
+            var(--crema-claro),
+            #f0eee7
+        );
+
+    border-bottom: 1px solid var(--borde-suave);
+}
+
+
+/* Brillo decorativo */
+
+.product-image::before {
+    content: "";
+
+    position: absolute;
+
+    width: 190px;
+    height: 190px;
+
+    top: -75px;
+    right: -65px;
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(216, 166, 59, 0.14),
+            transparent 68%
+        );
+
+    pointer-events: none;
+}
+
+
+/* Segundo detalle */
+
+.product-image::after {
+    content: "";
+
+    position: absolute;
+
+    width: 120px;
+    height: 120px;
+
+    bottom: -75px;
+    left: -45px;
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(40, 96, 82, 0.10),
+            transparent 70%
+        );
+
+    pointer-events: none;
+}
+
+
+/* =====================================================
+   4. IMAGEN DEL PRODUCTO
+===================================================== */
+
+.product-image img {
+    position: relative;
+
+    display: block;
+
+    width: 100%;
+    height: 235px;
+
+    object-fit: contain;
+
+    padding: 18px;
+
+    z-index: 1;
+
+    transition:
+        transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+        filter var(--transicion-normal);
+}
+
+
+/* Zoom */
+
+.product:hover .product-image img {
+    transform: scale(1.07);
+}
+
+
+/* =====================================================
+   5. PLACEHOLDER DE IMAGEN
+===================================================== */
+
+.product-image-placeholder {
+    position: relative;
+    z-index: 1;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 92px;
+    height: 92px;
+
+    border-radius: 26px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--verde-muy-suave),
+            var(--dorado-suave)
+        );
+
+    color: var(--verde);
+
+    font-size: 2.4rem;
+
+    box-shadow:
+        0 14px 30px rgba(23, 63, 53, 0.10);
+
+    transition:
+        transform var(--transicion-normal),
+        box-shadow var(--transicion-normal);
+}
+
+
+.product:hover .product-image-placeholder {
+    transform: scale(1.08) rotate(-2deg);
+
+    box-shadow:
+        0 18px 35px rgba(23, 63, 53, 0.14);
+}
+
+
+/* =====================================================
+   6. ICONO DE PRODUCTOS DE OFERTA
+===================================================== */
+
+.product-icon {
+    position: relative;
+    z-index: 1;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 88px;
+    height: 88px;
+
+    border-radius: 24px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--verde-muy-suave),
+            var(--dorado-suave)
+        );
+
+    font-size: 2.3rem;
+
+    box-shadow:
+        0 14px 28px rgba(23, 63, 53, 0.10);
+
+    transition:
+        transform var(--transicion-normal),
+        box-shadow var(--transicion-normal);
+}
+
+
+.product:hover .product-icon {
+    transform: scale(1.08) rotate(-2deg);
+}
+
+
+/* =====================================================
+   7. BOTÓN FAVORITOS
+===================================================== */
+
+.btn-favorito-producto {
+    position: absolute;
+
+    top: 12px;
+    right: 12px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 42px;
+    height: 42px;
+
+    padding: 0;
+
+    border: 1px solid rgba(255, 255, 255, 0.80);
+    border-radius: 50%;
+
+    background:
+        rgba(255, 255, 255, 0.92);
+
+    color: var(--texto-suave);
+
+    font-family: inherit;
+    font-size: 1.15rem;
+    line-height: 1;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 7px 18px rgba(23, 63, 53, 0.12);
+
+    backdrop-filter: blur(8px);
+
+    z-index: 5;
+
+    transition:
+        color var(--transicion-rapida),
+        background var(--transicion-rapida),
+        border-color var(--transicion-rapida),
+        transform var(--transicion-rapida),
+        box-shadow var(--transicion-rapida);
+}
+
+
+/* Hover */
+
+.btn-favorito-producto:hover {
+    color: var(--error);
+
+    border-color: rgba(179, 58, 58, 0.18);
+
+    background: var(--blanco);
+
+    box-shadow:
+        0 9px 22px rgba(179, 58, 58, 0.14);
+
+    transform: scale(1.08);
+}
+
+
+/* Estado activo */
+
+.btn-favorito-producto.active,
+.btn-favorito-producto.activo {
+    color: var(--error);
+
+    border-color: rgba(179, 58, 58, 0.16);
+
+    background:
+        var(--error-suave);
+}
+
+
+/* Active hover */
+
+.btn-favorito-producto.active:hover,
+.btn-favorito-producto.activo:hover {
+    color: var(--blanco);
+
+    background: var(--error);
+
+    transform: scale(1.10);
+}
+
+
+/* =====================================================
+   8. INFORMACIÓN DEL PRODUCTO
+===================================================== */
+
+.product-info {
+    display: flex;
+    flex-direction: column;
+
+    flex: 1;
+
+    padding: 18px 18px 19px;
+}
+
+
+/* =====================================================
+   9. CATEGORÍA
+===================================================== */
+
+.product-category {
+    display: inline-flex;
+    align-self: flex-start;
+    align-items: center;
+
+    max-width: 100%;
+
+    margin-bottom: 8px;
+    padding: 5px 9px;
+
+    border: 1px solid var(--borde-verde);
+    border-radius: 999px;
+
+    background: var(--verde-muy-suave);
+
+    color: var(--verde);
+
+    font-size: 0.68rem;
+    font-weight: 800;
+
+    letter-spacing: 0.055em;
+    line-height: 1.2;
+
+    text-transform: uppercase;
+}
+
+
+/* =====================================================
+   10. NOMBRE DEL PRODUCTO
+===================================================== */
+
+.product-name {
+    display: -webkit-box;
+
+    min-height: 48px;
+    margin: 0 0 6px;
+
+    overflow: hidden;
+
+    color: var(--verde);
+
+    font-size: 1.04rem;
+    font-weight: 800;
+    line-height: 1.35;
+
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+
+    transition: color var(--transicion-rapida);
+}
+
+
+.product:hover .product-name {
+    color: var(--verde-claro);
+}
+
+
+/* =====================================================
+   11. MARCA
+===================================================== */
+
+.product-brand {
+    display: block;
+
+    margin: 0 0 8px;
+
+    color: var(--texto-secundario);
+
+    font-size: 0.76rem;
+    font-weight: 700;
+
+    line-height: 1.4;
+}
+
+
+.product-brand::before {
+    content: "Marca: ";
+
+    color: var(--texto-suave);
+
+    font-weight: 600;
+}
+
+
+/* =====================================================
+   12. DESCRIPCIÓN
+===================================================== */
+
+.product-description {
+    display: -webkit-box;
+
+    min-height: 38px;
+    margin: 0 0 13px;
+
+    overflow: hidden;
+
+    color: var(--texto-secundario);
+
+    font-size: 0.79rem;
+    font-weight: 500;
+    line-height: 1.55;
+
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+
+/* =====================================================
+   13. PRECIO
+===================================================== */
+
+.product-price {
+    display: flex;
+    align-items: baseline;
+
+    margin-top: auto;
+    margin-bottom: 8px;
+
+    color: var(--verde);
+
+    font-size: 1.35rem;
+    font-weight: 900;
+
+    letter-spacing: -0.025em;
+}
+
+
+.product-price::first-letter {
+    font-size: 0.82em;
+}
+
+
+/* =====================================================
+   14. CÓDIGO
+===================================================== */
+
+.product-code {
+    margin-bottom: 8px;
+
+    color: var(--texto-suave);
+
+    font-size: 0.69rem;
+    font-weight: 600;
+
+    letter-spacing: 0.02em;
+}
+
+
+/* =====================================================
+   15. STOCK
+===================================================== */
+
+.product-stock,
+.stock {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+
+    margin-bottom: 14px;
+
+    color: var(--exito);
+
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+
+.product-stock::before,
+.stock::before {
+    content: "";
+
+    display: block;
+
+    width: 7px;
+    height: 7px;
+
+    flex: 0 0 7px;
+
+    border-radius: 50%;
+
+    background: currentColor;
+
+    box-shadow:
+        0 0 0 4px rgba(47, 125, 80, 0.10);
+}
+
+
+/* =====================================================
+   16. STOCK AGOTADO / ESTADOS
+===================================================== */
+
+.product-stock.agotado,
+.product-stock.sin-stock,
+.stock.agotado,
+.stock.sin-stock {
+    color: var(--error);
+}
+
+
+.product-stock.agotado::before,
+.product-stock.sin-stock::before,
+.stock.agotado::before,
+.stock.sin-stock::before {
+    box-shadow:
+        0 0 0 4px rgba(179, 58, 58, 0.10);
+}
+
+
+/* =====================================================
+   17. ACCIONES
+===================================================== */
+
+.product-actions {
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 8px;
+
+    margin-top: auto;
+}
+
+
+/* Botones */
+
+.btn-whatsapp-producto,
+.btn-agregar-carrito,
+.product-whatsapp,
+.product-add-cart {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 43px;
+
+    padding: 9px 11px;
+
+    border-radius: var(--radio-md);
+
+    font-family: inherit;
+    font-size: 0.76rem;
+    font-weight: 800;
+
+    line-height: 1.2;
+
+    cursor: pointer;
+
+    transition:
+        color var(--transicion-rapida),
+        background var(--transicion-rapida),
+        border-color var(--transicion-rapida),
+        box-shadow var(--transicion-rapida),
+        transform var(--transicion-rapida);
+}
+
+
+/* =====================================================
+   18. BOTÓN WHATSAPP
+===================================================== */
+
+.btn-whatsapp-producto,
+.product-whatsapp {
+    border: 1px solid rgba(47, 125, 80, 0.20);
+
+    background: var(--exito-suave);
+
+    color: var(--exito);
+}
+
+
+.btn-whatsapp-producto:hover,
+.product-whatsapp:hover {
+    border-color: var(--exito);
+
+    background: var(--exito);
+
+    color: var(--blanco);
+
+    box-shadow:
+        0 7px 17px rgba(47, 125, 80, 0.18);
+
+    transform: translateY(-2px);
+}
+
+
+/* =====================================================
+   19. BOTÓN AGREGAR AL CARRITO
+===================================================== */
+
+.btn-agregar-carrito,
+.product-add-cart {
+    border: 1px solid var(--verde);
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--verde),
+            var(--verde-claro)
+        );
+
+    color: var(--blanco);
+
+    box-shadow:
+        0 6px 15px rgba(23, 63, 53, 0.14);
+}
+
+
+.btn-agregar-carrito:hover,
+.product-add-cart:hover {
+    background:
+        linear-gradient(
+            135deg,
+            var(--verde-claro),
+            var(--verde)
+        );
+
+    box-shadow:
+        0 9px 20px rgba(23, 63, 53, 0.20);
+
+    transform: translateY(-2px);
+}
+
+
+.btn-agregar-carrito:active,
+.product-add-cart:active {
+    transform: translateY(0);
+}
+
+
+/* =====================================================
+   20. BOTONES DESHABILITADOS
+===================================================== */
+
+.btn-whatsapp-producto:disabled,
+.btn-agregar-carrito:disabled,
+.product-whatsapp:disabled,
+.product-add-cart:disabled {
+    opacity: 0.45;
+
+    cursor: not-allowed;
+
+    box-shadow: none;
+
+    transform: none;
+}
+
+
+/* =====================================================
+   21. PRODUCTOS EN OFERTA
+===================================================== */
+
+.offer-product {
+    border-color:
+        rgba(216, 166, 59, 0.28);
+
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #fffdf8 100%
+        );
+}
+
+
+.offer-product::before {
+    width: 48px;
+
+    background:
+        linear-gradient(
+            90deg,
+            var(--dorado),
+            var(--dorado-claro)
+        );
+}
+
+
+.offer-product:hover::before {
+    width: 78%;
+}
+
+
+/* Imagen de oferta */
+
+.offer-product .product-image {
+    background:
+        linear-gradient(
+            145deg,
+            #faf6e9,
+            var(--crema-claro)
+        );
+}
+
+
+/* =====================================================
+   22. ETIQUETA DE OFERTA
+===================================================== */
+
+.offer-badge {
+    position: absolute;
+
+    top: 13px;
+    left: 13px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 31px;
+
+    padding: 6px 10px;
+
+    border: 1px solid rgba(179, 58, 58, 0.16);
+    border-radius: 999px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--error),
+            #c84a4a
+        );
+
+    color: var(--blanco);
+
+    font-size: 0.7rem;
+    font-weight: 900;
+
+    letter-spacing: 0.025em;
+
+    box-shadow:
+        0 7px 17px rgba(179, 58, 58, 0.20);
+
+    z-index: 5;
+
+    animation:
+        offerBadgePulse 2.8s ease-in-out infinite;
+}
+
+
+/* =====================================================
+   23. PRECIO DE OFERTA
+===================================================== */
+
+.offer-price {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 9px;
+
+    margin-top: auto;
+    margin-bottom: 8px;
+}
+
+
+.original-price {
+    color: var(--texto-suave);
+
+    font-size: 0.82rem;
+    font-weight: 700;
+
+    text-decoration: line-through;
+    text-decoration-thickness: 1.5px;
+}
+
+
+.discount-price {
+    color: var(--error);
+
+    font-size: 1.38rem;
+    font-weight: 900;
+
+    letter-spacing: -0.025em;
+}
+
+
+/* =====================================================
+   24. ESTADO SIN RESULTADOS
+===================================================== */
+
+.no-results {
+    grid-column: 1 / -1;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 300px;
+
+    padding: 45px 25px;
+
+    border: 1px dashed var(--borde);
+    border-radius: var(--radio-xl);
+
+    background:
+        linear-gradient(
+            145deg,
+            var(--blanco),
+            var(--crema-claro)
+        );
+
+    text-align: center;
+
+    animation:
+        productStateIn 0.35s ease both;
+}
+
+
+/* Icono */
+
+.no-results-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 76px;
+    height: 76px;
+
+    margin-bottom: 18px;
+
+    border-radius: 24px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--verde-muy-suave),
+            var(--dorado-suave)
+        );
+
+    color: var(--verde);
+
+    font-size: 2rem;
+
+    box-shadow:
+        0 12px 28px rgba(23, 63, 53, 0.09);
+}
+
+
+/* Texto que pueda aparecer dentro */
+
+.no-results h3 {
+    margin: 0 0 8px;
+
+    color: var(--verde);
+
+    font-size: 1.1rem;
+    font-weight: 850;
+}
+
+
+.no-results p {
+    max-width: 500px;
+
+    margin: 0;
+
+    color: var(--texto-secundario);
+
+    font-size: 0.86rem;
+    line-height: 1.6;
+}
+
+
+/* =====================================================
+   25. EFECTO DE CARGA VISUAL
+===================================================== */
+
+.products.is-loading .product {
+    pointer-events: none;
+
+    animation:
+        productLoading 0.8s ease-in-out infinite alternate;
+}
+
+
+/* =====================================================
+   26. IMÁGENES CLICABLES
+===================================================== */
+
+.product-image-clickable {
+    cursor: zoom-in;
+}
+
+
+.product-image-clickable:focus-visible {
+    outline: 3px solid rgba(216, 166, 59, 0.45);
+    outline-offset: -4px;
+}
+
+
+/* =====================================================
+   27. RESPONSIVE — 1100 PX
+===================================================== */
+
+@media (max-width: 1100px) {
+
+    .products {
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+
+        gap: 19px;
+    }
+
+
+    .product-image {
+        min-height: 220px;
+    }
+
+
+    .product-image img {
+        height: 220px;
+    }
+
+
+    .product-info {
+        padding: 17px;
+    }
+
+}
+
+
+/* =====================================================
+   28. RESPONSIVE — 950 PX
+===================================================== */
+
+@media (max-width: 950px) {
+
+    .products {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 18px;
+    }
+
+
+    .product-image {
+        min-height: 225px;
+    }
+
+
+    .product-image img {
+        height: 225px;
+    }
+
+
+    .product-name {
+        font-size: 1rem;
+    }
+
+
+    .product-description {
+        font-size: 0.77rem;
+    }
+
+}
+
+
+/* =====================================================
+   29. RESPONSIVE — 650 PX
+===================================================== */
+
+@media (max-width: 650px) {
+
+    .products {
+        gap: 14px;
+    }
+
+
+    .product {
+        border-radius: 18px;
+    }
+
+
+    .product:hover {
+        transform: translateY(-4px);
+
+        box-shadow:
+            0 12px 28px rgba(23, 63, 53, 0.11);
+    }
+
+
+    .product-image {
+        min-height: 190px;
+    }
+
+
+    .product-image img {
+        height: 190px;
+
+        padding: 14px;
+    }
+
+
+    .product-info {
+        padding: 14px;
+    }
+
+
+    .product-category {
+        margin-bottom: 7px;
+
+        padding: 4px 8px;
+
+        font-size: 0.62rem;
+    }
+
+
+    .product-name {
+        min-height: 43px;
+
+        font-size: 0.92rem;
+    }
+
+
+    .product-brand {
+        font-size: 0.7rem;
+    }
+
+
+    .product-description {
+        min-height: 34px;
+
+        margin-bottom: 10px;
+
+        font-size: 0.72rem;
+    }
+
+
+    .product-price,
+    .discount-price {
+        font-size: 1.15rem;
+    }
+
+
+    .product-code {
+        font-size: 0.63rem;
+    }
+
+
+    .product-stock,
+    .stock {
+        font-size: 0.68rem;
+    }
+
+
+    .btn-whatsapp-producto,
+    .btn-agregar-carrito,
+    .product-whatsapp,
+    .product-add-cart {
+        min-height: 40px;
+
+        padding-inline: 7px;
+
+        font-size: 0.68rem;
+    }
+
+
+    .btn-favorito-producto {
+        width: 38px;
+        height: 38px;
+
+        top: 9px;
+        right: 9px;
+
+        font-size: 1rem;
+    }
+
+
+    .offer-badge {
+        top: 9px;
+        left: 9px;
+
+        min-height: 28px;
+
+        padding: 5px 8px;
+
+        font-size: 0.63rem;
+    }
+
+}
+
+
+/* =====================================================
+   30. RESPONSIVE — 480 PX
+===================================================== */
+
+@media (max-width: 480px) {
+
+    .products {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 10px;
+    }
+
+
+    .product {
+        border-radius: 15px;
+    }
+
+
+    .product-image {
+        min-height: 155px;
+    }
+
+
+    .product-image img {
+        height: 155px;
+
+        padding: 10px;
+    }
+
+
+    .product-image-placeholder,
+    .product-icon {
+        width: 65px;
+        height: 65px;
+
+        border-radius: 19px;
+
+        font-size: 1.7rem;
+    }
+
+
+    .product-info {
+        padding: 11px;
+    }
+
+
+    .product-category {
+        max-width: 100%;
+
+        margin-bottom: 6px;
+
+        padding: 4px 7px;
+
+        font-size: 0.55rem;
+    }
+
+
+    .product-name {
+        min-height: 39px;
+
+        margin-bottom: 4px;
+
+        font-size: 0.82rem;
+        line-height: 1.28;
+    }
+
+
+    .product-brand {
+        margin-bottom: 6px;
+
+        font-size: 0.63rem;
+    }
+
+
+    .product-brand::before {
+        content: "";
+    }
+
+
+    .product-description {
+        display: none;
+    }
+
+
+    .product-price {
+        margin-bottom: 6px;
+
+        font-size: 1rem;
+    }
+
+
+    .offer-price {
+        gap: 5px;
+
+        margin-bottom: 6px;
+    }
+
+
+    .original-price {
+        font-size: 0.65rem;
+    }
+
+
+    .discount-price {
+        font-size: 1rem;
+    }
+
+
+    .product-code {
+        margin-bottom: 6px;
+
+        font-size: 0.57rem;
+    }
+
+
+    .product-stock,
+    .stock {
+        gap: 5px;
+
+        margin-bottom: 9px;
+
+        font-size: 0.61rem;
+    }
+
+
+    .product-stock::before,
+    .stock::before {
+        width: 6px;
+        height: 6px;
+
+        flex-basis: 6px;
+    }
+
+
+    .product-actions {
+        grid-template-columns: 1fr;
+
+        gap: 5px;
+    }
+
+
+    .btn-whatsapp-producto,
+    .btn-agregar-carrito,
+    .product-whatsapp,
+    .product-add-cart {
+        width: 100%;
+
+        min-height: 36px;
+
+        padding: 7px 5px;
+
+        border-radius: 9px;
+
+        font-size: 0.61rem;
+    }
+
+
+    .btn-favorito-producto {
+        width: 34px;
+        height: 34px;
+
+        top: 7px;
+        right: 7px;
+
+        font-size: 0.9rem;
+    }
+
+
+    .offer-badge {
+        top: 7px;
+        left: 7px;
+
+        min-height: 24px;
+
+        padding: 4px 6px;
+
+        font-size: 0.56rem;
+    }
+
+
+    .no-results {
+        min-height: 250px;
+
+        padding: 30px 18px;
+    }
+
+
+    .no-results-icon {
+        width: 65px;
+        height: 65px;
+
+        margin-bottom: 14px;
+
+        border-radius: 20px;
+
+        font-size: 1.7rem;
+    }
+
+
+    .no-results h3 {
+        font-size: 0.98rem;
+    }
+
+
+    .no-results p {
+        font-size: 0.76rem;
+    }
+
+}
+
+
+/* =====================================================
+   31. RESPONSIVE — 360 PX
+===================================================== */
+
+@media (max-width: 360px) {
+
+    .products {
+        gap: 8px;
+    }
+
+
+    .product-info {
+        padding: 9px;
+    }
+
+
+    .product-image {
+        min-height: 140px;
+    }
+
+
+    .product-image img {
+        height: 140px;
+
+        padding: 8px;
+    }
+
+
+    .product-name {
+        min-height: 36px;
+
+        font-size: 0.76rem;
+    }
+
+
+    .product-brand {
+        font-size: 0.59rem;
+    }
+
+
+    .product-price,
+    .discount-price {
+        font-size: 0.92rem;
+    }
+
+
+    .product-code {
+        font-size: 0.52rem;
+    }
+
+
+    .product-stock,
+    .stock {
+        font-size: 0.57rem;
+    }
+
+
+    .btn-whatsapp-producto,
+    .btn-agregar-carrito,
+    .product-whatsapp,
+    .product-add-cart {
+        min-height: 34px;
+
+        font-size: 0.56rem;
+    }
+
+
+    .btn-favorito-producto {
+        width: 31px;
+        height: 31px;
+
+        font-size: 0.82rem;
+    }
+
+}
+
+
+/* =====================================================
+   32. ANIMACIONES LOCALES
+===================================================== */
+
+@keyframes productStateIn {
+
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+}
+
+
+@keyframes productLoading {
+
+    from {
+        opacity: 0.72;
+    }
+
+    to {
+        opacity: 1;
+    }
+
+}
+
+
+@keyframes offerBadgePulse {
+
+    0%,
+    100% {
+        box-shadow:
+            0 7px 17px rgba(179, 58, 58, 0.20);
+    }
+
+    50% {
+        box-shadow:
+            0 9px 24px rgba(179, 58, 58, 0.30);
+    }
+
+}
+
+
+/* =====================================================
+   33. REDUCIR MOVIMIENTO
+===================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .product,
+    .product-image img,
+    .product-image-placeholder,
+    .product-icon,
+    .btn-favorito-producto,
+    .btn-whatsapp-producto,
+    .btn-agregar-carrito,
+    .product-whatsapp,
+    .product-add-cart {
+        transition: none;
+    }
+
+
+    .offer-badge,
+    .no-results {
+        animation: none;
+    }
+
+}
+
+
+/* =====================================================
+   FIN — 06-PRODUCTOS.CSS
+===================================================== */

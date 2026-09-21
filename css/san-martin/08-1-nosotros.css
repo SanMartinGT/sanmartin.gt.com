@@ -1,0 +1,1056 @@
+/* =========================================================
+   SAN MARTÍN — 08 NOSOTROS
+   Vista interna independiente
+========================================================= */
+
+
+/* =========================================================
+   1. CONTENEDOR PRINCIPAL
+========================================================= */
+
+.about-page {
+
+    min-height: calc(100vh - var(--altura-header, 0px));
+
+    padding-top: 55px;
+    padding-bottom: 80px;
+
+    background:
+        linear-gradient(
+            180deg,
+            var(--fondo-suave) 0%,
+            var(--blanco) 45%,
+            var(--fondo-suave) 100%
+        );
+
+}
+
+
+/* =========================================================
+   2. ENCABEZADO
+========================================================= */
+
+.about-page-header {
+
+    max-width: 850px;
+
+    margin:
+        0 auto 55px;
+
+    text-align: center;
+
+}
+
+
+.about-back-button {
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-height: 42px;
+
+    margin-bottom: 28px;
+
+    padding:
+        9px 18px;
+
+    border:
+        1px solid var(--borde-verde);
+
+    border-radius:
+        var(--radio-full);
+
+    background:
+        var(--blanco);
+
+    color:
+        var(--verde);
+
+    font-size:
+        0.86rem;
+
+    font-weight:
+        750;
+
+    box-shadow:
+        var(--sombra-xs);
+
+    cursor: pointer;
+
+    transition:
+        transform var(--transicion),
+        background-color var(--transicion),
+        color var(--transicion),
+        box-shadow var(--transicion);
+
+}
+
+
+.about-back-button:hover {
+
+    transform:
+        translateY(-2px);
+
+    background:
+        var(--verde);
+
+    color:
+        var(--blanco);
+
+    box-shadow:
+        var(--sombra-sm);
+
+}
+
+
+.about-page-header h1 {
+
+    margin:
+        12px 0 8px;
+
+    color:
+        var(--verde);
+
+    font-size:
+        clamp(2.2rem, 5vw, 4rem);
+
+    font-weight:
+        900;
+
+    letter-spacing:
+        -0.045em;
+
+}
+
+
+.about-page-header p {
+
+    margin: 0;
+
+    color:
+        var(--texto-secundario);
+
+    font-size:
+        1rem;
+
+    font-weight:
+        700;
+
+    letter-spacing:
+        0.12em;
+
+    text-transform:
+        uppercase;
+
+}
+
+
+/* =========================================================
+   3. PRESENTACIÓN
+========================================================= */
+
+.about-hero {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        minmax(0, 1.4fr)
+        minmax(280px, 0.8fr);
+
+    gap:
+        40px;
+
+    align-items:
+        stretch;
+
+    margin-bottom:
+        55px;
+
+}
+
+
+.about-hero-content {
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    justify-content:
+        center;
+
+    padding:
+        50px;
+
+    border:
+        1px solid var(--borde);
+
+    border-radius:
+        28px;
+
+    background:
+        var(--blanco);
+
+    box-shadow:
+        var(--sombra-sm);
+
+}
+
+
+.about-small-label {
+
+    display:
+        inline-block;
+
+    margin-bottom:
+        12px;
+
+    color:
+        var(--dorado);
+
+    font-size:
+        0.72rem;
+
+    font-weight:
+        900;
+
+    letter-spacing:
+        0.14em;
+
+}
+
+
+.about-hero-content h2 {
+
+    max-width:
+        700px;
+
+    margin:
+        0 0 20px;
+
+    color:
+        var(--verde);
+
+    font-size:
+        clamp(2rem, 4vw, 3.1rem);
+
+    line-height:
+        1.08;
+
+    letter-spacing:
+        -0.04em;
+
+}
+
+
+.about-hero-content p {
+
+    max-width:
+        700px;
+
+    margin:
+        0 0 14px;
+
+    color:
+        var(--texto-secundario);
+
+    font-size:
+        1rem;
+
+    line-height:
+        1.8;
+
+}
+
+
+.about-hero-content p:last-child {
+
+    margin-bottom:
+        0;
+
+}
+
+
+/* =========================================================
+   4. LOGOTIPO
+========================================================= */
+
+.about-hero-logo {
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    min-height:
+        360px;
+
+    padding:
+        35px;
+
+    border-radius:
+        28px;
+
+    background:
+        linear-gradient(
+            145deg,
+            var(--verde),
+            var(--verde-claro)
+        );
+
+    box-shadow:
+        0 18px 45px rgba(23, 63, 53, 0.18);
+
+}
+
+
+.about-logo-card {
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    text-align:
+        center;
+
+}
+
+
+.about-logo-card img {
+
+    width:
+        150px;
+
+    height:
+        150px;
+
+    margin-bottom:
+        22px;
+
+    object-fit:
+        contain;
+
+    filter:
+        drop-shadow(
+            0 12px 20px rgba(0,0,0,0.15)
+        );
+
+}
+
+
+.about-logo-card strong {
+
+    color:
+        var(--blanco);
+
+    font-size:
+        1.8rem;
+
+    font-weight:
+        900;
+
+}
+
+
+.about-logo-card span {
+
+    margin-top:
+        7px;
+
+    color:
+        rgba(255,255,255,0.78);
+
+    font-size:
+        0.68rem;
+
+    font-weight:
+        800;
+
+    letter-spacing:
+        0.12em;
+
+}
+
+
+/* =========================================================
+   5. BLOQUE HISTORIA
+========================================================= */
+
+.about-block {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        70px minmax(0, 1fr);
+
+    gap:
+        25px;
+
+    max-width:
+        1000px;
+
+    margin:
+        0 auto 55px;
+
+    padding:
+        40px;
+
+    border:
+        1px solid var(--borde);
+
+    border-radius:
+        25px;
+
+    background:
+        var(--blanco);
+
+    box-shadow:
+        var(--sombra-xs);
+
+}
+
+
+.about-block-icon {
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    width:
+        60px;
+
+    height:
+        60px;
+
+    border-radius:
+        18px;
+
+    background:
+        var(--verde-muy-suave);
+
+    font-size:
+        1.5rem;
+
+}
+
+
+.about-block-label {
+
+    display:
+        block;
+
+    margin-bottom:
+        7px;
+
+    color:
+        var(--dorado);
+
+    font-size:
+        0.7rem;
+
+    font-weight:
+        900;
+
+    letter-spacing:
+        0.12em;
+
+    text-transform:
+        uppercase;
+
+}
+
+
+.about-block h2 {
+
+    margin:
+        0 0 15px;
+
+    color:
+        var(--verde);
+
+    font-size:
+        clamp(1.5rem, 3vw, 2rem);
+
+}
+
+
+.about-block p {
+
+    margin:
+        0 0 12px;
+
+    color:
+        var(--texto-secundario);
+
+    line-height:
+        1.8;
+
+}
+
+
+.about-block p:last-child {
+
+    margin-bottom:
+        0;
+
+}
+
+
+/* =========================================================
+   6. MISIÓN / VISIÓN
+========================================================= */
+
+.about-columns {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap:
+        25px;
+
+    margin-bottom:
+        60px;
+
+}
+
+
+.about-card {
+
+    padding:
+        38px;
+
+    border:
+        1px solid var(--borde);
+
+    border-radius:
+        25px;
+
+    background:
+        var(--blanco);
+
+    box-shadow:
+        var(--sombra-xs);
+
+    transition:
+        transform var(--transicion),
+        box-shadow var(--transicion);
+
+}
+
+
+.about-card:hover {
+
+    transform:
+        translateY(-5px);
+
+    box-shadow:
+        var(--sombra-md);
+
+}
+
+
+.about-card-icon {
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    width:
+        52px;
+
+    height:
+        52px;
+
+    margin-bottom:
+        20px;
+
+    border-radius:
+        16px;
+
+    background:
+        var(--verde-muy-suave);
+
+    font-size:
+        1.35rem;
+
+}
+
+
+.about-card > span {
+
+    color:
+        var(--dorado);
+
+    font-size:
+        0.7rem;
+
+    font-weight:
+        900;
+
+    letter-spacing:
+        0.12em;
+
+    text-transform:
+        uppercase;
+
+}
+
+
+.about-card h2 {
+
+    margin:
+        8px 0 13px;
+
+    color:
+        var(--verde);
+
+    font-size:
+        1.45rem;
+
+}
+
+
+.about-card p {
+
+    margin:
+        0;
+
+    color:
+        var(--texto-secundario);
+
+    line-height:
+        1.8;
+
+}
+
+
+/* =========================================================
+   7. VALORES
+========================================================= */
+
+.about-values {
+
+    margin-bottom:
+        60px;
+
+    padding:
+        50px;
+
+    border-radius:
+        30px;
+
+    background:
+        var(--verde);
+
+    box-shadow:
+        0 18px 45px rgba(23, 63, 53, 0.16);
+
+}
+
+
+.about-values-header {
+
+    max-width:
+        700px;
+
+    margin:
+        0 auto 35px;
+
+    text-align:
+        center;
+
+}
+
+
+.about-values-header .about-small-label {
+
+    color:
+        var(--dorado-claro);
+
+}
+
+
+.about-values-header h2 {
+
+    margin:
+        0 0 12px;
+
+    color:
+        var(--blanco);
+
+    font-size:
+        clamp(1.7rem, 3vw, 2.4rem);
+
+}
+
+
+.about-values-header p {
+
+    margin:
+        0;
+
+    color:
+        rgba(255,255,255,0.76);
+
+    line-height:
+        1.7;
+
+}
+
+
+.about-values-grid {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+    gap:
+        15px;
+
+}
+
+
+.about-value {
+
+    padding:
+        25px;
+
+    border:
+        1px solid rgba(255,255,255,0.1);
+
+    border-radius:
+        20px;
+
+    background:
+        rgba(255,255,255,0.07);
+
+    transition:
+        transform var(--transicion),
+        background-color var(--transicion);
+
+}
+
+
+.about-value:hover {
+
+    transform:
+        translateY(-4px);
+
+    background:
+        rgba(255,255,255,0.11);
+
+}
+
+
+.about-value > span {
+
+    font-size:
+        1.4rem;
+
+}
+
+
+.about-value h3 {
+
+    margin:
+        14px 0 8px;
+
+    color:
+        var(--blanco);
+
+    font-size:
+        1.05rem;
+
+}
+
+
+.about-value p {
+
+    margin:
+        0;
+
+    color:
+        rgba(255,255,255,0.7);
+
+    font-size:
+        0.86rem;
+
+    line-height:
+        1.65;
+
+}
+
+
+/* =========================================================
+   8. BLOQUE FINAL
+========================================================= */
+
+.about-final {
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        space-between;
+
+    gap:
+        30px;
+
+    padding:
+        40px;
+
+    border:
+        1px solid var(--borde-verde);
+
+    border-radius:
+        25px;
+
+    background:
+        var(--blanco);
+
+    box-shadow:
+        var(--sombra-sm);
+
+}
+
+
+.about-final h2 {
+
+    margin:
+        0 0 10px;
+
+    color:
+        var(--verde);
+
+    font-size:
+        clamp(1.4rem, 3vw, 2rem);
+
+}
+
+
+.about-final p {
+
+    margin:
+        0;
+
+    color:
+        var(--texto-secundario);
+
+}
+
+
+.about-back-button-primary {
+
+    flex-shrink:
+        0;
+
+    margin:
+        0;
+
+    background:
+        var(--verde);
+
+    color:
+        var(--blanco);
+
+    border-color:
+        var(--verde);
+
+}
+
+
+/* =========================================================
+   9. TABLET
+========================================================= */
+
+@media (max-width: 950px) {
+
+    .about-hero {
+
+        grid-template-columns:
+            1fr;
+
+    }
+
+
+    .about-hero-logo {
+
+        min-height:
+            300px;
+
+    }
+
+
+    .about-values-grid {
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+    }
+
+}
+
+
+/* =========================================================
+   10. MÓVIL
+========================================================= */
+
+@media (max-width: 640px) {
+
+    .about-page {
+
+        padding-top:
+            30px;
+
+        padding-bottom:
+            55px;
+
+    }
+
+
+    .about-page-header {
+
+        margin-bottom:
+            35px;
+
+    }
+
+
+    .about-page-header h1 {
+
+        font-size:
+            2.2rem;
+
+    }
+
+
+    .about-hero-content {
+
+        padding:
+            28px;
+
+    }
+
+
+    .about-hero-logo {
+
+        min-height:
+            270px;
+
+        padding:
+            25px;
+
+    }
+
+
+    .about-logo-card img {
+
+        width:
+            120px;
+
+        height:
+            120px;
+
+    }
+
+
+    .about-block {
+
+        grid-template-columns:
+            1fr;
+
+        padding:
+            28px;
+
+    }
+
+
+    .about-columns {
+
+        grid-template-columns:
+            1fr;
+
+    }
+
+
+    .about-card {
+
+        padding:
+            28px;
+
+    }
+
+
+    .about-values {
+
+        padding:
+            30px 20px;
+
+    }
+
+
+    .about-values-grid {
+
+        grid-template-columns:
+            1fr;
+
+    }
+
+
+    .about-final {
+
+        flex-direction:
+            column;
+
+        align-items:
+            flex-start;
+
+        padding:
+            28px;
+
+    }
+
+
+    .about-back-button-primary {
+
+        width:
+            100%;
+
+    }
+
+}

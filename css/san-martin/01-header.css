@@ -1,0 +1,1520 @@
+/* =========================================================
+   SAN MARTÍN — 01 HEADER
+   Header principal, navegación, acciones y buscador
+========================================================= */
+
+
+/* =========================================================
+   1. VARIABLES DEL HEADER
+========================================================= */
+
+:root {
+
+    --header-height: 78px;
+
+    --verde: #173f35;
+    --verde-claro: #286052;
+    --verde-suave: #3c7566;
+
+    --dorado: #d8a63b;
+    --dorado-claro: #e8c46a;
+
+    --crema: #f5f1e8;
+
+    --texto: #24332e;
+
+    --header-blanco: #ffffff;
+
+    --header-borde: rgba(23, 63, 53, 0.12);
+
+    --header-sombra:
+        0 5px 25px rgba(0, 0, 0, 0.07);
+
+    --header-radio: 12px;
+
+}
+
+
+/* =========================================================
+   2. HEADER PRINCIPAL
+========================================================= */
+
+header {
+
+    position: fixed;
+
+    top: 0;
+    right: 0;
+    left: 0;
+
+    z-index: 1000;
+
+    width: 100%;
+
+    background: rgba(255, 255, 255, 0.97);
+
+    border-bottom: 1px solid var(--header-borde);
+
+    box-shadow: var(--header-sombra);
+
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+
+}
+
+
+/* =========================================================
+   3. CONTENEDOR PRINCIPAL
+========================================================= */
+
+header .nav {
+
+    min-height: var(--header-height);
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 18px;
+
+}
+
+
+/* =========================================================
+   4. LOGO
+========================================================= */
+
+.logo {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 11px;
+
+    flex-shrink: 0;
+
+    min-width: 0;
+
+    color: var(--verde);
+
+    text-decoration: none;
+
+    transition:
+        transform 0.25s ease,
+        opacity 0.25s ease;
+
+}
+
+
+.logo:hover {
+
+    transform: translateY(-1px);
+
+    opacity: 0.94;
+
+}
+
+
+.logo:focus-visible {
+
+    outline: 3px solid rgba(216, 166, 59, 0.35);
+
+    outline-offset: 4px;
+
+    border-radius: 10px;
+
+}
+
+
+/* =========================================================
+   5. ICONO DEL LOGO
+========================================================= */
+
+.logo-icon {
+
+    width: 48px;
+    height: 48px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+}
+
+
+.logo-icon img {
+
+    display: block;
+
+    width: 100%;
+    height: 100%;
+
+    object-fit: contain;
+
+}
+
+
+/* =========================================================
+   6. TEXTO DEL LOGO
+========================================================= */
+
+.logo-text {
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+    min-width: 0;
+
+    color: var(--verde);
+
+    font-size: 20px;
+
+    font-weight: 800;
+
+    line-height: 1;
+
+    letter-spacing: -0.3px;
+
+    white-space: nowrap;
+
+}
+
+
+.logo-subtitle {
+
+    display: block;
+
+    margin-top: 5px;
+
+    color: var(--verde-claro);
+
+    font-size: 8px;
+
+    font-weight: 700;
+
+    line-height: 1;
+
+    letter-spacing: 1.5px;
+
+    white-space: nowrap;
+
+}
+
+
+/* =========================================================
+   7. NAVEGACIÓN PRINCIPAL
+========================================================= */
+
+#menuNavegacion {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 3px;
+
+    margin-left: auto;
+
+    min-width: 0;
+
+}
+
+
+#menuNavegacion a {
+
+    position: relative;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-height: 42px;
+
+    padding: 0 11px;
+
+    border-radius: 10px;
+
+    color: #34453f;
+
+    text-decoration: none;
+
+    font-size: 13px;
+
+    font-weight: 650;
+
+    line-height: 1;
+
+    white-space: nowrap;
+
+    transition:
+        color 0.22s ease,
+        background-color 0.22s ease,
+        transform 0.22s ease;
+
+}
+
+
+/* =========================================================
+   HOVER NAVEGACIÓN
+========================================================= */
+
+#menuNavegacion a:hover {
+
+    color: var(--verde);
+
+    background: rgba(23, 63, 53, 0.07);
+
+}
+
+
+/* =========================================================
+   PRESIONADO
+========================================================= */
+
+#menuNavegacion a:active {
+
+    transform: scale(0.96);
+
+}
+
+
+/* =========================================================
+   INDICADOR DORADO
+========================================================= */
+
+#menuNavegacion a::after {
+
+    content: "";
+
+    position: absolute;
+
+    right: 11px;
+    bottom: 5px;
+    left: 11px;
+
+    height: 2px;
+
+    border-radius: 999px;
+
+    background: var(--dorado);
+
+    transform: scaleX(0);
+
+    transform-origin: center;
+
+    transition:
+        transform 0.22s ease;
+
+}
+
+
+#menuNavegacion a:hover::after {
+
+    transform: scaleX(1);
+
+}
+
+
+/* =========================================================
+   FOCUS ACCESIBILIDAD
+========================================================= */
+
+#menuNavegacion a:focus-visible {
+
+    outline: 3px solid rgba(216, 166, 59, 0.35);
+
+    outline-offset: 2px;
+
+}
+
+
+/* =========================================================
+   8. DESTACAR CATÁLOGO
+========================================================= */
+
+#menuNavegacion a[href="#catalogo"] {
+
+    color: var(--verde);
+
+    font-weight: 750;
+
+}
+
+
+#menuNavegacion a[href="#catalogo"]:hover {
+
+    background: rgba(216, 166, 59, 0.12);
+
+}
+
+
+/* =========================================================
+   9. ACCIONES DEL HEADER
+   MI CUENTA + CARRITO
+========================================================= */
+
+.header-actions {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    flex-shrink: 0;
+
+}
+
+
+/* =========================================================
+   10. BOTONES DE ACCIÓN
+========================================================= */
+
+.header-action-btn {
+
+    position: relative;
+
+    min-width: 44px;
+
+    min-height: 44px;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    padding: 0 12px;
+
+    border: 1px solid rgba(23, 63, 53, 0.14);
+
+    border-radius: var(--header-radio);
+
+    background: var(--header-blanco);
+
+    color: var(--verde);
+
+    font-family: inherit;
+
+    font-size: 13px;
+
+    font-weight: 700;
+
+    line-height: 1;
+
+    white-space: nowrap;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.035);
+
+    transition:
+        color 0.22s ease,
+        background-color 0.22s ease,
+        border-color 0.22s ease,
+        box-shadow 0.22s ease,
+        transform 0.22s ease;
+
+}
+
+
+/* =========================================================
+   HOVER
+========================================================= */
+
+.header-action-btn:hover {
+
+    color: #ffffff;
+
+    background: var(--verde);
+
+    border-color: var(--verde);
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 8px 20px rgba(23, 63, 53, 0.18);
+
+}
+
+
+/* =========================================================
+   PRESIONADO
+========================================================= */
+
+.header-action-btn:active {
+
+    transform: translateY(0) scale(0.96);
+
+    box-shadow:
+        0 3px 8px rgba(0, 0, 0, 0.08);
+
+}
+
+
+/* =========================================================
+   FOCUS
+========================================================= */
+
+.header-action-btn:focus-visible {
+
+    outline: 3px solid rgba(216, 166, 59, 0.35);
+
+    outline-offset: 2px;
+
+}
+
+
+/* =========================================================
+   11. ICONOS
+========================================================= */
+
+.header-action-icon {
+
+    width: 21px;
+    height: 21px;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    font-size: 18px;
+
+    line-height: 1;
+
+}
+
+
+/* =========================================================
+   TEXTO DE LOS BOTONES
+========================================================= */
+
+.header-action-text {
+
+    display: inline-block;
+
+}
+
+
+/* =========================================================
+   12. CARRITO
+========================================================= */
+
+.header-cart-btn {
+
+    padding-right: 15px;
+
+}
+
+
+/* =========================================================
+   13. CONTADOR DEL CARRITO
+========================================================= */
+
+#carritoCantidad,
+.cart-count {
+
+    position: absolute;
+
+    top: -6px;
+    right: -6px;
+
+    min-width: 21px;
+    height: 21px;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 0 5px;
+
+    border: 2px solid #ffffff;
+
+    border-radius: 999px;
+
+    background: var(--dorado);
+
+    color: #ffffff;
+
+    font-size: 10px;
+
+    font-weight: 800;
+
+    line-height: 1;
+
+    box-shadow:
+        0 3px 9px rgba(0, 0, 0, 0.18);
+
+    z-index: 3;
+
+}
+
+
+/* =========================================================
+   CONTADOR CON MUCHOS PRODUCTOS
+========================================================= */
+
+#carritoCantidad:not(:empty) {
+
+    min-width: 21px;
+
+}
+
+
+/* =========================================================
+   ANIMACIÓN DEL CARRITO
+========================================================= */
+
+.cart-count-update {
+
+    animation:
+        cartCountPulse 0.45s ease;
+
+}
+
+
+@keyframes cartCountPulse {
+
+    0% {
+
+        transform: scale(1);
+
+    }
+
+    40% {
+
+        transform: scale(1.4);
+
+    }
+
+    70% {
+
+        transform: scale(0.92);
+
+    }
+
+    100% {
+
+        transform: scale(1);
+
+    }
+
+}
+
+
+/* =========================================================
+   14. BOTÓN MENÚ MÓVIL
+========================================================= */
+
+.btn-menu-movil {
+
+    width: 44px;
+    height: 44px;
+
+    display: none;
+
+    flex-shrink: 0;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-direction: column;
+
+    gap: 5px;
+
+    padding: 0;
+
+    border: 1px solid rgba(23, 63, 53, 0.14);
+
+    border-radius: var(--header-radio);
+
+    background: #ffffff;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.035);
+
+    transition:
+        background-color 0.22s ease,
+        border-color 0.22s ease,
+        transform 0.22s ease,
+        box-shadow 0.22s ease;
+
+}
+
+
+.btn-menu-movil:hover {
+
+    background: var(--verde);
+
+    border-color: var(--verde);
+
+    box-shadow:
+        0 7px 18px rgba(23, 63, 53, 0.18);
+
+}
+
+
+.btn-menu-movil:active {
+
+    transform: scale(0.94);
+
+}
+
+
+.btn-menu-movil:focus-visible {
+
+    outline: 3px solid rgba(216, 166, 59, 0.35);
+
+    outline-offset: 2px;
+
+}
+
+
+/* =========================================================
+   LÍNEAS DEL MENÚ
+========================================================= */
+
+.btn-menu-movil span {
+
+    width: 20px;
+    height: 2px;
+
+    display: block;
+
+    border-radius: 999px;
+
+    background: var(--verde);
+
+    transition:
+        transform 0.25s ease,
+        opacity 0.25s ease,
+        background-color 0.25s ease;
+
+}
+
+
+.btn-menu-movil:hover span {
+
+    background: #ffffff;
+
+}
+
+
+/* =========================================================
+   ESTADO MENÚ ABIERTO
+========================================================= */
+
+.btn-menu-movil.menu-activo span:nth-child(1) {
+
+    transform:
+        translateY(7px)
+        rotate(45deg);
+
+}
+
+
+.btn-menu-movil.menu-activo span:nth-child(2) {
+
+    opacity: 0;
+
+}
+
+
+.btn-menu-movil.menu-activo span:nth-child(3) {
+
+    transform:
+        translateY(-7px)
+        rotate(-45deg);
+
+}
+
+
+/* =========================================================
+   15. BUSCADOR
+========================================================= */
+
+.header-search-row {
+
+    width: 100%;
+
+    border-top: 1px solid rgba(23, 63, 53, 0.055);
+
+    background:
+        rgba(250, 249, 246, 0.96);
+
+}
+
+
+/* =========================================================
+   CONTENEDOR BUSCADOR
+========================================================= */
+
+.header-search-row > .container {
+
+    padding-top: 9px;
+
+    padding-bottom: 9px;
+
+}
+
+
+/* =========================================================
+   CAJA BUSCADOR
+========================================================= */
+
+.header-search {
+
+    position: relative;
+
+    width: 100%;
+
+}
+
+
+/* =========================================================
+   ICONO BUSCADOR
+========================================================= */
+
+.header-search-icon {
+
+    position: absolute;
+
+    top: 50%;
+    left: 17px;
+
+    z-index: 2;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 20px;
+    height: 20px;
+
+    color: var(--verde-claro);
+
+    font-size: 17px;
+
+    line-height: 1;
+
+    pointer-events: none;
+
+    transform: translateY(-50%);
+
+}
+
+
+/* =========================================================
+   INPUT
+========================================================= */
+
+.header-search-input {
+
+    width: 100%;
+    height: 46px;
+
+    display: block;
+
+    padding:
+        0
+        18px
+        0
+        48px;
+
+    border: 1px solid rgba(23, 63, 53, 0.13);
+
+    border-radius: 14px;
+
+    outline: none;
+
+    background: #ffffff;
+
+    color: var(--texto);
+
+    font-family: inherit;
+
+    font-size: 14px;
+
+    line-height: 1;
+
+    box-shadow:
+        0 2px 9px rgba(0, 0, 0, 0.035);
+
+    transition:
+        border-color 0.22s ease,
+        box-shadow 0.22s ease,
+        background-color 0.22s ease;
+
+}
+
+
+.header-search-input::placeholder {
+
+    color: #8a9691;
+
+}
+
+
+.header-search-input:hover {
+
+    border-color:
+        rgba(23, 63, 53, 0.25);
+
+}
+
+
+.header-search-input:focus {
+
+    border-color: var(--verde);
+
+    background: #ffffff;
+
+    box-shadow:
+        0 0 0 4px rgba(23, 63, 53, 0.08),
+        0 4px 12px rgba(0, 0, 0, 0.04);
+
+}
+
+
+/* =========================================================
+   16. TABLET GRANDE
+========================================================= */
+
+@media (max-width: 1200px) {
+
+    header .nav {
+
+        gap: 12px;
+
+    }
+
+
+    #menuNavegacion {
+
+        gap: 1px;
+
+    }
+
+
+    #menuNavegacion a {
+
+        padding-left: 8px;
+        padding-right: 8px;
+
+        font-size: 12px;
+
+    }
+
+
+    .header-action-btn {
+
+        padding-left: 9px;
+        padding-right: 9px;
+
+        font-size: 12px;
+
+    }
+
+}
+
+
+/* =========================================================
+   17. TABLET
+========================================================= */
+
+@media (max-width: 1050px) {
+
+    header .nav {
+
+        gap: 9px;
+
+    }
+
+
+    .logo {
+
+        gap: 8px;
+
+    }
+
+
+    .logo-icon {
+
+        width: 44px;
+        height: 44px;
+
+    }
+
+
+    .logo-text {
+
+        font-size: 18px;
+
+    }
+
+
+    .logo-subtitle {
+
+        font-size: 7px;
+
+    }
+
+
+    #menuNavegacion a {
+
+        padding-left: 6px;
+        padding-right: 6px;
+
+        font-size: 11px;
+
+    }
+
+
+    .header-action-btn {
+
+        padding-left: 8px;
+        padding-right: 8px;
+
+    }
+
+}
+
+
+/* =========================================================
+   18. CAMBIO A MENÚ MÓVIL
+========================================================= */
+
+@media (max-width: 950px) {
+
+    header .nav {
+
+        min-height: 70px;
+
+        gap: 8px;
+
+    }
+
+
+    /* LOGO */
+
+    .logo {
+
+        order: 1;
+
+    }
+
+
+    .logo-icon {
+
+        width: 44px;
+        height: 44px;
+
+    }
+
+
+    .logo-text {
+
+        font-size: 18px;
+
+    }
+
+
+    /* ACCIONES */
+
+    .header-actions {
+
+        order: 2;
+
+        margin-left: auto;
+
+        gap: 6px;
+
+    }
+
+
+    /* OCULTAR TEXTO */
+
+    .header-action-text {
+
+        display: none;
+
+    }
+
+
+    .header-action-btn {
+
+        width: 44px;
+        height: 44px;
+
+        min-width: 44px;
+
+        padding: 0;
+
+        border-radius: 12px;
+
+    }
+
+
+    .header-action-icon {
+
+        font-size: 19px;
+
+    }
+
+
+    /* MENÚ */
+
+    .btn-menu-movil {
+
+        display: flex;
+
+        order: 3;
+
+    }
+
+
+    /* NAVEGACIÓN */
+
+    #menuNavegacion {
+
+        position: absolute;
+
+        top: calc(100% + 7px);
+
+        right: 12px;
+        left: 12px;
+
+        display: none;
+
+        flex-direction: column;
+
+        align-items: stretch;
+
+        gap: 4px;
+
+        margin: 0;
+
+        padding: 9px;
+
+        border: 1px solid rgba(23, 63, 53, 0.10);
+
+        border-radius: 16px;
+
+        background:
+            rgba(255, 255, 255, 0.98);
+
+        box-shadow:
+            0 18px 40px rgba(0, 0, 0, 0.13);
+
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+
+    }
+
+
+    #menuNavegacion.menu-abierto {
+
+        display: flex;
+
+        animation:
+            menuMobileIn 0.22s ease;
+
+    }
+
+
+    #menuNavegacion a {
+
+        width: 100%;
+
+        min-height: 46px;
+
+        justify-content: flex-start;
+
+        padding:
+            0
+            15px;
+
+        border-radius: 10px;
+
+        font-size: 14px;
+
+        font-weight: 650;
+
+    }
+
+
+    #menuNavegacion a:hover {
+
+        background:
+            rgba(23, 63, 53, 0.07);
+
+    }
+
+
+    #menuNavegacion a::after {
+
+        display: none;
+
+    }
+
+}
+
+
+/* =========================================================
+   ANIMACIÓN DEL MENÚ
+========================================================= */
+
+@keyframes menuMobileIn {
+
+    from {
+
+        opacity: 0;
+
+        transform:
+            translateY(-8px)
+            scale(0.98);
+
+    }
+
+    to {
+
+        opacity: 1;
+
+        transform:
+            translateY(0)
+            scale(1);
+
+    }
+
+}
+
+
+/* =========================================================
+   19. TELÉFONO
+========================================================= */
+
+@media (max-width: 600px) {
+
+    :root {
+
+        --header-height: 64px;
+
+    }
+
+
+    header .nav {
+
+        min-height: 64px;
+
+        padding-left: 10px;
+        padding-right: 10px;
+
+        gap: 6px;
+
+    }
+
+
+    /* LOGO */
+
+    .logo {
+
+        gap: 7px;
+
+    }
+
+
+    .logo-icon {
+
+        width: 40px;
+        height: 40px;
+
+    }
+
+
+    .logo-text {
+
+        font-size: 16px;
+
+        letter-spacing: -0.2px;
+
+    }
+
+
+    .logo-subtitle {
+
+        margin-top: 4px;
+
+        font-size: 6.5px;
+
+        letter-spacing: 1.1px;
+
+    }
+
+
+    /* ACCIONES */
+
+    .header-actions {
+
+        gap: 4px;
+
+    }
+
+
+    .header-action-btn,
+    .btn-menu-movil {
+
+        width: 40px;
+        height: 40px;
+
+        min-width: 40px;
+        min-height: 40px;
+
+        border-radius: 10px;
+
+    }
+
+
+    .header-action-icon {
+
+        width: 19px;
+        height: 19px;
+
+        font-size: 17px;
+
+    }
+
+
+    /* CONTADOR */
+
+    #carritoCantidad,
+    .cart-count {
+
+        min-width: 19px;
+        height: 19px;
+
+        top: -5px;
+        right: -5px;
+
+        font-size: 9px;
+
+    }
+
+
+    /* MENÚ */
+
+    #menuNavegacion {
+
+        top: calc(100% + 6px);
+
+        right: 8px;
+        left: 8px;
+
+        padding: 8px;
+
+        border-radius: 14px;
+
+    }
+
+
+    #menuNavegacion a {
+
+        min-height: 45px;
+
+        font-size: 14px;
+
+    }
+
+
+    /* BUSCADOR */
+
+    .header-search-row > .container {
+
+        padding:
+            7px
+            10px;
+
+    }
+
+
+    .header-search-input {
+
+        height: 42px;
+
+        padding-left: 43px;
+
+        border-radius: 11px;
+
+        font-size: 13px;
+
+    }
+
+
+    .header-search-icon {
+
+        left: 14px;
+
+        width: 18px;
+        height: 18px;
+
+        font-size: 16px;
+
+    }
+
+}
+
+
+/* =========================================================
+   20. TELÉFONOS MUY PEQUEÑOS
+========================================================= */
+
+@media (max-width: 380px) {
+
+    header .nav {
+
+        padding-left: 8px;
+        padding-right: 8px;
+
+        gap: 5px;
+
+    }
+
+
+    .logo-text {
+
+        display: none;
+
+    }
+
+
+    .logo-icon {
+
+        width: 39px;
+        height: 39px;
+
+    }
+
+
+    .header-actions {
+
+        gap: 4px;
+
+    }
+
+
+    .header-action-btn,
+    .btn-menu-movil {
+
+        width: 39px;
+        height: 39px;
+
+        min-width: 39px;
+        min-height: 39px;
+
+    }
+
+
+    .header-action-icon {
+
+        font-size: 16px;
+
+    }
+
+}
+
+
+/* =========================================================
+   21. REDUCIR ANIMACIONES
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+
+        scroll-behavior: auto !important;
+
+        animation-duration: 0.01ms !important;
+
+        animation-iteration-count: 1 !important;
+
+        transition-duration: 0.01ms !important;
+
+    }
+
+}
+
+/* =========================================================
+   22. ESPACIO PARA HEADER FIJO
+   Evita que el contenido quede escondido debajo del header
+========================================================= */
+
+body {
+
+    padding-top: 137px;
+
+}
+
+
+/* =========================================================
+   TELÉFONO
+========================================================= */
+
+@media (max-width: 950px) {
+
+    body {
+
+        padding-top: 129px;
+
+    }
+
+}
+
+
+/* =========================================================
+   TELÉFONO PEQUEÑO
+========================================================= */
+
+@media (max-width: 600px) {
+
+    body {
+
+        padding-top: 113px;
+
+    }
+
+}
+
+
+/* =========================================================
+   TELÉFONO MUY PEQUEÑO
+========================================================= */
+
+@media (max-width: 380px) {
+
+    body {
+
+        padding-top: 113px;
+
+    }
+
+}

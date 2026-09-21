@@ -1,0 +1,1240 @@
+/* =====================================================
+   SAN MARTÍN — ANIMACIONES GLOBALES
+   Archivo: 10-animaciones.css
+===================================================== */
+
+
+/* =====================================================
+   01. VARIABLES LOCALES DE ANIMACIÓN
+===================================================== */
+
+:root {
+
+    --animacion-rapida: 0.18s ease;
+    --animacion-normal: 0.30s ease;
+    --animacion-media: 0.45s ease;
+    --animacion-lenta: 0.70s ease;
+
+}
+
+
+/* =====================================================
+   02. KEYFRAMES — ENTRADA DESDE ABAJO
+===================================================== */
+
+@keyframes sanMartinFadeUp {
+
+    from {
+        opacity: 0;
+        transform: translateY(22px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+}
+
+
+/* =====================================================
+   03. KEYFRAMES — ENTRADA DESDE ARRIBA
+===================================================== */
+
+@keyframes sanMartinFadeDown {
+
+    from {
+        opacity: 0;
+        transform: translateY(-18px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+}
+
+
+/* =====================================================
+   04. KEYFRAMES — ENTRADA DESDE LA IZQUIERDA
+===================================================== */
+
+@keyframes sanMartinFadeLeft {
+
+    from {
+        opacity: 0;
+        transform: translateX(-25px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+}
+
+
+/* =====================================================
+   05. KEYFRAMES — ENTRADA DESDE LA DERECHA
+===================================================== */
+
+@keyframes sanMartinFadeRight {
+
+    from {
+        opacity: 0;
+        transform: translateX(25px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+}
+
+
+/* =====================================================
+   06. KEYFRAMES — APARICIÓN SUAVE
+===================================================== */
+
+@keyframes sanMartinFade {
+
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+
+}
+
+
+/* =====================================================
+   07. KEYFRAMES — ESCALA
+===================================================== */
+
+@keyframes sanMartinScaleIn {
+
+    from {
+        opacity: 0;
+        transform: scale(0.94);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+}
+
+
+/* =====================================================
+   08. KEYFRAMES — ESCALA SUAVE
+===================================================== */
+
+@keyframes sanMartinScaleSoft {
+
+    0% {
+        opacity: 0;
+        transform: scale(0.98);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+}
+
+
+/* =====================================================
+   09. KEYFRAMES — DESLIZAMIENTO HORIZONTAL
+===================================================== */
+
+@keyframes sanMartinSlideIn {
+
+    from {
+        opacity: 0;
+        transform: translateX(35px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+}
+
+
+/* =====================================================
+   10. KEYFRAMES — PULSO
+===================================================== */
+
+@keyframes sanMartinPulse {
+
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.04);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+
+}
+
+
+/* =====================================================
+   11. KEYFRAMES — PULSO DORADO
+===================================================== */
+
+@keyframes sanMartinGoldPulse {
+
+    0% {
+        box-shadow:
+            0 0 0 0 rgba(216, 166, 59, 0.00);
+    }
+
+    50% {
+        box-shadow:
+            0 0 0 8px rgba(216, 166, 59, 0.10);
+    }
+
+    100% {
+        box-shadow:
+            0 0 0 0 rgba(216, 166, 59, 0.00);
+    }
+
+}
+
+
+/* =====================================================
+   12. KEYFRAMES — FLOTACIÓN
+===================================================== */
+
+@keyframes sanMartinFloat {
+
+    0% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-7px);
+    }
+
+    100% {
+        transform: translateY(0);
+    }
+
+}
+
+
+/* =====================================================
+   13. KEYFRAMES — FLOTACIÓN SUAVE
+===================================================== */
+
+@keyframes sanMartinFloatSoft {
+
+    0% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-4px);
+    }
+
+    100% {
+        transform: translateY(0);
+    }
+
+}
+
+
+/* =====================================================
+   14. KEYFRAMES — ROTACIÓN SUAVE
+===================================================== */
+
+@keyframes sanMartinRotate {
+
+    0% {
+        transform: rotate(0deg);
+    }
+
+    50% {
+        transform: rotate(3deg);
+    }
+
+    100% {
+        transform: rotate(0deg);
+    }
+
+}
+
+
+/* =====================================================
+   15. KEYFRAMES — BRILLO HORIZONTAL
+===================================================== */
+
+@keyframes sanMartinShine {
+
+    from {
+        transform: translateX(-120%);
+    }
+
+    to {
+        transform: translateX(140%);
+    }
+
+}
+
+
+/* =====================================================
+   16. KEYFRAMES — PARPADEO SUAVE
+===================================================== */
+
+@keyframes sanMartinGlow {
+
+    0%,
+    100% {
+        opacity: 0.65;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+}
+
+
+/* =====================================================
+   17. KEYFRAMES — CARGANDO
+===================================================== */
+
+@keyframes sanMartinLoading {
+
+    0% {
+        opacity: 0.45;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0.45;
+    }
+
+}
+
+
+/* =====================================================
+   18. KEYFRAMES — SPINNER
+===================================================== */
+
+@keyframes sanMartinSpinner {
+
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+
+}
+
+
+/* =====================================================
+   19. KEYFRAMES — BOUNCE
+===================================================== */
+
+@keyframes sanMartinBounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    35% {
+        transform: translateY(-8px);
+    }
+
+    55% {
+        transform: translateY(0);
+    }
+
+    75% {
+        transform: translateY(-3px);
+    }
+
+}
+
+
+/* =====================================================
+   20. KEYFRAMES — ENTRADA DEL CARRITO
+===================================================== */
+
+@keyframes sanMartinCartPop {
+
+    0% {
+        opacity: 0;
+        transform: scale(0.85);
+    }
+
+    70% {
+        transform: scale(1.05);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+}
+
+
+/* =====================================================
+   21. KEYFRAMES — BADGE
+===================================================== */
+
+@keyframes sanMartinBadge {
+
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+
+    60% {
+        transform: scale(1.12);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+}
+
+
+/* =====================================================
+   22. KEYFRAMES — HEART
+===================================================== */
+
+@keyframes sanMartinHeart {
+
+    0% {
+        transform: scale(1);
+    }
+
+    30% {
+        transform: scale(1.22);
+    }
+
+    55% {
+        transform: scale(0.92);
+    }
+
+    75% {
+        transform: scale(1.08);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+
+}
+
+
+/* =====================================================
+   23. KEYFRAMES — SHAKE SUAVE
+===================================================== */
+
+@keyframes sanMartinShake {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    20% {
+        transform: translateX(-4px);
+    }
+
+    40% {
+        transform: translateX(4px);
+    }
+
+    60% {
+        transform: translateX(-3px);
+    }
+
+    80% {
+        transform: translateX(3px);
+    }
+
+}
+
+
+/* =====================================================
+   24. CLASES UTILITARIAS
+===================================================== */
+
+.anim-fade {
+    animation:
+        sanMartinFade
+        var(--animacion-media)
+        both;
+}
+
+
+.anim-fade-up {
+    animation:
+        sanMartinFadeUp
+        var(--animacion-media)
+        both;
+}
+
+
+.anim-fade-down {
+    animation:
+        sanMartinFadeDown
+        var(--animacion-media)
+        both;
+}
+
+
+.anim-fade-left {
+    animation:
+        sanMartinFadeLeft
+        var(--animacion-media)
+        both;
+}
+
+
+.anim-fade-right {
+    animation:
+        sanMartinFadeRight
+        var(--animacion-media)
+        both;
+}
+
+
+.anim-scale {
+    animation:
+        sanMartinScaleIn
+        var(--animacion-media)
+        both;
+}
+
+
+.anim-float {
+    animation:
+        sanMartinFloat
+        3.5s
+        ease-in-out
+        infinite;
+}
+
+
+.anim-float-soft {
+    animation:
+        sanMartinFloatSoft
+        4s
+        ease-in-out
+        infinite;
+}
+
+
+.anim-pulse {
+    animation:
+        sanMartinPulse
+        2.4s
+        ease-in-out
+        infinite;
+}
+
+
+.anim-glow {
+    animation:
+        sanMartinGlow
+        2.2s
+        ease-in-out
+        infinite;
+}
+
+
+/* =====================================================
+   25. DELAYS
+===================================================== */
+
+.anim-delay-1 {
+    animation-delay: 0.08s;
+}
+
+
+.anim-delay-2 {
+    animation-delay: 0.16s;
+}
+
+
+.anim-delay-3 {
+    animation-delay: 0.24s;
+}
+
+
+.anim-delay-4 {
+    animation-delay: 0.32s;
+}
+
+
+.anim-delay-5 {
+    animation-delay: 0.40s;
+}
+
+
+.anim-delay-6 {
+    animation-delay: 0.48s;
+}
+
+
+/* =====================================================
+   26. ANIMACIÓN DE ENTRADA DEL HEADER
+===================================================== */
+
+header {
+    animation:
+        sanMartinFadeDown
+        0.55s
+        ease-out
+        both;
+}
+
+
+/* =====================================================
+   27. ANIMACIÓN INICIAL DEL HERO
+===================================================== */
+
+.hero .badge {
+    animation:
+        sanMartinFadeDown
+        0.55s
+        ease-out
+        both;
+}
+
+
+.hero h1 {
+    animation:
+        sanMartinFadeUp
+        0.65s
+        0.08s
+        ease-out
+        both;
+}
+
+
+.hero-description {
+    animation:
+        sanMartinFadeUp
+        0.65s
+        0.16s
+        ease-out
+        both;
+}
+
+
+.hero .buttons {
+    animation:
+        sanMartinFadeUp
+        0.65s
+        0.24s
+        ease-out
+        both;
+}
+
+
+.hero-card {
+    animation:
+        sanMartinFadeRight
+        0.75s
+        0.18s
+        ease-out
+        both;
+}
+
+
+/* =====================================================
+   28. ANIMACIÓN DE BOTONES
+===================================================== */
+
+.btn {
+    transition:
+        transform var(--animacion-normal),
+        box-shadow var(--animacion-normal),
+        background var(--animacion-normal),
+        border-color var(--animacion-normal),
+        color var(--animacion-normal);
+}
+
+
+.btn:not(:disabled):hover {
+    transform: translateY(-2px);
+}
+
+
+.btn:not(:disabled):active {
+    transform: translateY(0) scale(0.98);
+}
+
+
+/* =====================================================
+   29. ANIMACIÓN DEL CARRITO DEL HEADER
+===================================================== */
+
+#btnAbrirCarrito {
+    transition:
+        transform var(--animacion-normal),
+        box-shadow var(--animacion-normal),
+        background var(--animacion-normal);
+}
+
+
+#btnAbrirCarrito:hover {
+    transform: translateY(-2px);
+}
+
+
+#carritoCantidad {
+    animation:
+        sanMartinBadge
+        0.35s
+        ease-out
+        both;
+}
+
+
+/* =====================================================
+   30. ANIMACIÓN DE FAVORITOS
+===================================================== */
+
+.btn-favorito-producto {
+    transition:
+        transform var(--animacion-rapida),
+        background var(--animacion-normal),
+        color var(--animacion-normal),
+        border-color var(--animacion-normal);
+}
+
+
+.btn-favorito-producto:active {
+    animation:
+        sanMartinHeart
+        0.45s
+        ease-out;
+}
+
+
+/* =====================================================
+   31. ANIMACIÓN DE PRODUCTOS
+===================================================== */
+
+.product {
+    animation:
+        sanMartinFadeUp
+        0.5s
+        ease-out
+        both;
+}
+
+
+.product:nth-child(2) {
+    animation-delay: 0.05s;
+}
+
+
+.product:nth-child(3) {
+    animation-delay: 0.10s;
+}
+
+
+.product:nth-child(4) {
+    animation-delay: 0.15s;
+}
+
+
+.product:nth-child(5) {
+    animation-delay: 0.20s;
+}
+
+
+.product:nth-child(6) {
+    animation-delay: 0.25s;
+}
+
+
+.product:nth-child(7) {
+    animation-delay: 0.30s;
+}
+
+
+.product:nth-child(8) {
+    animation-delay: 0.35s;
+}
+
+
+/* =====================================================
+   32. ANIMACIÓN DE MARCAS
+===================================================== */
+
+.brand {
+    transition:
+        transform var(--animacion-normal),
+        box-shadow var(--animacion-normal),
+        border-color var(--animacion-normal),
+        background var(--animacion-normal);
+}
+
+
+.brand:hover {
+    transform: translateY(-5px);
+}
+
+
+/* =====================================================
+   33. ANIMACIÓN DE PROMOCIONES
+===================================================== */
+
+.promo-banner {
+    transition:
+        box-shadow var(--animacion-normal),
+        transform var(--animacion-normal);
+}
+
+
+.promo-banner:hover {
+    box-shadow:
+        0 18px 40px rgba(23, 63, 53, 0.16);
+}
+
+
+/* =====================================================
+   34. ANIMACIÓN DE BOTONES DEL CARRUSEL
+===================================================== */
+
+.promo-arrow {
+    transition:
+        transform var(--animacion-normal),
+        background var(--animacion-normal),
+        color var(--animacion-normal),
+        box-shadow var(--animacion-normal);
+}
+
+
+.promo-arrow:hover {
+    transform: translateY(-50%) scale(1.06);
+}
+
+
+.promo-arrow:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+
+/* =====================================================
+   35. ANIMACIÓN DE FILTROS
+===================================================== */
+
+.filter {
+    transition:
+        transform var(--animacion-rapida),
+        background var(--animacion-normal),
+        color var(--animacion-normal),
+        border-color var(--animacion-normal),
+        box-shadow var(--animacion-normal);
+}
+
+
+.filter:hover {
+    transform: translateY(-2px);
+}
+
+
+.filter:active {
+    transform: translateY(0) scale(0.98);
+}
+
+
+/* =====================================================
+   36. ANIMACIÓN DE PAGINACIÓN
+===================================================== */
+
+.pagination-btn {
+    transition:
+        transform var(--animacion-rapida),
+        background var(--animacion-normal),
+        color var(--animacion-normal),
+        border-color var(--animacion-normal),
+        box-shadow var(--animacion-normal);
+}
+
+
+.pagination-btn:not(:disabled):hover {
+    transform: translateY(-2px);
+}
+
+
+/* =====================================================
+   37. ANIMACIÓN DE CONTACTO
+===================================================== */
+
+.contact-item {
+    transition:
+        transform var(--animacion-normal),
+        box-shadow var(--animacion-normal),
+        border-color var(--animacion-normal);
+}
+
+
+.contact-item:hover {
+    transform: translateY(-4px);
+
+    box-shadow:
+        var(--sombra-media);
+}
+
+
+/* =====================================================
+   38. ANIMACIÓN DE ENTRADA DEL CARRITO
+===================================================== */
+
+.carrito-panel {
+    animation:
+        sanMartinSlideIn
+        0.42s
+        cubic-bezier(0.22, 1, 0.36, 1)
+        both;
+}
+
+
+/* =====================================================
+   39. ANIMACIÓN DE ITEMS DEL CARRITO
+===================================================== */
+
+.carrito-item {
+    animation:
+        sanMartinFadeUp
+        0.35s
+        ease-out
+        both;
+}
+
+
+/* =====================================================
+   40. ANIMACIÓN DEL MENSAJE DE CHECKOUT
+===================================================== */
+
+#checkoutMensaje {
+    animation:
+        sanMartinFadeUp
+        0.35s
+        ease-out
+        both;
+}
+
+
+/* =====================================================
+   41. ANIMACIÓN DEL ESTADO VACÍO
+===================================================== */
+
+#carritoVacio {
+    animation:
+        sanMartinFade
+        0.45s
+        ease-out
+        both;
+}
+
+
+/* =====================================================
+   42. ANIMACIÓN DEL FOOTER
+===================================================== */
+
+footer {
+    animation:
+        sanMartinFade
+        0.7s
+        ease-out
+        both;
+}
+
+
+/* =====================================================
+   43. ELEMENTOS CON ESTADO DE CARGA
+===================================================== */
+
+.loading,
+.is-loading {
+    animation:
+        sanMartinLoading
+        1.4s
+        ease-in-out
+        infinite;
+}
+
+
+/* =====================================================
+   44. SPINNER GENÉRICO
+===================================================== */
+
+.spinner,
+.loading-spinner {
+    animation:
+        sanMartinSpinner
+        0.8s
+        linear
+        infinite;
+}
+
+
+/* =====================================================
+   45. EFECTO DE APARICIÓN DE RESULTADOS
+===================================================== */
+
+.product-results-info {
+    animation:
+        sanMartinFade
+        0.35s
+        ease-out
+        both;
+}
+
+
+/* =====================================================
+   46. NO RESULTS
+===================================================== */
+
+.no-results {
+    animation:
+        sanMartinScaleSoft
+        0.45s
+        ease-out
+        both;
+}
+
+
+/* =====================================================
+   47. OFERTAS
+===================================================== */
+
+.offer-product {
+    animation:
+        sanMartinFadeUp
+        0.45s
+        ease-out
+        both;
+}
+
+
+.offer-badge {
+    animation:
+        sanMartinGoldPulse
+        2.5s
+        ease-in-out
+        infinite;
+}
+
+
+/* =====================================================
+   48. ACCIONES DE PRODUCTO
+===================================================== */
+
+.btn-agregar-carrito,
+.btn-whatsapp-producto,
+.product-add-cart,
+.product-whatsapp {
+    transition:
+        transform var(--animacion-normal),
+        box-shadow var(--animacion-normal),
+        background var(--animacion-normal),
+        border-color var(--animacion-normal);
+}
+
+
+.btn-agregar-carrito:hover,
+.btn-whatsapp-producto:hover,
+.product-add-cart:hover,
+.product-whatsapp:hover {
+    transform: translateY(-2px);
+}
+
+
+.btn-agregar-carrito:active,
+.btn-whatsapp-producto:active,
+.product-add-cart:active,
+.product-whatsapp:active {
+    transform: translateY(0) scale(0.98);
+}
+
+
+/* =====================================================
+   49. IMÁGENES DE PRODUCTO
+===================================================== */
+
+.product-image img {
+    transition:
+        transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity var(--animacion-normal);
+}
+
+
+.product:hover .product-image img {
+    transform: scale(1.045);
+}
+
+
+/*
+   IMPORTANTE:
+   No aplicar transformaciones globales al
+   .lightbox-image porque JavaScript controla
+   directamente su transformación y zoom.
+*/
+
+
+/* =====================================================
+   50. ANIMACIÓN DEL LOGO
+===================================================== */
+
+.logo {
+    transition:
+        transform var(--animacion-normal),
+        opacity var(--animacion-normal);
+}
+
+
+.logo:hover {
+    transform: translateY(-1px);
+}
+
+
+.logo-icon {
+    transition:
+        transform var(--animacion-normal),
+        box-shadow var(--animacion-normal);
+}
+
+
+.logo:hover .logo-icon {
+    transform: scale(1.04);
+}
+
+
+/* =====================================================
+   51. ANIMACIÓN DE LINKS DEL HEADER
+===================================================== */
+
+.nav-links a {
+    transition:
+        color var(--animacion-normal),
+        background var(--animacion-normal);
+}
+
+
+/* =====================================================
+   52. ANIMACIÓN DE BÚSQUEDA
+===================================================== */
+
+.header-search {
+    transition:
+        transform var(--animacion-normal),
+        box-shadow var(--animacion-normal);
+}
+
+
+.header-search:focus-within {
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 8px 24px rgba(23, 63, 53, 0.10);
+}
+
+
+/* =====================================================
+   53. ANIMACIÓN DE INPUTS
+===================================================== */
+
+input,
+select,
+textarea {
+    transition:
+        border-color var(--animacion-normal),
+        box-shadow var(--animacion-normal),
+        background var(--animacion-normal);
+}
+
+
+/* =====================================================
+   54. ANIMACIÓN DEL ACTIVE FILTER
+===================================================== */
+
+.active-filter-tag {
+    animation:
+        sanMartinScaleIn
+        0.28s
+        ease-out
+        both;
+}
+
+
+/* =====================================================
+   55. ANIMACIÓN DE SECCIONES
+===================================================== */
+
+.section-label {
+    transition:
+        transform var(--animacion-normal),
+        opacity var(--animacion-normal);
+}
+
+
+.section-label:hover {
+    transform: translateX(2px);
+}
+
+
+/* =====================================================
+   56. ANIMACIÓN DEL ENLACE ADMINISTRATIVO
+===================================================== */
+
+.admin-link {
+    transition:
+        transform var(--animacion-normal),
+        box-shadow var(--animacion-normal),
+        background var(--animacion-normal),
+        border-color var(--animacion-normal),
+        color var(--animacion-normal);
+}
+
+
+/* =====================================================
+   57. REDUCCIÓN DE MOVIMIENTO
+   Accesibilidad
+===================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+    }
+
+}
