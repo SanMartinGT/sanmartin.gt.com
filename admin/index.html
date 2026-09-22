@@ -1,0 +1,1684 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Administración | San Martín
+    </title>
+
+    <meta
+        name="robots"
+        content="noindex, nofollow"
+    >
+
+    <link
+        rel="stylesheet"
+        href="admin.css"
+    >
+
+</head>
+
+
+<body>
+
+
+<!-- =====================================================
+     LOGIN
+===================================================== -->
+
+<section
+    id="loginSection"
+    class="login-section"
+>
+
+    <div class="login-card">
+
+        <div class="logo-area">
+
+            <div class="logo-circle">
+                SM
+            </div>
+
+            <h1>
+                San Martín
+            </h1>
+
+            <p>
+                Panel de Administración
+            </p>
+
+        </div>
+
+
+        <form id="loginForm">
+
+            <label for="email">
+                Correo electrónico
+            </label>
+
+            <input
+                type="email"
+                id="email"
+                placeholder="Correo electrónico"
+                autocomplete="email"
+                required
+            >
+
+
+            <label for="password">
+                Contraseña
+            </label>
+
+            <input
+                type="password"
+                id="password"
+                placeholder="Contraseña"
+                autocomplete="current-password"
+                required
+            >
+
+
+            <button
+                type="submit"
+                id="loginButton"
+            >
+                🔐 Iniciar sesión
+            </button>
+
+
+            <p
+                id="loginMessage"
+                class="message"
+            ></p>
+
+        </form>
+
+    </div>
+
+</section>
+
+
+
+<!-- =====================================================
+     PANEL ADMINISTRATIVO
+===================================================== -->
+
+<section
+    id="adminSection"
+    class="admin-section hidden"
+>
+
+
+    <!-- =================================================
+         HEADER
+    ================================================== -->
+
+    <header class="admin-header">
+
+        <div>
+
+            <h1>
+                San Martín
+            </h1>
+
+            <span>
+                Administración de tienda
+            </span>
+
+        </div>
+
+
+        <div class="header-actions">
+
+            <span id="adminEmail"></span>
+
+
+            <button
+                id="logoutButton"
+                class="logout-button"
+                type="button"
+            >
+                🚪 Salir
+            </button>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- =================================================
+         CONTENIDO PRINCIPAL
+    ================================================== -->
+
+    <main class="admin-main">
+
+
+        <!-- =================================================
+             ESTADÍSTICAS
+        ================================================== -->
+
+        <section class="stats">
+
+
+            <!-- PRODUCTOS -->
+
+            <div class="stat-card">
+
+                <span>
+                    📦 Productos
+                </span>
+
+                <strong id="totalProducts">
+                    0
+                </strong>
+
+            </div>
+
+
+            <!-- DISPONIBLES -->
+
+            <div class="stat-card">
+
+                <span>
+                    🟢 Disponibles
+                </span>
+
+                <strong id="availableProducts">
+                    0
+                </strong>
+
+            </div>
+
+
+            <!-- STOCK BAJO -->
+
+            <div class="stat-card">
+
+                <span>
+                    🟡 Pocas unidades
+                </span>
+
+                <strong id="lowStockProducts">
+                    0
+                </strong>
+
+            </div>
+
+
+            <!-- AGOTADOS -->
+
+            <div class="stat-card">
+
+                <span>
+                    🔴 Agotados
+                </span>
+
+                <strong id="outOfStockProducts">
+                    0
+                </strong>
+
+            </div>
+
+
+            <!-- REPOSICIÓN -->
+
+            <div class="stat-card reorder-stat-card">
+
+                <span>
+                    🛒 Por comprar
+                </span>
+
+                <strong id="reorderProducts">
+                    0
+                </strong>
+
+            </div>
+
+
+            <!-- PEDIDOS PENDIENTES -->
+
+            <div
+                class="stat-card orders-stat-card"
+                id="pendingOrdersStatCard"
+            >
+
+                <span>
+                    🧾 Pedidos pendientes
+                </span>
+
+                <strong id="pendingOrdersCount">
+                    0
+                </strong>
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- =================================================
+             HERRAMIENTAS
+        ================================================== -->
+
+        <section class="toolbar">
+
+
+            <div class="search-box">
+
+                <input
+                    type="search"
+                    id="adminSearch"
+                    placeholder="🔎 Buscar por código, nombre, marca o categoría..."
+                    autocomplete="off"
+                >
+
+            </div>
+
+
+            <button
+                id="newProductButton"
+                class="refresh-button"
+                type="button"
+            >
+                ➕ Nuevo producto
+            </button>
+
+
+            <button
+                id="refreshButton"
+                class="refresh-button"
+                type="button"
+            >
+                🔄 Actualizar todo
+            </button>
+
+
+        </section>
+
+
+
+        <!-- =================================================
+             MENSAJE DE ESTADO
+        ================================================== -->
+
+        <div
+            id="statusMessage"
+            class="status-message"
+            aria-live="polite"
+        ></div>
+
+
+
+        <!-- =================================================
+             PEDIDOS
+        ================================================== -->
+
+        <section
+            id="ordersSection"
+            class="orders-section"
+        >
+
+
+            <!-- =================================================
+                 ENCABEZADO DE PEDIDOS
+            ================================================== -->
+
+            <div class="orders-header">
+
+                <div>
+
+                    <span class="section-eyebrow">
+                        VENTAS
+                    </span>
+
+                    <h2>
+                        🧾 Pedidos recibidos
+                    </h2>
+
+                    <p>
+                        Consulta, revisa y administra los pedidos realizados desde la tienda.
+                    </p>
+
+                </div>
+
+
+                <div class="orders-header-actions">
+
+                    <span
+                        id="ordersCount"
+                        class="orders-count"
+                    >
+                        0 pedidos
+                    </span>
+
+
+                    <button
+                        id="refreshOrdersButton"
+                        class="refresh-button"
+                        type="button"
+                    >
+                        🔄 Actualizar pedidos
+                    </button>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- =================================================
+                 RESUMEN DE PEDIDOS
+            ================================================== -->
+
+            <div class="orders-summary">
+
+
+                <!-- PENDIENTES -->
+
+                <div class="order-summary-card">
+
+                    <span>
+                        🕐 Pendientes
+                    </span>
+
+                    <strong id="pendingOrdersSummary">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <!-- TOTAL -->
+
+                <div class="order-summary-card">
+
+                    <span>
+                        📦 Total pedidos
+                    </span>
+
+                    <strong id="totalOrdersCount">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <!-- VENTAS -->
+
+                <div class="order-summary-card">
+
+                    <span>
+                        💰 Ventas
+                    </span>
+
+                    <strong id="totalOrdersAmount">
+                        Q 0.00
+                    </strong>
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- =================================================
+                 PEDIDOS VACÍOS
+            ================================================== -->
+
+            <div
+                id="ordersEmpty"
+                class="orders-empty"
+            >
+
+                <div class="orders-empty-icon">
+                    🧾
+                </div>
+
+
+                <strong>
+                    No hay pedidos registrados
+                </strong>
+
+
+                <span>
+                    Los pedidos realizados desde la tienda aparecerán aquí.
+                </span>
+
+            </div>
+
+
+
+            <!-- =================================================
+                 TABLA DE PEDIDOS
+            ================================================== -->
+
+            <div
+                id="ordersTableContainer"
+                class="orders-table-container hidden"
+            >
+
+                <div class="table-wrapper">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Pedido
+                                </th>
+
+                                <th>
+                                    Cliente
+                                </th>
+
+                                <th>
+                                    Teléfono
+                                </th>
+
+                                <th>
+                                    Productos
+                                </th>
+
+                                <th>
+                                    Total
+                                </th>
+
+                                <th>
+                                    Pago
+                                </th>
+
+                                <th>
+                                    Estado
+                                </th>
+
+                                <th>
+                                    Fecha
+                                </th>
+
+                                <th>
+                                    Acción
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody id="ordersTable">
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- =================================================
+             MODAL DETALLE DEL PEDIDO
+        ================================================== -->
+
+        <div
+            id="orderModal"
+            class="order-modal hidden"
+        >
+
+            <div
+                class="order-modal-overlay"
+                id="orderModalOverlay"
+            ></div>
+
+
+            <div
+                class="order-modal-card"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="orderModalTitle"
+            >
+
+
+                <!-- =================================================
+                     CABECERA
+                ================================================== -->
+
+                <div class="order-modal-header">
+
+                    <div>
+
+                        <span class="section-eyebrow">
+                            COMPROBANTE
+                        </span>
+
+
+                        <h2 id="orderModalTitle">
+                            Pedido
+                        </h2>
+
+
+                        <p id="orderModalDate">
+                        </p>
+
+                    </div>
+
+
+                    <button
+                        id="closeOrderModal"
+                        type="button"
+                        class="modal-close"
+                        aria-label="Cerrar pedido"
+                    >
+                        ✕
+                    </button>
+
+                </div>
+
+
+
+                <!-- =================================================
+                     CONTENIDO
+                ================================================== -->
+
+                <div
+                    id="orderDetailContent"
+                    class="order-detail-content"
+                ></div>
+
+
+
+                <!-- =================================================
+                     ACCIONES
+                ================================================== -->
+
+                <div class="order-modal-actions">
+
+                    <button
+                        id="printOrderButton"
+                        type="button"
+                        class="save-button"
+                    >
+                        🖨️ Imprimir / Guardar PDF
+                    </button>
+
+
+                    <button
+                        id="closeOrderButton"
+                        type="button"
+                        class="cancel-button"
+                    >
+                        Cerrar
+                    </button>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+    <!-- =========================================================
+         SECCIÓN DE COMPRAS / REPOSICIÓN
+    ========================================================== -->
+
+    <section
+        id="purchaseSection"
+        class="purchase-section"
+    >
+
+        <div class="section-header">
+
+            <div>
+                <span class="section-kicker">
+                    ABASTECIMIENTO
+                </span>
+
+                <h2>
+                    Productos para reposición
+                </h2>
+
+                <p>
+                    Productos cuyo inventario requiere atención.
+                </p>
+            </div>
+
+            <div class="section-header-actions">
+
+                <span
+                    id="purchaseCount"
+                    class="section-count"
+                >
+                    0 productos
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             ESTADO VACÍO
+        ====================================================== -->
+
+        <div
+            id="purchaseEmpty"
+            class="empty-state"
+        >
+
+            <div class="empty-state-icon">
+                ✓
+            </div>
+
+            <h3>
+                No hay productos para reponer
+            </h3>
+
+            <p>
+                El inventario actual no requiere reposición.
+            </p>
+
+        </div>
+
+
+        <!-- =====================================================
+             TABLA DE REPOSICIÓN
+        ====================================================== -->
+
+        <div
+            id="purchaseTableContainer"
+            class="table-container hidden"
+        >
+
+            <div class="table-scroll">
+
+                <table class="admin-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Producto
+                            </th>
+
+                            <th>
+                                Código
+                            </th>
+
+                            <th>
+                                Marca
+                            </th>
+
+                            <th>
+                                Categoría
+                            </th>
+
+                            <th>
+                                Stock
+                            </th>
+
+                            <th>
+                                Máximo
+                            </th>
+
+                            <th>
+                                Reponer
+                            </th>
+
+                            <th>
+                                Precio
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="purchaseTable">
+                        <!-- JS -->
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =========================================================
+         SEPARADOR
+    ========================================================== -->
+
+    <div class="admin-section-divider"></div>
+
+
+
+    <!-- =========================================================
+         INVENTARIO
+    ========================================================== -->
+
+    <section
+        id="inventorySection"
+        class="inventory-section"
+    >
+
+        <div class="section-header">
+
+            <div>
+
+                <span class="section-kicker">
+                    CATÁLOGO
+                </span>
+
+                <h2>
+                    Inventario
+                </h2>
+
+                <p>
+                    Administra los productos publicados en San Martín.
+                </p>
+
+            </div>
+
+            <div class="section-header-actions">
+
+                <span
+                    id="inventoryCount"
+                    class="section-count"
+                >
+                    0 productos
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             CONTENEDOR DE TABLA
+        ====================================================== -->
+
+        <div class="inventory-table-wrapper">
+
+            <div class="table-scroll">
+
+                <table
+                    class="admin-table inventory-table"
+                >
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Producto
+                            </th>
+
+                            <th>
+                                Código
+                            </th>
+
+                            <th>
+                                Marca
+                            </th>
+
+                            <th>
+                                Categoría
+                            </th>
+
+                            <th>
+                                Precio
+                            </th>
+
+                            <th>
+                                Oferta
+                            </th>
+
+                            <th>
+                                Stock
+                            </th>
+
+                            <th>
+                                Estado
+                            </th>
+
+                            <th>
+                                Acción
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="inventoryTable">
+                        <!-- JS -->
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =========================================================
+         MODAL DE PRODUCTO
+    ========================================================== -->
+
+    <div
+        id="productModal"
+        class="product-modal hidden"
+        aria-hidden="true"
+    >
+
+        <div
+            class="product-modal-overlay"
+            id="productModalOverlay"
+        ></div>
+
+
+        <div
+            class="product-modal-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="productModalTitle"
+        >
+
+
+            <!-- =================================================
+                 CABECERA DEL MODAL
+            ================================================== -->
+
+            <div class="product-modal-header">
+
+                <div>
+
+                    <span class="modal-kicker">
+                        SAN MARTÍN
+                    </span>
+
+                    <h2 id="productModalTitle">
+                        Nuevo producto
+                    </h2>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    id="closeProductModal"
+                    class="modal-close-button"
+                    aria-label="Cerrar"
+                >
+                    &times;
+                </button>
+
+            </div>
+
+
+
+            <!-- =================================================
+                 FORMULARIO
+            ================================================== -->
+
+            <form
+                id="productForm"
+                class="product-form"
+                novalidate
+            >
+
+                <!-- =============================================
+                     ID OCULTO
+                ============================================== -->
+
+                <input
+                    type="hidden"
+                    id="productId"
+                    name="productId"
+                >
+
+
+
+                <!-- =============================================
+                     INFORMACIÓN BÁSICA
+                ============================================== -->
+
+                <div class="form-section">
+
+                    <div class="form-section-header">
+
+                        <h3>
+                            Información del producto
+                        </h3>
+
+                        <p>
+                            Datos principales del artículo.
+                        </p>
+
+                    </div>
+
+
+                    <div class="form-grid">
+
+
+                        <!-- Código -->
+
+                        <div class="form-group">
+
+                            <label
+                                for="productCodigo"
+                            >
+                                Código
+                            </label>
+
+                            <input
+                                type="text"
+                                id="productCodigo"
+                                name="codigo"
+                                placeholder="Ej. LAP-001"
+                                autocomplete="off"
+                            >
+
+                        </div>
+
+
+
+                        <!-- Nombre -->
+
+                        <div
+                            class="form-group form-group-full"
+                        >
+
+                            <label
+                                for="productNombre"
+                            >
+                                Nombre del producto
+                            </label>
+
+                            <input
+                                type="text"
+                                id="productNombre"
+                                name="nombre"
+                                placeholder="Nombre del producto"
+                                required
+                            >
+
+                        </div>
+
+
+
+                        <!-- Marca -->
+
+                        <div class="form-group">
+
+                            <label
+                                for="productMarca"
+                            >
+                                Marca
+                            </label>
+
+                            <input
+                                type="text"
+                                id="productMarca"
+                                name="marca"
+                                placeholder="Ej. Maped"
+                            >
+
+                        </div>
+
+
+
+                        <!-- Categoría -->
+
+                        <div class="form-group">
+
+                            <label
+                                for="productCategoria"
+                            >
+                                Categoría
+                            </label>
+
+                            <select
+                                id="productCategoria"
+                                name="categoria"
+                                required
+                            >
+
+                                <option value="">
+                                    Seleccionar categoría
+                                </option>
+
+                                <option value="marcadores">
+                                    Marcadores
+                                </option>
+
+                                <option value="crayones">
+                                    Crayones
+                                </option>
+
+                                <option value="lapiceros">
+                                    Lapiceros
+                                </option>
+
+                                <option value="boligrafos">
+                                    Bolígrafos
+                                </option>
+
+                                <option value="lapices">
+                                    Lápices
+                                </option>
+
+                                <option value="decoracion">
+                                    Decoración
+                                </option>
+
+                                <option value="utiles">
+                                    Útiles
+                                </option>
+
+                                <option value="cumpleaños">
+                                    Cumpleaños
+                                </option>
+
+                                <option value="juguetes">
+                                    Juguetes
+                                </option>
+
+                                <option value="manualidades">
+                                    Manualidades
+                                </option>
+
+                                <option value="oficina">
+                                    Oficina
+                                </option>
+
+                                <option value="escolar">
+                                    Escolar
+                                </option>
+
+                                <option value="arte">
+                                    Arte
+                                </option>
+
+                                <option value="resaltadores">
+                                    Resaltadores
+                                </option>
+
+                                <option value="pinturas">
+                                    Pinturas
+                                </option>
+
+                                <option value="pegamento">
+                                    Pegamento / Adhesivo
+                                </option>
+
+                                <option value="cuadernos">
+                                    Cuadernos
+                                </option>
+
+                                <option value="papel">
+                                    Papel
+                                </option>
+
+                                <option value="cartulina">
+                                    Cartulina
+                                </option>
+
+                                <option value="foamy">
+                                    Foamy / Goma
+                                </option>
+
+                                <option value="reglas">
+                                    Reglas
+                                </option>
+
+                                <option value="tijeras">
+                                    Tijeras
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- =============================================
+                     PRECIOS E INVENTARIO
+                ============================================== -->
+
+                <div class="form-section">
+
+                    <div class="form-section-header">
+
+                        <h3>
+                            Precio e inventario
+                        </h3>
+
+                        <p>
+                            Configura precio, oferta y existencias.
+                        </p>
+
+                    </div>
+
+
+                    <div class="form-grid">
+
+
+                        <!-- Precio -->
+
+                        <div class="form-group">
+
+                            <label
+                                for="productPrecio"
+                            >
+                                Precio
+                            </label>
+
+                            <div class="input-prefix">
+
+                                <span>
+                                    Q
+                                </span>
+
+                                <input
+                                    type="number"
+                                    id="productPrecio"
+                                    name="precio"
+                                    min="0"
+                                    step="0.01"
+                                    placeholder="0.00"
+                                    required
+                                >
+
+                            </div>
+
+                        </div>
+
+
+
+                        <!-- Oferta -->
+
+                        <div class="form-group">
+
+                            <label
+                                for="productOferta"
+                            >
+                                Precio de oferta
+                            </label>
+
+                            <div class="input-prefix">
+
+                                <span>
+                                    Q
+                                </span>
+
+                                <input
+                                    type="number"
+                                    id="productOferta"
+                                    name="oferta"
+                                    min="0"
+                                    step="0.01"
+                                    placeholder="Opcional"
+                                >
+
+                            </div>
+
+                            <small class="form-help">
+                                Déjalo vacío si el producto no tiene oferta.
+                            </small>
+
+                        </div>
+
+
+
+                        <!-- Stock -->
+
+                        <div class="form-group">
+
+                            <label
+                                for="productStock"
+                            >
+                                Stock actual
+                            </label>
+
+                            <input
+                                type="number"
+                                id="productStock"
+                                name="stock"
+                                min="0"
+                                step="1"
+                                value="0"
+                                required
+                            >
+
+                        </div>
+
+
+
+                        <!-- Stock máximo -->
+
+                        <div class="form-group">
+
+                            <label
+                                for="productStockMaximo"
+                            >
+                                Stock máximo
+                            </label>
+
+                            <input
+                                type="number"
+                                id="productStockMaximo"
+                                name="stock_maximo"
+                                min="0"
+                                step="1"
+                                value="0"
+                                required
+                            >
+
+                            <small class="form-help">
+                                Se utiliza para calcular la reposición.
+                            </small>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- =============================================
+                     IMÁGENES DEL PRODUCTO
+                ============================================== -->
+
+                <div class="form-section">
+
+                    <div class="form-section-header">
+
+                        <h3>
+                            Imágenes
+                        </h3>
+
+                        <p>
+                            Agrega una o varias imágenes al producto.
+                        </p>
+
+                    </div>
+
+
+                    <div class="image-upload-area">
+
+
+                        <label
+                            for="productImagenes"
+                            class="image-upload-button"
+                        >
+
+                            <span class="image-upload-icon">
+                                +
+                            </span>
+
+                            <span>
+                                Agregar imágenes
+                            </span>
+
+                        </label>
+
+
+                        <input
+                            type="file"
+                            id="productImagenes"
+                            name="imagenes"
+                            accept="image/*"
+                            multiple
+                            hidden
+                        >
+
+
+                        <p class="form-help">
+                            Puedes seleccionar varias imágenes.
+                        </p>
+
+                    </div>
+
+
+
+                    <!-- =========================================
+                         PREVISUALIZACIÓN DE IMÁGENES NUEVAS
+                    ========================================== -->
+
+                    <div
+                        id="imagesPreviewContainer"
+                        class="images-preview-container hidden"
+                    >
+
+                        <div class="images-preview-header">
+
+                            <h4>
+                                Imágenes seleccionadas
+                            </h4>
+
+                            <span>
+                                Arrastra para ordenar
+                            </span>
+
+                        </div>
+
+
+                        <div
+                            id="imagesPreviewGrid"
+                            class="images-preview-grid"
+                        >
+                            <!-- JS -->
+                        </div>
+
+                    </div>
+
+
+
+                    <!-- =========================================
+                         PREVISUALIZACIÓN DE IMAGEN PRINCIPAL
+                    ========================================== -->
+
+                    <div
+                        id="imagePreviewContainer"
+                        class="image-preview-container hidden"
+                    >
+
+                        <div class="image-preview-label">
+                            Imagen principal
+                        </div>
+
+                        <img
+                            id="imagePreview"
+                            src=""
+                            alt="Vista previa del producto"
+                        >
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- =============================================
+                     DESCRIPCIÓN
+                ============================================== -->
+
+                <div class="form-section">
+
+                    <div class="form-section-header">
+
+                        <h3>
+                            Descripción
+                        </h3>
+
+                        <p>
+                            Información que verá el cliente en el catálogo.
+                        </p>
+
+                    </div>
+
+
+                    <div class="form-group form-group-full">
+
+                        <label
+                            for="productDescripcion"
+                        >
+                            Descripción del producto
+                        </label>
+
+                        <textarea
+                            id="productDescripcion"
+                            name="descripcion"
+                            rows="5"
+                            placeholder="Describe el producto..."
+                        ></textarea>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- =============================================
+                     ESTADO DEL PRODUCTO
+                ============================================== -->
+
+                <div class="form-section">
+
+                    <div class="form-section-header">
+
+                        <h3>
+                            Publicación
+                        </h3>
+
+                        <p>
+                            Controla si el producto aparece disponible
+                            en el catálogo.
+                        </p>
+
+                    </div>
+
+
+                    <label
+                        class="switch-field"
+                        for="productActivo"
+                    >
+
+                        <span class="switch-control">
+
+                            <input
+                                type="checkbox"
+                                id="productActivo"
+                                name="activo"
+                                checked
+                            >
+
+                            <span class="switch-slider"></span>
+
+                        </span>
+
+
+                        <span class="switch-text">
+
+                            <strong>
+                                Producto activo
+                            </strong>
+
+                            <small>
+                                El producto podrá mostrarse en el catálogo
+                                de San Martín.
+                            </small>
+
+                        </span>
+
+                    </label>
+
+                </div>
+
+
+
+                <!-- =============================================
+                     MENSAJE DEL FORMULARIO
+                ============================================== -->
+
+                <div
+                    id="productFormMessage"
+                    class="form-message"
+                    aria-live="polite"
+                ></div>
+
+
+
+                <!-- =============================================
+                     ACCIONES
+                ============================================== -->
+
+                <div class="product-form-actions">
+
+                    <button
+                        type="button"
+                        id="cancelProductButton"
+                        class="button button-secondary"
+                    >
+                        Cancelar
+                    </button>
+
+
+                    <button
+                        type="submit"
+                        id="saveProductButton"
+                        class="button button-primary"
+                    >
+                        Guardar producto
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+<!-- =========================================================
+     SAN MARTÍN — ADMINISTRACIÓN
+     PARTE 3/3
+========================================================== -->
+
+
+<!-- =========================================================
+     CIERRE DEL CONTENEDOR PRINCIPAL
+========================================================== -->
+
+        </main>
+
+    </section>
+
+    <!-- =========================================================
+         NOTIFICACIÓN DE NUEVO PEDIDO
+    ========================================================== -->
+
+    <div
+        id="adminNewOrderAlert"
+        class="admin-new-order-alert hidden"
+        role="alert"
+        aria-live="assertive"
+    >
+
+        <div class="admin-new-order-alert-icon">
+            !
+        </div>
+
+
+        <div class="admin-new-order-alert-content">
+
+            <strong>
+                ¡Nuevo pedido recibido!
+            </strong>
+
+            <span id="adminNewOrderAlertText">
+                Hay un nuevo pedido pendiente.
+            </span>
+
+        </div>
+
+
+        <button
+            type="button"
+            id="closeNewOrderAlert"
+            class="admin-new-order-alert-close"
+            aria-label="Cerrar notificación"
+        >
+            &times;
+        </button>
+
+    </div>
+
+
+
+    <!-- =========================================================
+         FOOTER ADMINISTRATIVO
+    ========================================================== -->
+
+    <footer class="admin-footer">
+
+        <div class="admin-footer-content">
+
+            <div class="admin-footer-brand">
+
+                <strong>
+                    San Martín
+                </strong>
+
+                <span>
+                    Papelería y Librería
+                </span>
+
+            </div>
+
+
+            <div class="admin-footer-info">
+
+                <span>
+                    Panel administrativo
+                </span>
+
+                <span>
+                    © 2026 San Martín
+                </span>
+
+            </div>
+
+        </div>
+
+    </footer>
+
+
+
+    <!-- =========================================================
+         SUPABASE
+    ========================================================== -->
+
+    <script
+        src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+    ></script>
+
+
+    <!-- =========================================================
+         JAVASCRIPT DEL ADMINISTRADOR
+    ========================================================== -->
+
+    <script
+        src="admin.js"
+    ></script>
+
+
+</body>
+
+</html>
