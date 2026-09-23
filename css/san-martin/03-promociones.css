@@ -1,0 +1,2176 @@
+/* =========================================================
+   SAN MARTÍN — OFERTAS Y EVENTOS
+
+   Archivo: 03-ofertas.css
+
+   RESPONSABILIDAD:
+
+   - Sección de promociones
+   - Banner principal
+   - Carrusel de promociones
+   - Flechas del carrusel
+   - Vista interna #ofertas
+   - Encabezado de ofertas
+   - Botón volver
+   - Información de resultados
+   - Integración con .product
+   - Productos en oferta
+   - Precios de oferta
+   - Estado sin ofertas
+   - Paginación de ofertas
+   - Responsive
+   - Animaciones
+
+   DEPENDENCIAS:
+
+   - Variables globales
+   - 03-ofertas.js
+   - 05-08-productos.js
+   - 05-06-precio.js
+   - 06-productos.css
+========================================================= */
+
+
+/* =========================================================
+   1. VARIABLES ESPECÍFICAS DE OFERTAS
+========================================================= */
+
+:root {
+
+    --ofertas-verde:
+        var(--verde, #173f35);
+
+    --ofertas-verde-claro:
+        var(--verde-claro, #286052);
+
+    --ofertas-verde-suave:
+        var(--verde-muy-suave, #e8f0ed);
+
+    --ofertas-dorado:
+        var(--dorado, #d8a63b);
+
+    --ofertas-dorado-claro:
+        var(--dorado-claro, #e8c46a);
+
+    --ofertas-dorado-suave:
+        var(--dorado-suave, #f7edcf);
+
+    --ofertas-crema:
+        var(--crema, #f5f1e8);
+
+    --ofertas-crema-claro:
+        var(--crema-claro, #faf8f2);
+
+    --ofertas-blanco:
+        var(--blanco, #ffffff);
+
+    --ofertas-texto:
+        var(--texto, #26332f);
+
+    --ofertas-texto-suave:
+        var(--texto-suave, #68736f);
+
+    --ofertas-borde:
+        var(--borde-suave, rgba(23, 63, 53, 0.10));
+
+    --ofertas-error:
+        var(--error, #b33a3a);
+
+    --ofertas-error-suave:
+        var(--error-suave, #f9eaea);
+
+    --ofertas-sombra:
+        0 12px 35px rgba(23, 63, 53, 0.09);
+
+    --ofertas-sombra-fuerte:
+        0 20px 48px rgba(23, 63, 53, 0.14);
+
+    --ofertas-radio:
+        var(--radio-xl, 20px);
+}
+
+
+/* =========================================================
+   2. RESPETAR ATRIBUTO HIDDEN
+========================================================= */
+
+.promotions[hidden],
+.offers-page[hidden] {
+
+    display: none !important;
+
+}
+
+
+/* =========================================================
+   3. SECCIÓN DE PROMOCIONES
+========================================================= */
+
+.promotions {
+
+    position: relative;
+
+    width: 100%;
+
+    padding:
+        78px
+        0
+        85px;
+
+    overflow: hidden;
+
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            var(--ofertas-crema-claro) 100%
+        );
+
+}
+
+
+/* =========================================================
+   4. DECORACIÓN DE FONDO
+========================================================= */
+
+.promotions::before {
+
+    content: "";
+
+    position: absolute;
+
+    width: 430px;
+    height: 430px;
+
+    top: -250px;
+    right: -150px;
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(216, 166, 59, 0.13),
+            rgba(216, 166, 59, 0) 70%
+        );
+
+    pointer-events: none;
+
+}
+
+
+.promotions::after {
+
+    content: "";
+
+    position: absolute;
+
+    width: 360px;
+    height: 360px;
+
+    bottom: -230px;
+    left: -160px;
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(40, 96, 82, 0.09),
+            rgba(40, 96, 82, 0) 70%
+        );
+
+    pointer-events: none;
+
+}
+
+
+/* =========================================================
+   5. CONTENEDOR
+========================================================= */
+
+.promotions > .container {
+
+    position: relative;
+
+    z-index: 1;
+
+}
+
+
+/* =========================================================
+   6. ENCABEZADO DE PROMOCIONES
+========================================================= */
+
+.promotions .section-header {
+
+    max-width: 760px;
+
+    margin:
+        0
+        auto
+        38px;
+
+    text-align: center;
+
+}
+
+
+.promotions .section-label {
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    margin-bottom: 11px;
+
+    color:
+        var(--ofertas-verde);
+
+    font-weight: 800;
+
+}
+
+
+.promotions .section-title {
+
+    margin: 0;
+
+    color:
+        var(--ofertas-verde);
+
+    line-height: 1.12;
+
+}
+
+
+.promotions .section-description {
+
+    max-width: 650px;
+
+    margin:
+        12px
+        auto
+        0;
+
+    color:
+        var(--ofertas-texto-suave);
+
+    line-height: 1.65;
+
+}
+
+
+/* =========================================================
+   7. CARRUSEL
+========================================================= */
+
+.promotions-carousel {
+
+    position: relative;
+
+    width: 100%;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+}
+
+
+/* =========================================================
+   8. TRACK
+========================================================= */
+
+.promotions-track {
+
+    position: relative;
+
+    width: 100%;
+
+    display: flex;
+
+    overflow-x: auto;
+
+    scroll-behavior: smooth;
+
+    scroll-snap-type: x mandatory;
+
+    scrollbar-width: none;
+
+    overscroll-behavior-x: contain;
+
+    border-radius:
+        var(--ofertas-radio);
+
+    box-shadow:
+        var(--ofertas-sombra);
+
+}
+
+
+.promotions-track::-webkit-scrollbar {
+
+    display: none;
+
+}
+
+
+/* =========================================================
+   9. BANNER
+========================================================= */
+
+.promo-banner {
+
+    position: relative;
+
+    flex:
+        0 0 100%;
+
+    width: 100%;
+
+    display: block;
+
+    overflow: hidden;
+
+    scroll-snap-align: center;
+
+    border-radius:
+        var(--ofertas-radio);
+
+    background:
+        var(--ofertas-blanco);
+
+    text-decoration: none;
+
+    box-shadow:
+        0 8px 25px
+        rgba(23, 63, 53, 0.08);
+
+    transform: translateZ(0);
+
+    transition:
+        box-shadow 0.3s ease,
+        transform 0.3s ease;
+
+}
+
+
+.promo-banner:hover {
+
+    box-shadow:
+        var(--ofertas-sombra-fuerte);
+
+    transform:
+        translateY(-2px);
+
+}
+
+
+/* =========================================================
+   10. IMAGEN DEL BANNER
+========================================================= */
+
+.promo-banner img {
+
+    display: block;
+
+    width: 100%;
+
+    height: auto;
+
+    min-height: 190px;
+
+    max-height: 470px;
+
+    object-fit: cover;
+
+    object-position: center;
+
+    border-radius: inherit;
+
+    transition:
+        transform 0.55s
+        cubic-bezier(
+            0.22,
+            1,
+            0.36,
+            1
+        );
+
+}
+
+
+.promo-banner:hover img {
+
+    transform:
+        scale(1.018);
+
+}
+
+
+/* =========================================================
+   11. BRILLO DEL BANNER
+========================================================= */
+
+.promo-banner::after {
+
+    content: "";
+
+    position: absolute;
+
+    inset: 0;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0) 55%,
+            rgba(23, 63, 53, 0.07) 100%
+        );
+
+    pointer-events: none;
+
+}
+
+
+/* =========================================================
+   12. FLECHAS
+========================================================= */
+
+.promo-arrow {
+
+    position: absolute;
+
+    top: 50%;
+
+    z-index: 10;
+
+    width: 50px;
+    height: 50px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.75);
+
+    border-radius: 50%;
+
+    background:
+        rgba(23, 63, 53, 0.90);
+
+    color: #ffffff;
+
+    font-family: inherit;
+
+    font-size: 25px;
+
+    font-weight: 700;
+
+    line-height: 1;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 9px 24px
+        rgba(0, 0, 0, 0.22);
+
+    backdrop-filter: blur(7px);
+
+    -webkit-backdrop-filter: blur(7px);
+
+    transform:
+        translateY(-50%);
+
+    transition:
+        transform 0.22s ease,
+        background 0.22s ease,
+        box-shadow 0.22s ease;
+
+}
+
+
+.promo-arrow:hover {
+
+    background:
+        var(--ofertas-verde-claro);
+
+    box-shadow:
+        0 12px 28px
+        rgba(0, 0, 0, 0.26);
+
+    transform:
+        translateY(-50%)
+        scale(1.08);
+
+}
+
+
+.promo-arrow:active {
+
+    transform:
+        translateY(-50%)
+        scale(0.94);
+
+}
+
+
+.promo-arrow-prev {
+
+    left: 18px;
+
+}
+
+
+.promo-arrow-next {
+
+    right: 18px;
+
+}
+
+
+/* =========================================================
+   13. VISTA INTERNA DE OFERTAS
+========================================================= */
+
+.offers-page {
+
+    position: relative;
+
+    width: 100%;
+
+    min-height: 65vh;
+
+    padding:
+        48px
+        0
+        90px;
+
+    overflow: hidden;
+
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #faf8f3 100%
+        );
+
+    scroll-margin-top:
+        calc(
+            var(--header-height, 78px) + 20px
+        );
+
+}
+
+
+/* =========================================================
+   14. DECORACIÓN VISTA OFERTAS
+========================================================= */
+
+.offers-page::before {
+
+    content: "";
+
+    position: absolute;
+
+    top: -220px;
+    right: -160px;
+
+    width: 460px;
+    height: 460px;
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(216, 166, 59, 0.12),
+            transparent 69%
+        );
+
+    pointer-events: none;
+
+}
+
+
+.offers-page::after {
+
+    content: "";
+
+    position: absolute;
+
+    bottom: -240px;
+    left: -190px;
+
+    width: 480px;
+    height: 480px;
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(40, 96, 82, 0.08),
+            transparent 69%
+        );
+
+    pointer-events: none;
+
+}
+
+
+.offers-page > .container {
+
+    position: relative;
+
+    z-index: 1;
+
+}
+
+/* =========================================================
+   DISTINTIVO DE OFERTA — 🔥 20% OFF
+   SUPERPUESTO SOBRE LA IMAGEN
+========================================================= */
+
+.offers-products .product {
+    position: relative;
+}
+
+.offers-products .product-offer-badge {
+    position: absolute;
+
+    top: 12px;
+    left: 12px;
+
+    z-index: 10;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 4px;
+
+    padding: 7px 11px;
+
+    background: var(--ofertas-verde, #173f35);
+    color: #ffffff;
+
+    border: 1px solid var(--ofertas-dorado, #d8a63b);
+    border-radius: 999px;
+
+    font-size: 0.78rem;
+    font-weight: 900;
+    line-height: 1;
+
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+
+    box-shadow:
+        0 4px 10px rgba(23, 63, 53, 0.18);
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+/* =========================================================
+   EFECTO HOVER
+========================================================= */
+
+.offers-products .product:hover .product-offer-badge {
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 6px 14px rgba(23, 63, 53, 0.25);
+}
+
+
+/* =========================================================
+   MÓVIL
+========================================================= */
+
+@media (max-width: 600px) {
+
+    .offers-products .product-offer-badge {
+        top: 9px;
+        left: 9px;
+
+        padding: 6px 9px;
+
+        font-size: 0.72rem;
+
+        gap: 3px;
+    }
+
+}
+
+
+/* =========================================================
+   15. ENCABEZADO INTERNO
+========================================================= */
+
+.offers-page-header {
+
+    max-width: 850px;
+
+    margin:
+        0
+        auto
+        32px;
+
+    text-align: center;
+
+}
+
+
+.offers-page-header .section-label {
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    margin-bottom: 12px;
+
+    color:
+        var(--ofertas-verde);
+
+    font-weight: 800;
+
+}
+
+
+.offers-page-header h1 {
+
+    margin: 0;
+
+    color:
+        var(--ofertas-verde);
+
+    line-height: 1.12;
+
+    letter-spacing: -0.025em;
+
+}
+
+
+.offers-page-header p {
+
+    max-width: 650px;
+
+    margin:
+        12px
+        auto
+        0;
+
+    color:
+        var(--ofertas-texto-suave);
+
+    line-height: 1.65;
+
+}
+
+
+/* =========================================================
+   16. BOTÓN VOLVER
+========================================================= */
+
+.offers-back-button {
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    margin:
+        0
+        0
+        25px;
+
+    padding:
+        10px
+        16px;
+
+    border:
+        1px solid
+        var(--ofertas-borde);
+
+    border-radius: 11px;
+
+    background:
+        rgba(255, 255, 255, 0.92);
+
+    color:
+        var(--ofertas-verde);
+
+    font-family: inherit;
+
+    font-size: 0.86rem;
+
+    font-weight: 800;
+
+    line-height: 1;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 6px 18px
+        rgba(23, 63, 53, 0.07);
+
+    transition:
+        transform 0.22s ease,
+        background 0.22s ease,
+        border-color 0.22s ease,
+        box-shadow 0.22s ease;
+
+}
+
+
+.offers-back-button:hover {
+
+    transform:
+        translateX(-4px);
+
+    background:
+        var(--ofertas-crema);
+
+    border-color:
+        rgba(216, 166, 59, 0.42);
+
+    box-shadow:
+        0 9px 23px
+        rgba(23, 63, 53, 0.10);
+
+}
+
+
+.offers-back-button:active {
+
+    transform:
+        translateX(-1px)
+        scale(0.98);
+
+}
+
+
+/* =========================================================
+   17. INFORMACIÓN DE RESULTADOS
+========================================================= */
+
+#offersResultsInfo {
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+    margin:
+        0
+        0
+        24px;
+
+    padding:
+        12px
+        16px;
+
+    border:
+        1px solid
+        var(--ofertas-borde);
+
+    border-radius: 12px;
+
+    background:
+        rgba(255, 255, 255, 0.82);
+
+    color:
+        var(--ofertas-texto-suave);
+
+    font-size: 0.78rem;
+
+    font-weight: 700;
+
+    line-height: 1.4;
+
+    box-shadow:
+        0 5px 18px
+        rgba(23, 63, 53, 0.04);
+
+}
+
+
+/* =========================================================
+   18. GRID DE OFERTAS
+========================================================= */
+
+.offers-products {
+
+    width: 100%;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            4,
+            minmax(0, 1fr)
+        );
+
+    gap: 22px;
+
+    align-items: stretch;
+
+}
+
+
+/* =========================================================
+   19. INTEGRACIÓN CON TARJETAS .product
+========================================================= */
+
+.offers-products .product {
+
+    border-color:
+        rgba(216, 166, 59, 0.24);
+
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #fffdf8 100%
+        );
+
+    box-shadow:
+        0 10px 30px
+        rgba(23, 63, 53, 0.08);
+
+}
+
+
+.offers-products .product::before {
+
+    width: 42px;
+
+}
+
+
+.offers-products .product:hover::before {
+
+    width: 75%;
+
+}
+
+
+.offers-products .product:hover {
+
+    border-color:
+        rgba(216, 166, 59, 0.38);
+
+    box-shadow:
+        0 20px 45px
+        rgba(23, 63, 53, 0.14);
+
+}
+
+
+/* =========================================================
+   20. IMAGEN DE PRODUCTO EN OFERTA
+========================================================= */
+
+.offers-products .product-image {
+
+    background:
+        linear-gradient(
+            145deg,
+            #fbf8ee,
+            var(--ofertas-crema-claro)
+        );
+
+}
+
+
+.offers-products .product-image::before {
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(216, 166, 59, 0.18),
+            transparent 68%
+        );
+
+}
+
+
+/* =========================================================
+   21. ETIQUETA DE DESCUENTO
+
+   IMPORTANTE:
+
+   crearTarjetaProducto() genera:
+
+       .product-offer-badge
+========================================================= */
+
+.offers-products .product-offer-badge {
+
+    z-index: 6;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-height: 31px;
+
+    padding:
+        6px
+        11px;
+
+    border:
+        1px solid
+        rgba(179, 58, 58, 0.18);
+
+    border-radius: 999px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--ofertas-error),
+            #c74b4b
+        );
+
+    color: #ffffff;
+
+    font-size: 0.68rem;
+
+    font-weight: 900;
+
+    letter-spacing: 0.02em;
+
+    line-height: 1;
+
+    box-shadow:
+        0 7px 18px
+        rgba(179, 58, 58, 0.22);
+
+}
+
+
+/* =========================================================
+   22. CONTENEDOR DE PRECIOS DE OFERTA
+
+   IMPORTANTE:
+
+   crearTarjetaProducto() genera:
+
+       .product-price
+       .product-price-offer
+
+   Resultado:
+
+       Q86.00
+       ───────
+       Q77.40
+
+   El precio original y el precio final
+   permanecen separados.
+========================================================= */
+
+.offers-products .product-price-offer {
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    justify-content: center;
+
+    gap: 4px;
+
+    width: 100%;
+
+    margin-top: auto;
+
+    margin-bottom: 10px;
+
+    padding-top: 7px;
+
+    line-height: 1.1;
+
+}
+
+
+/* =========================================================
+   23. PRECIO ORIGINAL — TACHADO
+
+   Clase real generada por JavaScript:
+
+       .product-price-original
+========================================================= */
+
+.offers-products .product-price-offer
+.product-price-original {
+
+    display: block;
+
+    width: fit-content;
+
+    margin: 0;
+    padding: 0;
+
+    color:
+        var(--ofertas-texto-suave);
+
+    font-size: 0.82rem;
+
+    font-weight: 600;
+
+    line-height: 1.1;
+
+    text-decoration-line: line-through;
+
+    text-decoration-thickness: 1.5px;
+
+    text-decoration-color: currentColor;
+
+    white-space: nowrap;
+
+    opacity: 0.85;
+
+}
+
+
+/* =========================================================
+   24. PRECIO FINAL — OFERTA
+
+   Clase real generada por JavaScript:
+
+       .product-price-final
+========================================================= */
+
+.offers-products .product-price-offer
+.product-price-final {
+
+    display: block;
+
+    width: fit-content;
+
+    margin: 0;
+    padding: 0;
+
+    color:
+        var(--ofertas-error);
+
+    font-size: 1.38rem;
+
+    font-weight: 900;
+
+    line-height: 1.05;
+
+    letter-spacing: -0.025em;
+
+    white-space: nowrap;
+
+}
+
+
+/* =========================================================
+   25. SEPARACIÓN ENTRE PRECIOS
+========================================================= */
+
+.offers-products .product-price-original
++ .product-price-final {
+
+    margin-top: 2px;
+
+}
+
+
+/* =========================================================
+   26. ASEGURAR QUE EL PRECIO DE OFERTA
+   NO SEA SOBRESCRITO POR 06-productos.css
+========================================================= */
+
+.offers-products .product-price-offer
+.product-price-original,
+.offers-products .product-price-offer
+.product-price-final {
+
+    flex-shrink: 0;
+
+}
+
+
+/* =========================================================
+   27. PRECIO NORMAL
+========================================================= */
+
+.offers-products .product-price:not(.product-price-offer) {
+
+    color:
+        var(--ofertas-error);
+
+    font-weight: 800;
+
+    white-space: nowrap;
+
+}
+
+
+/* =========================================================
+   28. BOTONES DENTRO DE OFERTAS
+========================================================= */
+
+.offers-products .product-actions {
+
+    position: relative;
+
+}
+
+
+/* =========================================================
+   29. ESTADO VACÍO
+========================================================= */
+
+.offers-empty {
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+    min-height: 290px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding:
+        45px
+        25px;
+
+    border:
+        1px dashed
+        rgba(23, 63, 53, 0.20);
+
+    border-radius:
+        var(--ofertas-radio);
+
+    background:
+        linear-gradient(
+            145deg,
+            #ffffff,
+            #faf7ee
+        );
+
+    text-align: center;
+
+    box-shadow:
+        0 8px 25px
+        rgba(23, 63, 53, 0.04);
+
+}
+
+
+.offers-empty::before {
+
+    content: "🔥";
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 76px;
+    height: 76px;
+
+    margin:
+        0
+        0
+        18px;
+
+    border-radius: 24px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--ofertas-verde-suave),
+            var(--ofertas-dorado-suave)
+        );
+
+    font-size: 2rem;
+
+    box-shadow:
+        0 12px 28px
+        rgba(23, 63, 53, 0.09);
+
+}
+
+
+.offers-empty p {
+
+    max-width: 500px;
+
+    margin: 0;
+
+    color:
+        var(--ofertas-texto-suave);
+
+    font-size: 0.88rem;
+
+    font-weight: 600;
+
+    line-height: 1.6;
+
+}
+
+
+/* =========================================================
+   30. PAGINACIÓN
+========================================================= */
+
+#offersPagination {
+
+    width: 100%;
+
+    min-height: 42px;
+
+    margin:
+        38px
+        0
+        0;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-wrap: wrap;
+
+    gap: 8px;
+
+}
+
+
+/* =========================================================
+   31. BOTONES DE PAGINACIÓN
+========================================================= */
+
+#offersPagination button {
+
+    min-width: 40px;
+
+    height: 40px;
+
+    padding:
+        0
+        11px;
+
+    border:
+        1px solid
+        var(--ofertas-borde);
+
+    border-radius: 10px;
+
+    background: #ffffff;
+
+    color:
+        var(--ofertas-verde);
+
+    font-family: inherit;
+
+    font-size: 0.78rem;
+
+    font-weight: 800;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 4px 12px
+        rgba(23, 63, 53, 0.05);
+
+    transition:
+        transform 0.2s ease,
+        background 0.2s ease,
+        color 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+
+}
+
+
+#offersPagination button:hover {
+
+    transform:
+        translateY(-2px);
+
+    border-color:
+        rgba(216, 166, 59, 0.45);
+
+    background:
+        var(--ofertas-crema);
+
+    box-shadow:
+        0 7px 17px
+        rgba(23, 63, 53, 0.08);
+
+}
+
+
+#offersPagination button:active {
+
+    transform:
+        translateY(0);
+
+}
+
+
+/* =========================================================
+   PÁGINA ACTIVA
+========================================================= */
+
+#offersPagination button.active,
+#offersPagination button[aria-current="page"] {
+
+    border-color:
+        var(--ofertas-verde);
+
+    background:
+        var(--ofertas-verde);
+
+    color: #ffffff;
+
+    box-shadow:
+        0 7px 17px
+        rgba(23, 63, 53, 0.17);
+
+}
+
+
+/* =========================================================
+   DESHABILITADO
+========================================================= */
+
+#offersPagination button:disabled {
+
+    opacity: 0.42;
+
+    cursor: not-allowed;
+
+    box-shadow: none;
+
+    transform: none;
+
+}
+
+
+/* =========================================================
+   32. ANIMACIÓN DE ENTRADA
+========================================================= */
+
+.offers-page.vista-activa {
+
+    animation:
+        vistaOfertasEntrada
+        0.35s
+        ease
+        both;
+
+}
+
+
+.offers-page.vista-activa
+.offers-page-header {
+
+    animation:
+        contenidoOfertasEntrada
+        0.45s
+        ease
+        both;
+
+}
+
+
+.offers-page.vista-activa
+.offers-products {
+
+    animation:
+        contenidoOfertasEntrada
+        0.50s
+        0.04s
+        ease
+        both;
+
+}
+
+
+@keyframes vistaOfertasEntrada {
+
+    from {
+
+        opacity: 0;
+
+    }
+
+    to {
+
+        opacity: 1;
+
+    }
+
+}
+
+
+@keyframes contenidoOfertasEntrada {
+
+    from {
+
+        opacity: 0;
+
+        transform:
+            translateY(14px);
+
+    }
+
+    to {
+
+        opacity: 1;
+
+        transform:
+            translateY(0);
+
+    }
+
+}
+
+
+/* =========================================================
+   33. FOCO ACCESIBLE
+========================================================= */
+
+.promo-arrow:focus-visible,
+.promo-banner:focus-visible,
+.offers-back-button:focus-visible,
+#offersPagination button:focus-visible {
+
+    outline:
+        3px solid
+        rgba(216, 166, 59, 0.65);
+
+    outline-offset: 3px;
+
+}
+
+
+/* =========================================================
+   34. TABLET GRANDE
+========================================================= */
+
+@media (max-width: 1200px) {
+
+    .offers-products {
+
+        grid-template-columns:
+            repeat(
+                3,
+                minmax(0, 1fr)
+            );
+
+        gap: 20px;
+
+    }
+
+}
+
+
+/* =========================================================
+   35. TABLET
+========================================================= */
+
+@media (max-width: 950px) {
+
+    .promotions {
+
+        padding:
+            60px
+            0
+            68px;
+
+    }
+
+
+    .offers-page {
+
+        padding:
+            42px
+            0
+            70px;
+
+    }
+
+
+    .offers-products {
+
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+
+        gap: 18px;
+
+    }
+
+
+    .promo-arrow {
+
+        width: 44px;
+        height: 44px;
+
+        font-size: 21px;
+
+    }
+
+
+    .promo-arrow-prev {
+
+        left: 12px;
+
+    }
+
+
+    .promo-arrow-next {
+
+        right: 12px;
+
+    }
+
+}
+
+
+/* =========================================================
+   36. MÓVIL
+========================================================= */
+
+@media (max-width: 650px) {
+
+    .promotions {
+
+        padding:
+            43px
+            0
+            50px;
+
+    }
+
+
+    .promotions .section-header {
+
+        margin-bottom: 25px;
+
+    }
+
+
+    .promotions .section-description {
+
+        line-height: 1.55;
+
+    }
+
+
+    .promotions-track {
+
+        border-radius: 14px;
+
+    }
+
+
+    .promo-banner {
+
+        border-radius: 14px;
+
+    }
+
+
+    .promo-banner img {
+
+        min-height: 145px;
+
+        max-height: 285px;
+
+    }
+
+
+    .promo-arrow {
+
+        width: 37px;
+        height: 37px;
+
+        font-size: 18px;
+
+    }
+
+
+    .promo-arrow-prev {
+
+        left: 7px;
+
+    }
+
+
+    .promo-arrow-next {
+
+        right: 7px;
+
+    }
+
+
+    /* -----------------------------------------------------
+       VISTA INTERNA
+    ----------------------------------------------------- */
+
+    .offers-page {
+
+        min-height: 60vh;
+
+        padding:
+            27px
+            0
+            55px;
+
+    }
+
+
+    .offers-page-header {
+
+        margin-bottom: 23px;
+
+        text-align: left;
+
+    }
+
+
+    .offers-page-header .section-label {
+
+        justify-content: flex-start;
+
+    }
+
+
+    .offers-page-header p {
+
+        margin-top: 9px;
+
+    }
+
+
+    /* -----------------------------------------------------
+       VOLVER
+    ----------------------------------------------------- */
+
+    .offers-back-button {
+
+        margin-bottom: 18px;
+
+        padding:
+            9px
+            13px;
+
+        font-size: 0.76rem;
+
+    }
+
+
+    /* -----------------------------------------------------
+       RESULTADOS
+    ----------------------------------------------------- */
+
+    #offersResultsInfo {
+
+        margin-bottom: 17px;
+
+        padding:
+            10px
+            13px;
+
+        font-size: 0.70rem;
+
+    }
+
+
+    /* -----------------------------------------------------
+       PRODUCTOS
+    ----------------------------------------------------- */
+
+    .offers-products {
+
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+
+        gap: 12px;
+
+    }
+
+
+    /* -----------------------------------------------------
+       OFERTA
+    ----------------------------------------------------- */
+
+    .offers-products .product-offer-badge {
+
+        min-height: 26px;
+
+        padding:
+            5px
+            8px;
+
+        font-size: 0.58rem;
+
+    }
+
+
+    /* -----------------------------------------------------
+       PRECIOS DE OFERTA
+    ----------------------------------------------------- */
+
+    .offers-products .product-price-offer {
+
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        gap: 3px;
+
+        margin-bottom: 8px;
+
+        padding-top: 5px;
+
+    }
+
+
+    .offers-products .product-price-offer
+    .product-price-original {
+
+        display: block;
+
+        font-size: 0.65rem;
+
+        line-height: 1.1;
+
+    }
+
+
+    .offers-products .product-price-offer
+    .product-price-final {
+
+        display: block;
+
+        font-size: 1.04rem;
+
+        line-height: 1.05;
+
+    }
+
+
+    /* -----------------------------------------------------
+       PAGINACIÓN
+    ----------------------------------------------------- */
+
+    #offersPagination {
+
+        margin-top: 28px;
+
+        gap: 6px;
+
+    }
+
+
+    #offersPagination button {
+
+        min-width: 36px;
+
+        height: 36px;
+
+        padding:
+            0
+            9px;
+
+        border-radius: 9px;
+
+        font-size: 0.68rem;
+
+    }
+
+
+    /* -----------------------------------------------------
+       ESTADO VACÍO
+    ----------------------------------------------------- */
+
+    .offers-empty {
+
+        min-height: 245px;
+
+        padding:
+            35px
+            18px;
+
+        border-radius: 15px;
+
+    }
+
+
+    .offers-empty::before {
+
+        width: 65px;
+        height: 65px;
+
+        margin-bottom: 14px;
+
+        border-radius: 20px;
+
+        font-size: 1.7rem;
+
+    }
+
+
+    .offers-empty p {
+
+        font-size: 0.76rem;
+
+    }
+
+}
+
+
+/* =========================================================
+   37. MÓVIL PEQUEÑO
+========================================================= */
+
+@media (max-width: 480px) {
+
+    .promotions {
+
+        padding-top: 35px;
+
+    }
+
+
+    .promo-banner img {
+
+        min-height: 125px;
+
+        max-height: 225px;
+
+    }
+
+
+    .promo-arrow {
+
+        width: 34px;
+        height: 34px;
+
+        font-size: 16px;
+
+    }
+
+
+    .offers-page {
+
+        padding-top: 23px;
+
+    }
+
+
+    .offers-products {
+
+        gap: 10px;
+
+    }
+
+
+    .offers-products .product {
+
+        border-radius: 15px;
+
+    }
+
+
+    .offers-products .product-offer-badge {
+
+        top: 7px;
+
+        left: 7px;
+
+        min-height: 23px;
+
+        padding:
+            4px
+            6px;
+
+        font-size: 0.52rem;
+
+    }
+
+
+    /* -----------------------------------------------------
+       PRECIOS PEQUEÑOS
+    ----------------------------------------------------- */
+
+    .offers-products .product-price-offer {
+
+        gap: 3px;
+
+        padding-top: 4px;
+
+    }
+
+
+    .offers-products .product-price-offer
+    .product-price-original {
+
+        font-size: 0.60rem;
+
+    }
+
+
+    .offers-products .product-price-offer
+    .product-price-final {
+
+        font-size: 0.98rem;
+
+    }
+
+
+    #offersResultsInfo {
+
+        font-size: 0.63rem;
+
+    }
+
+}
+
+
+/* =========================================================
+   38. PANTALLAS MUY PEQUEÑAS
+========================================================= */
+
+@media (max-width: 360px) {
+
+    .offers-products {
+
+        gap: 8px;
+
+    }
+
+
+    .offers-page-header {
+
+        margin-bottom: 18px;
+
+    }
+
+
+    .offers-back-button {
+
+        padding:
+            8px
+            11px;
+
+        font-size: 0.70rem;
+
+    }
+
+
+    /* -----------------------------------------------------
+       PRECIOS MUY PEQUEÑOS
+    ----------------------------------------------------- */
+
+    .offers-products .product-price-offer
+    .product-price-original {
+
+        font-size: 0.56rem;
+
+    }
+
+
+    .offers-products .product-price-offer
+    .product-price-final {
+
+        font-size: 0.90rem;
+
+    }
+
+
+    #offersPagination button {
+
+        min-width: 33px;
+
+        height: 33px;
+
+        padding:
+            0
+            7px;
+
+        font-size: 0.62rem;
+
+    }
+
+}
+
+
+/* =========================================================
+   39. REDUCIR MOVIMIENTO
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .promotions-track {
+
+        scroll-behavior: auto;
+
+    }
+
+
+    .promo-banner,
+    .promo-banner img,
+    .promo-arrow,
+    .offers-back-button,
+    #offersPagination button {
+
+        transition: none;
+
+    }
+
+
+    .offers-page,
+    .offers-page.vista-activa,
+    .offers-page.vista-activa .offers-page-header,
+    .offers-page.vista-activa .offers-products {
+
+        animation: none;
+
+    }
+
+}
+
+
+/* =========================================================
+   FIN — 03-OFERTAS.CSS
+========================================================= */
