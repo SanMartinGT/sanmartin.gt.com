@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://sanmartingt.github.io/sanmartin.gt.com/sitemap.xml
