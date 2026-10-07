@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /mi-cuenta.html
+Disallow: /login.html
+
+Sitemap: https://sanmartingt.github.io/sanmartin.gt.com/sitemap.xml
