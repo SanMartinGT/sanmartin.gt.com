@@ -1,0 +1,30 @@
+-- Vista interna para revisar qué datos faltan antes de publicar o promocionar un producto.
+-- No se concede acceso a anon/authenticated: se consulta desde ERP o SQL Editor.
+create or replace view public.auditoria_calidad_catalogo_ecommerce as
+select
+  p.id,
+  p.sku,
+  p.nombre,
+  p.slug,
+  p.publicado_ecommerce,
+  p.visible_ecommerce,
+  count(img.id) filter (where img.activo = true) as imagenes_activas,
+  count(img.id) filter (where img.activo = true and img.es_principal = true) as imagenes_principales,
+  array_remove(array[
+    case when nullif(trim(p.slug),'') is null then 'Falta slug' end,
+    case when nullif(trim(p.nombre_corto),'') is null then 'Falta nombre corto' end,
+    case when nullif(trim(p.descripcion_corta),'') is null then 'Falta descripción corta' end,
+    case when nullif(trim(p.titulo_seo),'') is null then 'Falta título SEO' end,
+    case when nullif(trim(p.descripcion_seo),'') is null then 'Falta descripción SEO' end,
+    case when count(img.id) filter (where img.activo = true) = 0 then 'Falta imagen' end,
+    case when count(img.id) filter (where img.activo = true and img.es_principal = true) = 0 then 'Falta imagen principal' end,
+    case when p.presentacion is null and p.modelo is null and p.color is null and p.contenido is null and p.piezas_por_paquete is null then 'Faltan atributos de producto' end
+  ], null) as pendientes,
+  case when count(img.id) filter (where img.activo = true) >= 2 then 'GALERIA_COMPLETA'
+       when count(img.id) filter (where img.activo = true) = 1 then 'UNA_IMAGEN'
+       else 'SIN_IMAGEN' end as calidad_imagenes
+from public.productos p
+left join public.producto_imagenes img on img.producto_id = p.id
+group by p.id;
+
+revoke all on public.auditoria_calidad_catalogo_ecommerce from public, anon, authenticated;

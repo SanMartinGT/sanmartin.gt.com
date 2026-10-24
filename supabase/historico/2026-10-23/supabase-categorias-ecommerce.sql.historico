@@ -1,0 +1,14 @@
+-- Ejecuta este script en Supabase SQL Editor antes de publicar el e-commerce.
+-- Expone ÚNICAMENTE las categorías activas y visibles para e-commerce a visitantes anónimos.
+-- No concede permisos de inserción, edición ni eliminación.
+
+create policy "ecommerce_public_read_categories"
+on public.categorias
+for select
+to anon
+using (activo = true and visible_ecommerce = true);
+
+-- Para recibir cambios sin recargar la página, habilita Realtime para esta tabla
+-- desde Database > Replication > supabase_realtime > categorias.
+-- Alternativamente, si aún no está agregada a la publicación, ejecuta:
+-- alter publication supabase_realtime add table public.categorias;

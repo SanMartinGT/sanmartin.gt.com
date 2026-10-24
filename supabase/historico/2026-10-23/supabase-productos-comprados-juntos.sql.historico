@@ -1,0 +1,20 @@
+-- Recomendaciones agregadas: no expone clientes, pedidos ni cantidades internas.
+create or replace function public.productos_comprados_juntos_ecommerce(p_producto_id uuid, p_limite integer default 4)
+returns table (id uuid, slug varchar, nombre varchar, nombre_corto varchar, precio_base numeric, veces_comprados_juntos bigint)
+language sql stable security definer set search_path = public
+as $$
+  select producto.id, producto.slug, producto.nombre, producto.nombre_corto, producto.precio_base, count(*)::bigint
+  from public.pedidos_ecommerce_detalle origen
+  join public.pedidos_ecommerce pedido on pedido.id = origen.pedido_id
+  join public.pedidos_ecommerce_detalle candidato on candidato.pedido_id = origen.pedido_id and candidato.producto_id <> origen.producto_id
+  join public.productos producto on producto.id = candidato.producto_id
+  where origen.producto_id = p_producto_id
+    and pedido.estado in ('CONFIRMADO','PREPARANDO','LISTO_PARA_RETIRO','ENVIADO','ENTREGADO')
+    and producto.activo = true and producto.publicado_ecommerce = true and producto.visible_ecommerce = true and producto.slug is not null
+  group by producto.id, producto.slug, producto.nombre, producto.nombre_corto, producto.precio_base
+  order by count(*) desc, producto.nombre asc
+  limit greatest(1, least(coalesce(p_limite, 4), 8));
+$$;
+
+revoke all on function public.productos_comprados_juntos_ecommerce(uuid, integer) from public;
+grant execute on function public.productos_comprados_juntos_ecommerce(uuid, integer) to anon, authenticated;

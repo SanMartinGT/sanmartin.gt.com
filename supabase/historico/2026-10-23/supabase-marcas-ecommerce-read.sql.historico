@@ -1,0 +1,21 @@
+-- Ejecuta este script UNA sola vez en Supabase SQL Editor.
+-- Expone únicamente marcas activas para poder mostrar sus logos y filtrar el catálogo.
+
+drop policy if exists "ecommerce_public_read_brands" on public.marcas;
+create policy "ecommerce_public_read_brands"
+on public.marcas
+for select to anon
+using (activo = true);
+
+drop policy if exists "ecommerce_authenticated_read_brands" on public.marcas;
+create policy "ecommerce_authenticated_read_brands"
+on public.marcas
+for select to authenticated
+using (activo = true);
+
+-- Opcional: actualiza el carrusel de marcas sin recargar la página.
+do $$
+begin
+  alter publication supabase_realtime add table public.marcas;
+exception when duplicate_object then null;
+end $$;

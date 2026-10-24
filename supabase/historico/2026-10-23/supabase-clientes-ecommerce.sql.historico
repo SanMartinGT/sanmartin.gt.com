@@ -1,0 +1,47 @@
+-- Perfiles de cliente: una sola dirección por usuario, guardada en perfiles.
+alter table public.perfiles add column if not exists segundo_nombre varchar;
+alter table public.perfiles add column if not exists segundo_apellido varchar;
+alter table public.perfiles add column if not exists nombre_direccion varchar;
+alter table public.perfiles add column if not exists departamento varchar;
+alter table public.perfiles add column if not exists municipio varchar;
+alter table public.perfiles add column if not exists direccion_completa text;
+alter table public.perfiles add column if not exists referencia_direccion text;
+
+-- Crea el perfil automáticamente cuando se registra una cuenta.
+create or replace function public.crear_perfil_cliente()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  -- estado, activo y cualquier otro dato administrativo usan los valores por
+  -- defecto definidos en la tabla. No se fijan desde el ecommerce.
+  insert into public.perfiles (id, correo, nombre, apellido, telefono)
+  values (new.id, new.email, coalesce(new.raw_user_meta_data->>'nombre',''), coalesce(new.raw_user_meta_data->>'apellido',''), coalesce(new.raw_user_meta_data->>'telefono',''))
+  on conflict (id) do nothing;
+  return new;
+end; $$;
+
+drop trigger if exists al_crear_usuario_perfil on auth.users;
+create trigger al_crear_usuario_perfil after insert on auth.users
+for each row execute procedure public.crear_perfil_cliente();
+
+-- Favoritos de cada cliente.
+create table if not exists public.favoritos_ecommerce (
+  id uuid primary key default gen_random_uuid(),
+  usuario_id uuid not null references auth.users(id) on delete cascade,
+  producto_id uuid not null references public.productos(id) on delete cascade,
+  fecha_creacion timestamptz not null default now(),
+  unique(usuario_id, producto_id)
+);
+alter table public.favoritos_ecommerce enable row level security;
+create policy "cliente_manage_own_favorites" on public.favoritos_ecommerce
+for all to authenticated using (usuario_id = auth.uid()) with check (usuario_id = auth.uid());
+
+-- Permite que un cliente autenticado vea datos básicos de productos publicados
+-- para mostrar sus favoritos. No concede escritura sobre productos.
+create policy "cliente_read_published_products" on public.productos
+for select to authenticated
+using (activo = true and publicado_ecommerce = true and visible_ecommerce = true);
+
+-- No concedas INSERT/UPDATE directo sobre perfiles a clientes: RLS no puede
+-- limitar columnas y permitiría modificar rol_id, estado o activo. Ejecuta
+-- supabase-perfiles-seguridad.sql para instalar actualizar_mi_perfil(jsonb),
+-- la única vía controlada de edición del perfil desde el ecommerce.

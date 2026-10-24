@@ -1,0 +1,92 @@
+-- Cola operativa para que el ERP consuma eventos sin exponerlos al cliente.
+create table if not exists public.notificaciones_operativas_ecommerce (
+  id uuid primary key default gen_random_uuid(),
+  tipo varchar not null check (tipo in ('PEDIDO_NUEVO','PEDIDO_POR_PREPARAR','INVENTARIO_BAJO')),
+  prioridad varchar not null default 'NORMAL' check (prioridad in ('NORMAL','ALTA')),
+  pedido_id uuid references public.pedidos_ecommerce(id) on delete cascade,
+  alerta_inventario_id uuid references public.alertas_inventario(id) on delete cascade,
+  ubicacion_id uuid references public.ubicaciones(id),
+  payload jsonb not null default '{}'::jsonb,
+  estado varchar not null default 'PENDIENTE' check (estado in ('PENDIENTE','PROCESADA','DESCARTADA','ERROR')),
+  creado_en timestamptz not null default now(),
+  procesado_en timestamptz,
+  error_detalle text
+);
+
+create unique index if not exists notificaciones_operativas_pedido_unica
+  on public.notificaciones_operativas_ecommerce(tipo,pedido_id)
+  where pedido_id is not null and estado = 'PENDIENTE';
+create unique index if not exists notificaciones_operativas_alerta_unica
+  on public.notificaciones_operativas_ecommerce(tipo,alerta_inventario_id)
+  where alerta_inventario_id is not null and estado = 'PENDIENTE';
+
+alter table public.notificaciones_operativas_ecommerce enable row level security;
+-- El ERP debe consumir esta cola con service role o una política administrativa explícita.
+
+create or replace function public.sincronizar_alerta_existencia_ecommerce()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare v_estado varchar;
+begin
+  if not new.activo then
+    update public.alertas_inventario set activa=false,resuelta_en=now(),fecha_actualizacion=now()
+      where existencia_id=new.id and activa=true;
+    return new;
+  end if;
+  v_estado := case
+    when coalesce(new.stock_disponible,0)<=0 then 'SIN_STOCK'
+    when coalesce(new.stock_disponible,0)<=coalesce(new.stock_minimo,0)
+      or (coalesce(new.stock_maximo,0)>0 and new.stock_disponible<=new.stock_maximo*.40) then 'STOCK_BAJO'
+    else null end;
+  if v_estado is null then
+    update public.alertas_inventario set activa=false,resuelta_en=now(),fecha_actualizacion=now()
+      where existencia_id=new.id and activa=true;
+  else
+    update public.alertas_inventario set activa=false,resuelta_en=now(),fecha_actualizacion=now()
+      where existencia_id=new.id and activa=true and estado<>v_estado;
+    if not exists(select 1 from public.alertas_inventario where existencia_id=new.id and estado=v_estado and activa=true) then
+      insert into public.alertas_inventario(existencia_id,producto_id,ubicacion_id,estado,stock_disponible,stock_minimo,stock_maximo)
+      values(new.id,new.producto_id,new.ubicacion_id,v_estado,new.stock_disponible,new.stock_minimo,new.stock_maximo);
+    end if;
+  end if;
+  return new;
+end; $$;
+
+drop trigger if exists existencias_alertas_ecommerce on public.existencias;
+create trigger existencias_alertas_ecommerce
+after insert or update of stock_disponible,stock_minimo,stock_maximo,activo on public.existencias
+for each row execute function public.sincronizar_alerta_existencia_ecommerce();
+
+create or replace function public.encolar_alerta_pedido_ecommerce()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if tg_op='INSERT' then
+    insert into public.notificaciones_operativas_ecommerce(tipo,prioridad,pedido_id,ubicacion_id,payload)
+    values('PEDIDO_NUEVO','ALTA',new.id,new.ubicacion_id,jsonb_build_object('numero',new.numero,'total',new.total,'metodo_entrega',new.metodo_entrega));
+  elsif new.estado='CONFIRMADO' and old.estado is distinct from new.estado then
+    insert into public.notificaciones_operativas_ecommerce(tipo,prioridad,pedido_id,ubicacion_id,payload)
+    values('PEDIDO_POR_PREPARAR','ALTA',new.id,new.ubicacion_id,jsonb_build_object('numero',new.numero,'estado',new.estado));
+  end if;
+  return new;
+end; $$;
+
+drop trigger if exists pedidos_ecommerce_alertas_operativas on public.pedidos_ecommerce;
+create trigger pedidos_ecommerce_alertas_operativas
+after insert or update of estado on public.pedidos_ecommerce
+for each row execute function public.encolar_alerta_pedido_ecommerce();
+
+create or replace function public.encolar_alerta_inventario_ecommerce()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if new.activa and (tg_op='INSERT' or old.activa=false or old.estado is distinct from new.estado) then
+    insert into public.notificaciones_operativas_ecommerce(tipo,prioridad,alerta_inventario_id,ubicacion_id,payload)
+    values('INVENTARIO_BAJO',case when new.estado='SIN_STOCK' then 'ALTA' else 'NORMAL' end,new.id,new.ubicacion_id,jsonb_build_object('estado',new.estado,'producto_id',new.producto_id));
+  end if;
+  return new;
+end; $$;
+
+drop trigger if exists alertas_inventario_alertas_operativas on public.alertas_inventario;
+create trigger alertas_inventario_alertas_operativas
+after insert or update of activa,estado on public.alertas_inventario
+for each row execute function public.encolar_alerta_inventario_ecommerce();
+
+revoke all on table public.notificaciones_operativas_ecommerce from anon, authenticated;

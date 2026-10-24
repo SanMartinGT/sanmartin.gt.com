@@ -1,0 +1,9 @@
+-- Ejecuta únicamente este archivo para añadir temas a una tabla ya existente.
+-- No recrea políticas, bucket ni tabla.
+
+alter table public.banners_ecommerce
+drop constraint if exists banners_ecommerce_tema_check;
+
+alter table public.banners_ecommerce
+add constraint banners_ecommerce_tema_check
+check (tema in ('oscuro', 'claro', 'esmeralda', 'dorado', 'coral', 'nocturno'));

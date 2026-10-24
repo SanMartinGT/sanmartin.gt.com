@@ -1,0 +1,59 @@
+-- Anuncios editoriales ubicados entre Marcas y Compra por categoría.
+-- Ejecutar este archivo una vez en Supabase SQL Editor.
+
+create extension if not exists pgcrypto;
+
+create table if not exists public.anuncios_editoriales_ecommerce (
+  id uuid primary key default gen_random_uuid(),
+  etiqueta varchar(80),
+  titulo varchar(180) not null,
+  descripcion text,
+  cta_texto varchar(80),
+  cta_url text,
+  imagen_url text,
+  storage_bucket varchar(120),
+  storage_path text,
+  alt_text text,
+  orden integer not null default 0,
+  activo boolean not null default true,
+  fecha_inicio timestamptz,
+  fecha_fin timestamptz,
+  fecha_creacion timestamptz not null default now(),
+  fecha_actualizacion timestamptz not null default now(),
+  constraint anuncios_editoriales_fechas_chk check (
+    fecha_fin is null or fecha_inicio is null or fecha_fin >= fecha_inicio
+  )
+);
+
+create index if not exists anuncios_editoriales_ecommerce_activo_orden_idx
+  on public.anuncios_editoriales_ecommerce (activo, orden);
+
+alter table public.anuncios_editoriales_ecommerce enable row level security;
+
+drop policy if exists ecommerce_public_read_anuncios_editoriales
+  on public.anuncios_editoriales_ecommerce;
+create policy ecommerce_public_read_anuncios_editoriales
+  on public.anuncios_editoriales_ecommerce
+  for select
+  to anon, authenticated
+  using (activo = true);
+
+-- Permite actualizaciones instantáneas si Realtime está habilitado para el proyecto.
+do $$
+begin
+  alter publication supabase_realtime add table public.anuncios_editoriales_ecommerce;
+exception
+  when duplicate_object then null;
+end $$;
+
+-- Bucket recomendado: ecommerce-anuncios-editoriales (público).
+-- Sube las imágenes desde Storage y guarda su URL pública en imagen_url.
+-- Ejemplo de primer anuncio (ajusta la URL a tu imagen):
+-- insert into public.anuncios_editoriales_ecommerce
+-- (etiqueta, titulo, descripcion, cta_texto, cta_url, imagen_url, alt_text, orden, activo)
+-- values
+-- ('IDEAS PARA CREAR', 'Haz espacio para todo lo que imaginas.',
+--  'Pinturas, papeles y herramientas para proyectos que empiezan contigo.',
+--  'Explorar manualidades', 'catalogo.html',
+--  'https://TU-PROYECTO.supabase.co/storage/v1/object/public/ecommerce-anuncios-editoriales/crear.jpg',
+--  'Materiales para crear', 1, true);

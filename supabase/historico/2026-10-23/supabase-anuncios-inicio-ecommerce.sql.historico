@@ -1,0 +1,63 @@
+-- Carrusel de anuncios de la página de inicio.
+-- Ejecuta este archivo UNA vez en Supabase SQL Editor.
+
+create extension if not exists pgcrypto;
+
+insert into storage.buckets (id, name, public)
+values ('ecommerce-anuncios-inicio', 'ecommerce-anuncios-inicio', true)
+on conflict (id) do nothing;
+
+create table if not exists public.anuncios_inicio_ecommerce (
+  id uuid primary key default gen_random_uuid(),
+  titulo varchar(180),
+  imagen_url text,
+  storage_bucket varchar(120) not null default 'ecommerce-anuncios-inicio',
+  storage_path text not null,
+  alt_text text,
+  cta_url text,
+  orden integer not null default 0,
+  activo boolean not null default true,
+  fecha_inicio timestamptz,
+  fecha_fin timestamptz,
+  fecha_creacion timestamptz not null default now(),
+  fecha_actualizacion timestamptz not null default now(),
+  constraint anuncios_inicio_fechas_chk check (
+    fecha_fin is null or fecha_inicio is null or fecha_fin >= fecha_inicio
+  )
+);
+
+create index if not exists anuncios_inicio_ecommerce_activo_orden_idx
+  on public.anuncios_inicio_ecommerce (activo, orden);
+
+alter table public.anuncios_inicio_ecommerce enable row level security;
+
+drop policy if exists ecommerce_public_read_anuncios_inicio on public.anuncios_inicio_ecommerce;
+create policy ecommerce_public_read_anuncios_inicio
+  on public.anuncios_inicio_ecommerce for select to anon, authenticated
+  using (activo = true);
+
+drop policy if exists erp_manage_anuncios_inicio on public.anuncios_inicio_ecommerce;
+create policy erp_manage_anuncios_inicio
+  on public.anuncios_inicio_ecommerce for all to authenticated
+  using (tiene_permiso('banners.editar'))
+  with check (tiene_permiso('banners.editar'));
+
+drop policy if exists ecommerce_public_read_anuncios_inicio_files on storage.objects;
+create policy ecommerce_public_read_anuncios_inicio_files
+  on storage.objects for select to public
+  using (bucket_id = 'ecommerce-anuncios-inicio');
+
+-- Habilita actualización inmediata en la tienda al crear, editar o eliminar un anuncio.
+do $$
+begin
+  alter publication supabase_realtime add table public.anuncios_inicio_ecommerce;
+exception
+  when duplicate_object then null;
+end $$;
+
+-- Flujo de uso en Supabase:
+-- 1. Storage > ecommerce-anuncios-inicio > Upload: sube una imagen 4:5 (ej. 1080 x 1350).
+-- 2. Table Editor > anuncios_inicio_ecommerce: agrega storage_path, alt_text, orden y activo=true.
+-- 3. Para quitarla del carrusel: elimina el registro o marca activo=false;
+--    después borra el archivo de Storage si ya no lo necesitas.
+-- imagen_url es opcional: úsalo solo si la imagen vive fuera de Storage.

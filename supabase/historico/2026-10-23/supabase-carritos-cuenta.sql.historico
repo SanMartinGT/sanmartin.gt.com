@@ -1,0 +1,12 @@
+create table if not exists public.carritos_ecommerce (
+  id uuid primary key default gen_random_uuid(),
+  cliente_id uuid not null unique references public.perfiles(id) on delete cascade,
+  items jsonb not null default '[]'::jsonb,
+  actualizado_en timestamptz not null default now()
+);
+alter table public.carritos_ecommerce enable row level security;
+drop policy if exists "cliente administra su carrito" on public.carritos_ecommerce;
+create policy "cliente administra su carrito" on public.carritos_ecommerce
+  for all to authenticated using (cliente_id=auth.uid()) with check (cliente_id=auth.uid());
+grant select,insert,update,delete on public.carritos_ecommerce to authenticated;
+

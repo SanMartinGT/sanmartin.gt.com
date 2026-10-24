@@ -1,0 +1,13 @@
+-- Ficha pública de producto: expone solo información comercial.
+create or replace view public.catalogo_producto_detalle as
+select p.id,p.slug,p.nombre,p.nombre_corto,p.categoria_id,p.marca_id,
+  p.descripcion_corta,p.descripcion_larga,p.precio_base,p.presentacion,p.modelo,
+  p.color,p.tamano,p.material,p.peso,p.unidad_peso,p.ancho,p.alto,p.profundidad,
+  p.unidad_dimensiones,p.contenido,p.piezas_por_paquete,p.venta_fraccionada,
+  p.titulo_seo,p.descripcion_seo,
+  p.sku,p.codigo_barras
+from public.productos p
+where p.activo=true and p.publicado_ecommerce=true and p.visible_ecommerce=true
+  and p.es_vendible=true and p.es_comprable=true and coalesce(p.descontinuado,false)=false;
+
+grant select on public.catalogo_producto_detalle to anon, authenticated;

@@ -1,0 +1,35 @@
+-- Validación de descuentos para el ERP y la tienda e-commerce.
+-- Ejecuta este archivo en Supabase > SQL Editor.
+
+-- Auditoría: muestra cualquier oferta inválida antes de aplicar la regla.
+select id, nombre, producto_id, oferta_porcentaje, activo, aplica_ecommerce
+from public.ofertas_producto
+where oferta_porcentaje is null
+   or oferta_porcentaje < 0
+   or oferta_porcentaje > 100;
+
+-- No modifica descuentos existentes: detiene la instalación si hay datos que
+-- el equipo debe corregir conscientemente en el ERP.
+do $$
+begin
+  if exists (
+    select 1
+    from public.ofertas_producto
+    where oferta_porcentaje is null
+       or oferta_porcentaje < 0
+       or oferta_porcentaje > 100
+  ) then
+    raise exception 'Existen ofertas con porcentaje inválido. Corrígelas antes de activar la restricción.';
+  end if;
+
+  if not exists (
+    select 1
+    from pg_constraint
+    where conrelid = 'public.ofertas_producto'::regclass
+      and conname = 'ofertas_producto_porcentaje_rango'
+  ) then
+    alter table public.ofertas_producto
+      add constraint ofertas_producto_porcentaje_rango
+      check (oferta_porcentaje >= 0 and oferta_porcentaje <= 100);
+  end if;
+end $$;

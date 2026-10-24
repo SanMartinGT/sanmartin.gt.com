@@ -1,0 +1,9 @@
+-- La limpieza de reservas solo debe ejecutarse desde un scheduler administrativo.
+revoke all on function public.liberar_reservas_ecommerce_vencidas() from public, anon, authenticated;
+
+-- Programa la liberación cada minuto después de habilitar pg_cron en Supabase:
+-- select cron.schedule(
+--   'liberar-reservas-ecommerce-vencidas',
+--   '* * * * *',
+--   $$ select public.liberar_reservas_ecommerce_vencidas(); $$
+-- );

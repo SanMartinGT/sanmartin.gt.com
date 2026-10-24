@@ -1,0 +1,49 @@
+-- Ejecuta este script UNA sola vez en Supabase SQL Editor.
+-- Permite lectura pública y autenticada únicamente de los datos necesarios
+-- para el catálogo: imágenes activas y ofertas e-commerce.
+-- No permite insertar, editar ni eliminar datos del ERP.
+
+-- No concedas SELECT sobre public.productos: RLS no oculta columnas.
+-- Ejecuta supabase-catalogo-publico-seguro.sql para publicar la vista
+-- catalogo_productos con la lista explícita de campos seguros.
+
+drop policy if exists "ecommerce_public_read_product_images" on public.producto_imagenes;
+create policy "ecommerce_public_read_product_images"
+on public.producto_imagenes
+for select to anon
+using (activo = true);
+
+drop policy if exists "ecommerce_authenticated_read_product_images" on public.producto_imagenes;
+create policy "ecommerce_authenticated_read_product_images"
+on public.producto_imagenes
+for select to authenticated
+using (activo = true);
+
+drop policy if exists "ecommerce_public_read_product_offers" on public.ofertas_producto;
+create policy "ecommerce_public_read_product_offers"
+on public.ofertas_producto
+for select to anon
+using (activo = true and aplica_ecommerce = true);
+
+drop policy if exists "ecommerce_authenticated_read_product_offers" on public.ofertas_producto;
+create policy "ecommerce_authenticated_read_product_offers"
+on public.ofertas_producto
+for select to authenticated
+using (activo = true and aplica_ecommerce = true);
+
+-- Opcional: para reflejar altas, cambios y bajas sin recargar la página.
+do $$
+begin
+  alter publication supabase_realtime add table public.productos;
+exception when duplicate_object then null;
+end $$;
+do $$
+begin
+  alter publication supabase_realtime add table public.producto_imagenes;
+exception when duplicate_object then null;
+end $$;
+do $$
+begin
+  alter publication supabase_realtime add table public.ofertas_producto;
+exception when duplicate_object then null;
+end $$;

@@ -1,0 +1,17 @@
+-- Ejecuta este archivo UNA sola vez.
+-- Permite que clientes autenticados sigan viendo el contenido público del e-commerce.
+-- No concede crear, editar ni eliminar categorías, banners ni productos.
+
+create policy "ecommerce_authenticated_read_categories"
+on public.categorias
+for select to authenticated
+using (activo = true and visible_ecommerce = true);
+
+create policy "ecommerce_authenticated_read_banners"
+on public.banners_ecommerce
+for select to authenticated
+using (activo = true);
+
+-- No concedas SELECT sobre public.productos a clientes autenticados: RLS no
+-- oculta columnas. La lectura de catálogo debe hacerse desde catalogo_productos
+-- (creada en supabase-catalogo-publico-seguro.sql).

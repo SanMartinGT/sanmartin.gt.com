@@ -1,0 +1,30 @@
+-- Repara el trigger que crea perfiles al registrar un usuario de Supabase Auth.
+-- Ejecuta este archivo UNA VEZ en Supabase > SQL Editor.
+
+create or replace function public.crear_perfil_cliente()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  -- Solo se escriben los datos propios del cliente. estado, activo, rol_id y
+  -- demás campos administrativos se resuelven con los defaults de perfiles.
+  insert into public.perfiles (id, correo, nombre, apellido, telefono)
+  values (
+    new.id,
+    new.email,
+    coalesce(new.raw_user_meta_data->>'nombre', ''),
+    coalesce(new.raw_user_meta_data->>'apellido', ''),
+    coalesce(new.raw_user_meta_data->>'telefono', '')
+  )
+  on conflict (id) do nothing;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists al_crear_usuario_perfil on auth.users;
+create trigger al_crear_usuario_perfil
+after insert on auth.users
+for each row execute function public.crear_perfil_cliente();

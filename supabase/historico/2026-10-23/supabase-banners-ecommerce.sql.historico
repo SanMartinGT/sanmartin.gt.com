@@ -1,0 +1,51 @@
+-- Banners del e-commerce de San Martín.
+-- Cada fila es el identificador único que relaciona imagen, texto, CTA y orden.
+
+create table if not exists public.banners_ecommerce (
+  id uuid primary key default gen_random_uuid(),
+  imagen_url text,
+  storage_bucket varchar,
+  storage_path text,
+  alt_text text,
+  etiqueta varchar,
+  titulo varchar not null,
+  descripcion text,
+  cta_texto varchar,
+  cta_url text,
+  tema varchar not null default 'oscuro' check (tema in ('oscuro', 'claro')),
+  orden integer not null default 0,
+  activo boolean not null default true,
+  fecha_inicio timestamptz,
+  fecha_fin timestamptz,
+  creado_por uuid references auth.users(id),
+  fecha_creacion timestamptz not null default now(),
+  fecha_actualizacion timestamptz not null default now(),
+  constraint banner_imagen_requerida check (imagen_url is not null or (storage_bucket is not null and storage_path is not null))
+);
+
+alter table public.banners_ecommerce enable row level security;
+
+-- Visitantes: sólo ven banners publicados y activos.
+create policy "ecommerce_public_read_banners"
+on public.banners_ecommerce for select to anon
+using (activo = true);
+
+-- Personal autenticado: ajusta estos permisos a los roles de tu ERP si corresponde.
+create policy "erp_manage_banners"
+on public.banners_ecommerce for all to authenticated
+using (tiene_permiso('banners.editar'))
+with check (tiene_permiso('banners.editar'));
+
+-- Habilita cambios instantáneos en el carrusel.
+-- Ejecuta sólo si la tabla aún no pertenece a la publicación Realtime:
+-- alter publication supabase_realtime add table public.banners_ecommerce;
+
+-- Bucket sugerido en Storage: ecommerce-banners (público para lectura).
+-- Guarda el archivo como: <id-del-banner>/<nombre-del-archivo> y escribe esos
+-- valores en storage_bucket y storage_path. El e-commerce resolverá la URL pública.
+
+-- Temas disponibles: oscuro, claro, esmeralda, dorado, coral y nocturno.
+-- Ejecuta estas dos líneas si la tabla ya se creó con sólo claro/oscuro:
+alter table public.banners_ecommerce drop constraint if exists banners_ecommerce_tema_check;
+alter table public.banners_ecommerce add constraint banners_ecommerce_tema_check
+check (tema in ('oscuro', 'claro', 'esmeralda', 'dorado', 'coral', 'nocturno'));

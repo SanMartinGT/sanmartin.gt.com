@@ -1,0 +1,74 @@
+-- Corrige la escalada de privilegios en public.perfiles.
+-- Ejecuta este archivo UNA VEZ en Supabase > SQL Editor.
+
+-- Las políticas RLS son por fila, no por columna. Por eso se retiran las
+-- actualizaciones/inserciones directas del cliente: podrían incluir rol_id,
+-- estado, activo u otros campos administrativos.
+drop policy if exists "cliente_manage_own_profile" on public.perfiles;
+drop policy if exists "cliente actualiza su perfil" on public.perfiles;
+drop policy if exists "cliente_insert_own_profile" on public.perfiles;
+drop policy if exists "cliente crea su perfil" on public.perfiles;
+
+revoke insert, update on table public.perfiles from anon, authenticated;
+
+-- Único punto de escritura del cliente. La lista cerrada de claves evita que
+-- alguien envíe rol_id, estado, activo, correo o cualquier columna futura.
+create or replace function public.actualizar_mi_perfil(p_datos jsonb)
+returns public.perfiles
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_usuario uuid := auth.uid();
+  v_perfil public.perfiles;
+  v_claves_permitidas constant text[] := array[
+    'nombre', 'segundo_nombre', 'apellido', 'segundo_apellido', 'telefono',
+    'nombre_direccion', 'departamento', 'municipio',
+    'direccion_completa', 'referencia_direccion'
+  ];
+  v_clave text;
+begin
+  if v_usuario is null then
+    raise exception 'Debes iniciar sesión para actualizar tu perfil';
+  end if;
+
+  if p_datos is null or jsonb_typeof(p_datos) <> 'object' then
+    raise exception 'Los datos del perfil no tienen un formato válido';
+  end if;
+
+  for v_clave in select jsonb_object_keys(p_datos) loop
+    if not (v_clave = any(v_claves_permitidas)) then
+      raise exception 'No está permitido actualizar el campo: %', v_clave;
+    end if;
+  end loop;
+
+  update public.perfiles
+  set
+    nombre = case when p_datos ? 'nombre' then nullif(trim(p_datos->>'nombre'), '') else nombre end,
+    segundo_nombre = case when p_datos ? 'segundo_nombre' then nullif(trim(p_datos->>'segundo_nombre'), '') else segundo_nombre end,
+    apellido = case when p_datos ? 'apellido' then nullif(trim(p_datos->>'apellido'), '') else apellido end,
+    segundo_apellido = case when p_datos ? 'segundo_apellido' then nullif(trim(p_datos->>'segundo_apellido'), '') else segundo_apellido end,
+    telefono = case when p_datos ? 'telefono' then nullif(trim(p_datos->>'telefono'), '') else telefono end,
+    nombre_direccion = case when p_datos ? 'nombre_direccion' then nullif(trim(p_datos->>'nombre_direccion'), '') else nombre_direccion end,
+    departamento = case when p_datos ? 'departamento' then nullif(trim(p_datos->>'departamento'), '') else departamento end,
+    municipio = case when p_datos ? 'municipio' then nullif(trim(p_datos->>'municipio'), '') else municipio end,
+    direccion_completa = case when p_datos ? 'direccion_completa' then nullif(trim(p_datos->>'direccion_completa'), '') else direccion_completa end,
+    referencia_direccion = case when p_datos ? 'referencia_direccion' then nullif(trim(p_datos->>'referencia_direccion'), '') else referencia_direccion end
+  where id = v_usuario
+  returning * into v_perfil;
+
+  if not found then
+    raise exception 'No se encontró el perfil del usuario';
+  end if;
+
+  return v_perfil;
+end;
+$$;
+
+revoke all on function public.actualizar_mi_perfil(jsonb) from public, anon;
+grant execute on function public.actualizar_mi_perfil(jsonb) to authenticated;
+
+-- Comprobación opcional posterior a la migración:
+-- select policyname, cmd, roles from pg_policies
+-- where schemaname = 'public' and tablename = 'perfiles';

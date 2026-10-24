@@ -1,0 +1,43 @@
+-- Catálogo público seguro: no expone columnas internas de public.productos.
+-- Ejecuta este archivo UNA VEZ en Supabase > SQL Editor.
+
+-- Una vista con columnas explícitas evita que PostgREST exponga costo_ultimo,
+-- proveedor_id, codigo_interno u otros campos que se agreguen a productos.
+create or replace view public.catalogo_productos as
+select
+  p.id,
+  p.nombre,
+  p.nombre_corto,
+  p.slug,
+  p.categoria_id,
+  p.marca_id,
+  p.descripcion_corta,
+  p.precio_base,
+  p.destacado_ecommerce,
+  p.orden_ecommerce,
+  p.color,
+  p.piezas_por_paquete,
+  -- Se agrega al final para mantener las posiciones de una vista ya existente.
+  p.sku
+from public.productos p
+where p.activo = true
+  and p.publicado_ecommerce = true
+  and p.visible_ecommerce = true
+  and p.es_vendible = true
+  and p.es_comprable = true
+  and coalesce(p.descontinuado, false) = false;
+
+-- El cliente ya no puede consultar la tabla base, incluso estando autenticado.
+revoke select on table public.productos from anon, authenticated;
+
+-- Se retiran las políticas de lectura del ecommerce sobre la tabla base.
+-- El acceso ahora se realiza solamente mediante catalogo_productos.
+drop policy if exists "ecommerce_public_read_products" on public.productos;
+drop policy if exists "ecommerce_authenticated_read_products" on public.productos;
+drop policy if exists "cliente_read_published_products" on public.productos;
+
+grant select on public.catalogo_productos to anon, authenticated;
+
+-- Verificación opcional: estas consultas deben fallar para anon/authenticated,
+-- mientras que la vista solo devuelve las doce columnas definidas arriba.
+-- select * from public.catalogo_productos limit 1;

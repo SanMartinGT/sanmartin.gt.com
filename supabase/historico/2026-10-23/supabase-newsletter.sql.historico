@@ -1,0 +1,40 @@
+-- Suscripciones al newsletter para San Martín.
+-- Ejecuta este archivo una vez en Supabase > SQL Editor.
+
+create table if not exists public.suscripciones_newsletter (
+  id uuid primary key default gen_random_uuid(),
+  correo text not null unique,
+  estado varchar not null default 'ACTIVA' check (estado in ('ACTIVA','CANCELADA')),
+  origen varchar not null default 'SITIO_WEB',
+  fecha_suscripcion timestamptz not null default now(),
+  fecha_actualizacion timestamptz not null default now()
+);
+
+alter table public.suscripciones_newsletter enable row level security;
+revoke all on table public.suscripciones_newsletter from anon, authenticated;
+
+create or replace function public.suscribir_newsletter(p_correo text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_correo text := lower(trim(coalesce(p_correo, '')));
+begin
+  if v_correo = '' or v_correo !~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$' then
+    raise exception 'Ingresa un correo electrónico válido';
+  end if;
+
+  insert into public.suscripciones_newsletter (correo, estado, origen, fecha_suscripcion, fecha_actualizacion)
+  values (v_correo, 'ACTIVA', 'SITIO_WEB', now(), now())
+  on conflict (correo) do update
+    set estado = 'ACTIVA',
+        fecha_actualizacion = now();
+
+  return jsonb_build_object('correo', v_correo, 'estado', 'ACTIVA');
+end;
+$$;
+
+revoke all on function public.suscribir_newsletter(text) from public;
+grant execute on function public.suscribir_newsletter(text) to anon, authenticated;

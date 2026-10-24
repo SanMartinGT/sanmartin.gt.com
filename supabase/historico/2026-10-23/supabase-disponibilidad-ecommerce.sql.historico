@@ -1,0 +1,18 @@
+-- Disponibilidad comercial pública: no expone cantidades ni ubicaciones.
+alter table public.configuracion_ecommerce add column if not exists umbral_pocas_unidades numeric not null default 5;
+
+create or replace function public.estado_disponibilidad_ecommerce(p_producto_id uuid)
+returns table(estado text, mensaje text)
+language plpgsql security definer set search_path = public as $$
+declare v_ubicacion uuid; v_stock numeric := 0; v_umbral numeric := 5;
+begin
+  select ubicacion_ecommerce_id,greatest(1,coalesce(umbral_pocas_unidades,5)) into v_ubicacion,v_umbral from public.configuracion_ecommerce where id=true;
+  if v_ubicacion is null then return query select 'AGOTADO'::text,'No disponible por el momento'::text; return; end if;
+  select coalesce(stock_disponible,0) into v_stock from public.existencias where producto_id=p_producto_id and ubicacion_id=v_ubicacion and activo=true;
+  if coalesce(v_stock,0)<=0 then return query select 'AGOTADO'::text,'Agotado por el momento'::text;
+  elsif v_stock<=v_umbral then return query select 'POCAS_UNIDADES'::text,'Pocas unidades disponibles'::text;
+  else return query select 'DISPONIBLE'::text,'Disponible para comprar'::text; end if;
+end; $$;
+
+revoke all on function public.estado_disponibilidad_ecommerce(uuid) from public;
+grant execute on function public.estado_disponibilidad_ecommerce(uuid) to anon, authenticated;

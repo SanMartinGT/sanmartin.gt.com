@@ -1,0 +1,40 @@
+-- Ejecutar después de supabase-carrito-checkout.sql.
+-- Libera reservas vencidas y consume/libera la reserva al cambiar estado del pedido.
+create or replace function public.liberar_reservas_ecommerce_vencidas()
+returns integer language plpgsql security definer set search_path=public as $$
+declare r record; v_total integer:=0;
+begin
+  for r in select * from public.reservas where estado='ACTIVA' and fecha_expiracion<=now() for update loop
+    update public.existencias set stock_reservado=stock_reservado-r.cantidad,stock_disponible=stock_disponible+r.cantidad,fecha_actualizacion=now() where producto_id=r.producto_id and ubicacion_id=r.ubicacion_id and activo=true;
+    update public.reservas set estado='LIBERADA',fecha_liberacion=now(),fecha_actualizacion=now() where id=r.id;
+    v_total:=v_total+1;
+  end loop;
+  return v_total;
+end; $$;
+
+create or replace function public.procesar_estado_pedido_ecommerce()
+returns trigger language plpgsql security definer set search_path=public as $$
+declare r record; v_stock numeric;
+begin
+  if new.estado=old.estado then return new; end if;
+  if new.estado='CONFIRMADO' then
+    for r in select * from public.reservas where referencia_id=new.id and estado='ACTIVA' for update loop
+      if r.fecha_expiracion<=now() then raise exception 'La reserva del pedido % venció; valida inventario nuevamente',new.numero; end if;
+      select stock_fisico into v_stock from public.existencias where producto_id=r.producto_id and ubicacion_id=r.ubicacion_id and activo=true for update;
+      update public.existencias set stock_fisico=stock_fisico-r.cantidad,stock_reservado=stock_reservado-r.cantidad,fecha_ultimo_movimiento=now(),fecha_actualizacion=now() where producto_id=r.producto_id and ubicacion_id=r.ubicacion_id and activo=true;
+      update public.reservas set estado='CONSUMIDA',fecha_consumo=now(),fecha_actualizacion=now() where id=r.id;
+      insert into public.movimientos(producto_id,ubicacion_id,tipo_movimiento,cantidad,stock_anterior,stock_posterior,origen,referencia_tipo,referencia_id,referencia_numero,grupo_movimiento_id,usuario_id,fecha_movimiento) values(r.producto_id,r.ubicacion_id,'SALIDA',r.cantidad,v_stock,v_stock-r.cantidad,'ECOMMERCE','PEDIDO_ECOMMERCE',new.id,new.numero,gen_random_uuid(),auth.uid(),now());
+    end loop;
+  elsif new.estado='CANCELADO' then
+    for r in select * from public.reservas where referencia_id=new.id and estado='ACTIVA' for update loop
+      update public.existencias set stock_reservado=stock_reservado-r.cantidad,stock_disponible=stock_disponible+r.cantidad,fecha_actualizacion=now() where producto_id=r.producto_id and ubicacion_id=r.ubicacion_id and activo=true;
+      update public.reservas set estado='LIBERADA',fecha_liberacion=now(),fecha_actualizacion=now() where id=r.id;
+    end loop;
+  end if;
+  return new;
+end; $$;
+
+drop trigger if exists pedidos_ecommerce_procesar_reserva on public.pedidos_ecommerce;
+create trigger pedidos_ecommerce_procesar_reserva before update of estado on public.pedidos_ecommerce for each row execute function public.procesar_estado_pedido_ecommerce();
+
+revoke all on function public.liberar_reservas_ecommerce_vencidas() from public;
