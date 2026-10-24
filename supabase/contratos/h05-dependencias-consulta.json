@@ -1,0 +1,110 @@
+{
+  "kind": "h05_test_dependency_snapshot",
+  "project_ref": "beasfybalepkdlomzazf",
+  "client_date": "2026-10-23",
+  "scope": "Definiciones observadas para aceptación aislada; no ejecutar como instalador en Supabase.",
+  "functions": [
+    {
+      "schema": "erp_private",
+      "name": "ecommerce_stock_omnicanal",
+      "identity_args": "p_producto_ids uuid[], p_ubicacion_destino_id uuid",
+      "result": "jsonb",
+      "volatility": "v",
+      "security_definer": true,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "owner": "postgres",
+      "definition": "CREATE OR REPLACE FUNCTION erp_private.ecommerce_stock_omnicanal(p_producto_ids uuid[] DEFAULT NULL::uuid[], p_ubicacion_destino_id uuid DEFAULT NULL::uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare resultado jsonb; locales jsonb; limite numeric:=100; admite_traslados boolean:=true;\nbegin\n  if p_producto_ids is not null and cardinality(p_producto_ids)>1000 then raise exception 'Consulta como máximo 1000 productos por solicitud'; end if;\n  if p_ubicacion_destino_id is not null and not exists(select 1 from public.ubicaciones u\n    where u.id=p_ubicacion_destino_id and u.activo and u.permite_inventario and u.permite_venta) then\n    raise exception 'La sucursal no está habilitada para inventario y venta'; end if;\n  if p_ubicacion_destino_id is not null then\n    select permite_recepcion and permite_transferencia into admite_traslados from public.ubicaciones where id=p_ubicacion_destino_id;\n  end if;\n  select greatest(1,coalesce(max_cantidad_por_linea,100)) into limite from public.configuracion_ecommerce where id=true;\n  limite:=coalesce(limite,100);\n  select coalesce(jsonb_agg(jsonb_build_object('id',u.id,'codigo',u.codigo,'nombre',u.nombre,\n    'direccion',u.direccion,'permite_transferencia',u.permite_transferencia,'permite_recepcion',u.permite_recepcion) order by u.orden,u.codigo,u.id),'[]'::jsonb)\n    into locales from public.ubicaciones u where u.activo and u.permite_inventario and u.permite_venta;\n  with disponibles as (\n    select e.producto_id,e.ubicacion_id,e.stock_disponible,u.codigo,u.nombre,u.orden\n    from public.existencias e join public.ubicaciones u on u.id=e.ubicacion_id\n    where e.activo and u.activo and u.permite_inventario\n      and (u.id=p_ubicacion_destino_id or (admite_traslados and u.permite_transferencia))\n  ), elegibles as (\n    select p.id,p.sku,p.nombre,coalesce(sum(d.stock_disponible),0) stock_red,\n      coalesce(sum(d.stock_disponible) filter(where d.ubicacion_id=p_ubicacion_destino_id),0) stock_local,\n      coalesce(jsonb_agg(jsonb_build_object('ubicacion_id',d.ubicacion_id,'codigo',d.codigo,'nombre',d.nombre,'stock_disponible',d.stock_disponible) order by d.orden,d.codigo,d.ubicacion_id) filter(where d.ubicacion_id is not null),'[]'::jsonb) sucursales\n    from public.productos p join public.categorias c on c.id=p.categoria_id\n    left join public.marcas marca on marca.id=p.marca_id\n    left join disponibles d on d.producto_id=p.id\n    where p.activo and not p.descontinuado and p.es_vendible and p.es_comprable\n      and p.controla_inventario and p.publicado_ecommerce and p.visible_ecommerce and c.activo and c.visible_ecommerce and (p.marca_id is null or marca.activo)\n      and (p_producto_ids is null or p.id=any(p_producto_ids))\n    group by p.id,p.sku,p.nombre order by p.nombre,p.id limit 1000\n  )\n  select coalesce(jsonb_agg(jsonb_build_object('producto_id',id,'nombre',nombre,'sku',sku,\n    'stock_red',stock_red,'stock_local',stock_local,'stock_otras_sucursales',stock_red-stock_local,\n    'cantidad_maxima',least(stock_red,limite),'sucursales',sucursales) order by nombre,id),'[]'::jsonb) into resultado from elegibles;\n  return jsonb_build_object('productos',resultado,'sucursales',locales,'ubicacion_destino_id',p_ubicacion_destino_id);\nend;\n$function$\n",
+      "definition_md5": "c73aa8355c45b0310683e86545805619",
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "public_execute": false
+    },
+    {
+      "schema": "erp_private",
+      "name": "normalizar_lineas_presentaciones",
+      "identity_args": "p_items jsonb, p_limite integer",
+      "result": "jsonb",
+      "volatility": "v",
+      "security_definer": false,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "owner": "postgres",
+      "definition": "CREATE OR REPLACE FUNCTION erp_private.normalizar_lineas_presentaciones(p_items jsonb, p_limite integer DEFAULT 500)\n RETURNS jsonb\n LANGUAGE plpgsql\n SET search_path TO ''\nAS $function$\nDECLARE x jsonb; pid uuid; sid uuid; q numeric; result jsonb;\nBEGIN\n IF p_items IS NULL OR jsonb_typeof(p_items)<>'array' OR jsonb_array_length(p_items) NOT BETWEEN 1 AND p_limite THEN\n  RAISE EXCEPTION 'Cantidad de líneas inválida' USING ERRCODE='22023'; END IF;\n FOR x IN SELECT value FROM jsonb_array_elements(p_items) LOOP\n  IF jsonb_typeof(x)<>'object' OR jsonb_typeof(x->'producto_id') IS DISTINCT FROM 'string'\n   OR jsonb_typeof(x->'cantidad') IS DISTINCT FROM 'number'\n   OR (x?'presentacion_id' AND x->'presentacion_id'<>'null'::jsonb AND jsonb_typeof(x->'presentacion_id')<>'string') THEN\n   RAISE EXCEPTION 'Cada línea necesita producto, presentación opcional y cantidad numérica' USING ERRCODE='22023'; END IF;\n  pid:=(x->>'producto_id')::uuid; sid:=(x->>'presentacion_id')::uuid; q:=(x->>'cantidad')::numeric;\n  IF pid IS NULL OR q IS NULL OR q<=0 OR q>99999999999.999 OR q::text IN('NaN','Infinity','-Infinity') OR round(q,3)<>q\n   OR (sid IS NOT NULL AND trunc(q)<>q) THEN\n   RAISE EXCEPTION 'La cantidad debe ser positiva; las presentaciones se venden en paquetes enteros y la unidad base admite hasta tres decimales' USING ERRCODE='22023'; END IF;\n  IF sid IS NULL AND EXISTS(SELECT 1 FROM public.productos p JOIN public.unidades_medida u ON u.id=p.unidad_medida_id\n   WHERE p.id=pid AND (round(q,CASE WHEN p.venta_fraccionada AND u.permite_fraccion THEN least(3,greatest(0,u.decimales_permitidos)) ELSE 0 END)<>q)) THEN\n   RAISE EXCEPTION 'Cada línea debe respetar la precisión de venta de la unidad antes de consolidarse' USING ERRCODE='22023'; END IF;\n END LOOP;\n SELECT jsonb_agg(jsonb_build_object('producto_id',producto_id,'presentacion_id',presentacion_id,'cantidad',trim_scale(cantidad)) ORDER BY producto_id,presentacion_id NULLS FIRST)\n INTO result FROM (SELECT producto_id,presentacion_id,sum(cantidad) cantidad\n  FROM jsonb_to_recordset(p_items)x(producto_id uuid,presentacion_id uuid,cantidad numeric) GROUP BY producto_id,presentacion_id) q;\n IF EXISTS(SELECT 1 FROM jsonb_to_recordset(result)x(cantidad numeric) WHERE cantidad>99999999999.999) THEN\n  RAISE EXCEPTION 'Cantidad acumulada fuera de rango' USING ERRCODE='22023'; END IF;\n RETURN result;\nEND $function$\n",
+      "definition_md5": "f009f110ac01a8e44855e6ea6b2d0689",
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "public_execute": false
+    },
+    {
+      "schema": "erp_private",
+      "name": "resolver_linea_presentacion",
+      "identity_args": "p_producto_id uuid, p_presentacion_id uuid, p_cantidad numeric, p_canal text",
+      "result": "jsonb",
+      "volatility": "v",
+      "security_definer": false,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "owner": "postgres",
+      "definition": "CREATE OR REPLACE FUNCTION erp_private.resolver_linea_presentacion(p_producto_id uuid, p_presentacion_id uuid, p_cantidad numeric, p_canal text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SET search_path TO ''\nAS $function$\nDECLARE p public.productos%rowtype; s public.producto_presentaciones%rowtype; u public.unidades_medida%rowtype;\n factor numeric:=1; precio numeric; descuento numeric; base numeric;\nBEGIN\n SELECT * INTO p FROM public.productos WHERE id=p_producto_id;\n SELECT * INTO u FROM public.unidades_medida WHERE id=p.unidad_medida_id;\n IF p.id IS NULL OR NOT p.activo OR p.descontinuado OR NOT p.es_vendible OR NOT p.controla_inventario OR u.id IS NULL OR NOT u.activo\n  OR p_canal NOT IN('POS','ECOMMERCE') OR (p_canal='POS' AND NOT p.disponible_pos)\n  OR (p_canal='ECOMMERCE' AND (NOT p.publicado_ecommerce OR NOT p.visible_ecommerce OR NOT p.es_comprable\n   OR NOT EXISTS(SELECT 1 FROM public.categorias c WHERE c.id=p.categoria_id AND c.activo AND c.visible_ecommerce)\n   OR (p.marca_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM public.marcas m WHERE m.id=p.marca_id AND m.activo)))) THEN\n  RAISE EXCEPTION 'Producto no disponible para este canal' USING ERRCODE='22023'; END IF;\n precio:=p.precio_base;\n IF p_presentacion_id IS NOT NULL THEN\n  SELECT * INTO s FROM public.producto_presentaciones WHERE id=p_presentacion_id AND producto_id=p.id;\n  IF NOT FOUND OR NOT s.activo OR (p_canal='POS' AND NOT s.disponible_pos) OR (p_canal='ECOMMERCE' AND NOT s.disponible_ecommerce) THEN\n   RAISE EXCEPTION 'La presentación ya no está disponible para este producto' USING ERRCODE='22023'; END IF;\n  IF trunc(p_cantidad)<>p_cantidad THEN RAISE EXCEPTION 'Indica un número entero de presentaciones' USING ERRCODE='22023'; END IF;\n  factor:=s.cantidad_base; precio:=s.precio;\n END IF;\n base:=p_cantidad*factor;\n IF p_cantidad IS NULL OR p_cantidad<=0 OR p_cantidad::text IN('NaN','Infinity','-Infinity') OR base>99999999999.999\n  OR round(base,3)<>base OR (NOT(p.venta_fraccionada AND u.permite_fraccion) AND trunc(base)<>base) THEN\n  RAISE EXCEPTION 'Cantidad incompatible con la unidad base del producto' USING ERRCODE='22023'; END IF;\n PERFORM erp_private.validar_cantidad_producto(p.id,base);\n IF precio IS NULL OR precio<0 OR precio::text IN('NaN','Infinity','-Infinity') THEN RAISE EXCEPTION 'Precio inválido'; END IF;\n SELECT max(oferta_porcentaje) INTO descuento FROM public.ofertas_producto WHERE producto_id=p.id AND activo\n  AND ((p_canal='POS' AND aplica_pos) OR (p_canal='ECOMMERCE' AND aplica_ecommerce)) AND fecha_inicio<=now() AND (fecha_fin IS NULL OR fecha_fin>=now());\n IF descuento IS NOT NULL AND (descuento<0 OR descuento>100 OR descuento::text IN('NaN','Infinity','-Infinity')) THEN RAISE EXCEPTION 'Oferta inválida'; END IF;\n precio:=round(precio*(1-coalesce(descuento,0)/100),2);\n RETURN jsonb_build_object('producto_id',p.id,'presentacion_id',p_presentacion_id,'presentacion_nombre',s.nombre,\n  'cantidad',p_cantidad,'cantidad_base',base,'factor',factor,'precio',precio,'total',round(p_cantidad*precio,2));\nEND $function$\n",
+      "definition_md5": "668de105051eb25b6b4fc59fd7a1ec51",
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "public_execute": false
+    },
+    {
+      "schema": "erp_private",
+      "name": "validar_cantidad_producto",
+      "identity_args": "p_producto uuid, p_cantidad numeric, p_permitir_archivado boolean",
+      "result": "void",
+      "volatility": "v",
+      "security_definer": true,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "owner": "postgres",
+      "definition": "CREATE OR REPLACE FUNCTION erp_private.validar_cantidad_producto(p_producto uuid, p_cantidad numeric, p_permitir_archivado boolean DEFAULT false)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\r\nDECLARE p public.productos%rowtype; u public.unidades_medida%rowtype; decimales integer;\r\nBEGIN\r\n IF p_producto IS NULL OR p_cantidad IS NULL OR p_cantidad::text IN('NaN','Infinity','-Infinity')\r\n   OR abs(p_cantidad)>=100000000000 OR round(p_cantidad,3)<>p_cantidad THEN\r\n  RAISE EXCEPTION 'Cantidad inválida: número finito, menor a 100 mil millones y máximo 3 decimales' USING ERRCODE='22023'; END IF;\r\n SELECT * INTO p FROM public.productos WHERE id=p_producto FOR NO KEY UPDATE;\r\n IF NOT FOUND THEN RAISE EXCEPTION 'Producto no encontrado' USING ERRCODE='22023'; END IF;\r\n SELECT * INTO u FROM public.unidades_medida WHERE id=p.unidad_medida_id FOR SHARE;\r\n IF NOT FOUND OR (NOT coalesce(p_permitir_archivado,false) AND (NOT p.activo OR NOT p.controla_inventario OR NOT u.activo)) THEN\r\n  RAISE EXCEPTION 'Producto o unidad no habilitados para inventario' USING ERRCODE='22023'; END IF;\r\n decimales:=CASE WHEN u.permite_fraccion THEN least(3,greatest(0,u.decimales_permitidos)) ELSE 0 END;\r\n IF round(p_cantidad,decimales)<>p_cantidad THEN\r\n  RAISE EXCEPTION 'Cantidad incompatible con unidad %: admite % decimales',u.abreviatura,decimales USING ERRCODE='22023'; END IF;\r\nEND; $function$\n",
+      "definition_md5": "685dbac965a0623cc25c65da02ad38ca",
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "public_execute": false
+    },
+    {
+      "schema": "public",
+      "name": "ecommerce_stock_omnicanal",
+      "identity_args": "p_producto_ids uuid[], p_ubicacion_destino_id uuid",
+      "result": "jsonb",
+      "volatility": "v",
+      "security_definer": false,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "owner": "postgres",
+      "definition": "CREATE OR REPLACE FUNCTION public.ecommerce_stock_omnicanal(p_producto_ids uuid[] DEFAULT NULL::uuid[], p_ubicacion_destino_id uuid DEFAULT NULL::uuid)\n RETURNS jsonb\n LANGUAGE sql\n SET search_path TO ''\nAS $function$\r\n  select erp_private.ecommerce_stock_omnicanal(p_producto_ids,p_ubicacion_destino_id);\r\n$function$\n",
+      "definition_md5": "b5956c0c7d0c110058a51a9236b9567e",
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "public_execute": false
+    },
+    {
+      "schema": "public",
+      "name": "validar_disponibilidad_presentaciones",
+      "identity_args": "p_items jsonb",
+      "result": "jsonb",
+      "volatility": "v",
+      "security_definer": true,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "owner": "postgres",
+      "definition": "CREATE OR REPLACE FUNCTION public.validar_disponibilidad_presentaciones(p_items jsonb)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nDECLARE lines jsonb; line record; resolved jsonb; sums jsonb:='{}'::jsonb; result jsonb:='[]'::jsonb; k text; available numeric; wanted numeric; configured uuid;\nBEGIN\n lines:=erp_private.normalizar_lineas_presentaciones(p_items,100);\n SELECT ubicacion_ecommerce_id INTO configured FROM public.configuracion_ecommerce WHERE id=true;\n FOR line IN SELECT * FROM jsonb_to_recordset(lines)x(producto_id uuid,presentacion_id uuid,cantidad numeric) LOOP\n  BEGIN\n   resolved:=erp_private.resolver_linea_presentacion(line.producto_id,line.presentacion_id,line.cantidad,'ECOMMERCE');\n   k:=line.producto_id::text;\n   sums:=jsonb_set(sums,ARRAY[k],to_jsonb(coalesce((sums->>k)::numeric,0)+(resolved->>'cantidad_base')::numeric));\n  EXCEPTION WHEN raise_exception OR invalid_parameter_value THEN\n   result:=result||jsonb_build_array(jsonb_build_object('producto_id',line.producto_id,'estado','NO_DISPONIBLE','mensaje','El producto o presentación ya no está disponible; revisa el carrito'));\n  END;\n END LOOP;\n FOR k,wanted IN SELECT key,value::text::numeric FROM jsonb_each(sums) LOOP\n  SELECT coalesce(sum(e.stock_disponible),0) INTO available FROM public.existencias e JOIN public.ubicaciones u ON u.id=e.ubicacion_id\n   WHERE e.producto_id=k::uuid AND e.ubicacion_id=configured AND e.activo AND u.activo AND u.permite_inventario AND u.permite_venta;\n  result:=result||jsonb_build_array(jsonb_build_object('producto_id',k,'estado',CASE WHEN available>=wanted THEN 'DISPONIBLE' ELSE 'AGOTADO' END,\n   'mensaje',CASE WHEN available>=wanted THEN 'Cantidad disponible en la sucursal de la tienda; se confirma al finalizar' ELSE 'No hay disponibilidad para todas las presentaciones seleccionadas' END));\n END LOOP;\n RETURN result;\nEND $function$\n",
+      "definition_md5": "a1e4525c434fc3d40800515fa3936c8c",
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "public_execute": false
+    }
+  ]
+}
