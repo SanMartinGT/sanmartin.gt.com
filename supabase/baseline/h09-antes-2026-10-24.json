@@ -1,0 +1,204 @@
+{
+  "kind": "h01_read_only_catalog_snapshot",
+  "project_ref": "beasfybalepkdlomzazf",
+  "observed_on": "2026-10-24",
+  "metadata": {
+    "read_only": true,
+    "scope": "H09 puente mínimo catálogo, prerequisitos sin valores de secretos"
+  },
+  "migration_history": [
+    {
+      "version": "20261009135451",
+      "name": "estabilizacion_h01_h09_20261009"
+    },
+    {
+      "version": "20261009184222",
+      "name": "etapa_b_h10_h14"
+    },
+    {
+      "version": "20261009184808",
+      "name": "etapa_b_rol_activo"
+    },
+    {
+      "version": "20261009185206",
+      "name": "etapa_b_cliente_sin_rol"
+    },
+    {
+      "version": "20261009185850",
+      "name": "etapa_b_imagen_url_portable"
+    },
+    {
+      "version": "20261012235716",
+      "name": "venta_pos_cajeros_descuentos"
+    },
+    {
+      "version": "20261013200712",
+      "name": "omnicanal_stock_compartido_y_abastecimiento"
+    },
+    {
+      "version": "20261014211739",
+      "name": "etapa1_seguridad_sesiones_reservas_auditoria"
+    },
+    {
+      "version": "20261015020750",
+      "name": "etapa1_activar_mfa_admin"
+    },
+    {
+      "version": "20261015162627",
+      "name": "etapa2_permisos_procesos_comerciales"
+    },
+    {
+      "version": "20261015163139",
+      "name": "etapa2_activar_contratos_e_indices_operativos"
+    },
+    {
+      "version": "20261016022737",
+      "name": "etapa3_inventario_cantidades_costos"
+    },
+    {
+      "version": "20261016023517",
+      "name": "etapa3_lecturas_operativas_sin_costos"
+    },
+    {
+      "version": "20261016221110",
+      "name": "etapa4_informacion_pantallas_exportaciones"
+    },
+    {
+      "version": "20261017204117",
+      "name": "etapa5_alertas_comprobantes"
+    },
+    {
+      "version": "20261017205206",
+      "name": "etapa5_despacho_permiso_servidor"
+    },
+    {
+      "version": "20261018020001",
+      "name": "etapa6_archivos_rendimiento"
+    },
+    {
+      "version": "20261018153255",
+      "name": "h02_politicas_reabastecimiento_explicadas"
+    },
+    {
+      "version": "20261018153531",
+      "name": "h02_redactar_notas_en_bitacora"
+    },
+    {
+      "version": "20261018195907",
+      "name": "h04_document_requests_idempotency"
+    },
+    {
+      "version": "20261020151159",
+      "name": "fix_h02_historical_operational_summary"
+    },
+    {
+      "version": "20261020152639",
+      "name": "fix_h03_pos_cashier_historical_revenue"
+    },
+    {
+      "version": "20261020194714",
+      "name": "fix_h04_ecommerce_offer_consistency"
+    },
+    {
+      "version": "20261021152724",
+      "name": "fix_h10_paginated_inventory_cost_history"
+    },
+    {
+      "version": "20261021154523",
+      "name": "fix_h11_enqueue_final_order_total"
+    },
+    {
+      "version": "20261022013039",
+      "name": "add_product_presentations"
+    },
+    {
+      "version": "20261024025818",
+      "name": "validar_disponibilidad_presentaciones_contextual"
+    },
+    {
+      "version": "20261024114111",
+      "name": "persistir_snapshots_pedidos"
+    }
+  ],
+  "latest_migration": {
+    "version": "20261024114111",
+    "name": "persistir_snapshots_pedidos"
+  },
+  "catalog": {
+    "tables": [
+      {
+        "kind": "r",
+        "name": "categorias",
+        "schema": "public",
+        "id_type": "uuid"
+      },
+      {
+        "kind": "r",
+        "name": "configuracion_ecommerce",
+        "schema": "public",
+        "id_type": "boolean"
+      },
+      {
+        "kind": "r",
+        "name": "existencias",
+        "schema": "public",
+        "id_type": "uuid"
+      },
+      {
+        "kind": "r",
+        "name": "marcas",
+        "schema": "public",
+        "id_type": "uuid"
+      },
+      {
+        "kind": "r",
+        "name": "ofertas_producto",
+        "schema": "public",
+        "id_type": "uuid"
+      },
+      {
+        "kind": "r",
+        "name": "producto_imagenes",
+        "schema": "public",
+        "id_type": "uuid"
+      },
+      {
+        "kind": "r",
+        "name": "producto_presentaciones",
+        "schema": "public",
+        "id_type": "uuid"
+      },
+      {
+        "kind": "r",
+        "name": "productos",
+        "schema": "public",
+        "id_type": "uuid"
+      },
+      {
+        "kind": "r",
+        "name": "unidades_medida",
+        "schema": "public",
+        "id_type": "uuid"
+      }
+    ],
+    "schemas": [
+      {
+        "name": "vault",
+        "anon_create": false,
+        "authenticated_create": false
+      },
+      {
+        "name": "erp_private",
+        "anon_create": false,
+        "authenticated_create": false
+      },
+      {
+        "name": "net",
+        "anon_create": false,
+        "authenticated_create": false
+      }
+    ],
+    "vault_ready": false,
+    "webhook_helper": null
+  }
+}

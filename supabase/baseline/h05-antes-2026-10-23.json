@@ -1,0 +1,1245 @@
+{
+  "format_version": 1,
+  "kind": "h01_read_only_catalog_snapshot",
+  "project_ref": "beasfybalepkdlomzazf",
+  "observed_at_utc": "2026-10-24T02:55:00.546717+00:00",
+  "client_date": "2026-10-23",
+  "client_timezone": "America/Guatemala",
+  "scope": "H05 targeted read-only catalog snapshot: affected functions, dependent columns, schema usage, migration history; not full DDL.",
+  "migration_history": [
+    {
+      "name": "estabilizacion_h01_h09_20261009",
+      "version": "20261009135451"
+    },
+    {
+      "name": "etapa_b_h10_h14",
+      "version": "20261009184222"
+    },
+    {
+      "name": "etapa_b_rol_activo",
+      "version": "20261009184808"
+    },
+    {
+      "name": "etapa_b_cliente_sin_rol",
+      "version": "20261009185206"
+    },
+    {
+      "name": "etapa_b_imagen_url_portable",
+      "version": "20261009185850"
+    },
+    {
+      "name": "venta_pos_cajeros_descuentos",
+      "version": "20261012235716"
+    },
+    {
+      "name": "omnicanal_stock_compartido_y_abastecimiento",
+      "version": "20261013200712"
+    },
+    {
+      "name": "etapa1_seguridad_sesiones_reservas_auditoria",
+      "version": "20261014211739"
+    },
+    {
+      "name": "etapa1_activar_mfa_admin",
+      "version": "20261015020750"
+    },
+    {
+      "name": "etapa2_permisos_procesos_comerciales",
+      "version": "20261015162627"
+    },
+    {
+      "name": "etapa2_activar_contratos_e_indices_operativos",
+      "version": "20261015163139"
+    },
+    {
+      "name": "etapa3_inventario_cantidades_costos",
+      "version": "20261016022737"
+    },
+    {
+      "name": "etapa3_lecturas_operativas_sin_costos",
+      "version": "20261016023517"
+    },
+    {
+      "name": "etapa4_informacion_pantallas_exportaciones",
+      "version": "20261016221110"
+    },
+    {
+      "name": "etapa5_alertas_comprobantes",
+      "version": "20261017204117"
+    },
+    {
+      "name": "etapa5_despacho_permiso_servidor",
+      "version": "20261017205206"
+    },
+    {
+      "name": "etapa6_archivos_rendimiento",
+      "version": "20261018020001"
+    },
+    {
+      "name": "h02_politicas_reabastecimiento_explicadas",
+      "version": "20261018153255"
+    },
+    {
+      "name": "h02_redactar_notas_en_bitacora",
+      "version": "20261018153531"
+    },
+    {
+      "name": "h04_document_requests_idempotency",
+      "version": "20261018195907"
+    },
+    {
+      "name": "fix_h02_historical_operational_summary",
+      "version": "20261020151159"
+    },
+    {
+      "name": "fix_h03_pos_cashier_historical_revenue",
+      "version": "20261020152639"
+    },
+    {
+      "name": "fix_h04_ecommerce_offer_consistency",
+      "version": "20261020194714"
+    },
+    {
+      "name": "fix_h10_paginated_inventory_cost_history",
+      "version": "20261021152724"
+    },
+    {
+      "name": "fix_h11_enqueue_final_order_total",
+      "version": "20261021154523"
+    },
+    {
+      "name": "add_product_presentations",
+      "version": "20261022013039"
+    }
+  ],
+  "latest_migration": {
+    "name": "add_product_presentations",
+    "version": "20261022013039"
+  },
+  "metadata": {
+    "functions": [
+      {
+        "name": "crear_pedido_checkout",
+        "result": "jsonb",
+        "schema": "erp_private",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "anon_execute": false,
+        "identity_args": "p_items jsonb, p_modo_inventario text, p_ubicacion_destino_id uuid, p_metodo_entrega character varying, p_metodo_pago character varying, p_clave_idempotencia uuid, p_minutos_expiracion integer",
+        "definition_md5": "150dbd79ca4716e0a4f8decc9cd7f1c6",
+        "security_definer": true,
+        "service_role_execute": true,
+        "authenticated_execute": true
+      },
+      {
+        "name": "crear_pedido_checkout_presentaciones",
+        "result": "jsonb",
+        "schema": "erp_private",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "anon_execute": false,
+        "identity_args": "p_items jsonb, p_modo_inventario text, p_ubicacion_destino_id uuid, p_metodo_entrega character varying, p_metodo_pago character varying, p_clave_idempotencia uuid, p_minutos_expiracion integer",
+        "definition_md5": "c0e7d6953f489cd3d15c037e27064557",
+        "security_definer": true,
+        "service_role_execute": false,
+        "authenticated_execute": false
+      },
+      {
+        "name": "ecommerce_stock_omnicanal",
+        "result": "jsonb",
+        "schema": "erp_private",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "anon_execute": true,
+        "identity_args": "p_producto_ids uuid[], p_ubicacion_destino_id uuid",
+        "definition_md5": "c73aa8355c45b0310683e86545805619",
+        "security_definer": true,
+        "service_role_execute": true,
+        "authenticated_execute": true
+      },
+      {
+        "name": "normalizar_lineas_presentaciones",
+        "result": "jsonb",
+        "schema": "erp_private",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "anon_execute": false,
+        "identity_args": "p_items jsonb, p_limite integer",
+        "definition_md5": "f009f110ac01a8e44855e6ea6b2d0689",
+        "security_definer": false,
+        "service_role_execute": false,
+        "authenticated_execute": false
+      },
+      {
+        "name": "resolver_linea_presentacion",
+        "result": "jsonb",
+        "schema": "erp_private",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "anon_execute": false,
+        "identity_args": "p_producto_id uuid, p_presentacion_id uuid, p_cantidad numeric, p_canal text",
+        "definition_md5": "668de105051eb25b6b4fc59fd7a1ec51",
+        "security_definer": false,
+        "service_role_execute": false,
+        "authenticated_execute": false
+      },
+      {
+        "name": "validar_cantidad_producto",
+        "result": "void",
+        "schema": "erp_private",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "anon_execute": false,
+        "identity_args": "p_producto uuid, p_cantidad numeric, p_permitir_archivado boolean",
+        "definition_md5": "685dbac965a0623cc25c65da02ad38ca",
+        "security_definer": true,
+        "service_role_execute": false,
+        "authenticated_execute": false
+      },
+      {
+        "name": "crear_pedido_checkout",
+        "result": "jsonb",
+        "schema": "public",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "anon_execute": false,
+        "identity_args": "p_items jsonb, p_modo_inventario text, p_ubicacion_destino_id uuid, p_metodo_entrega character varying, p_metodo_pago character varying, p_clave_idempotencia uuid, p_minutos_expiracion integer",
+        "definition_md5": "26c75937c6357a45f4a94ff83eb5ca06",
+        "security_definer": false,
+        "service_role_execute": true,
+        "authenticated_execute": true
+      },
+      {
+        "name": "crear_pedido_checkout_presentaciones",
+        "result": "jsonb",
+        "schema": "public",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "anon_execute": false,
+        "identity_args": "p_items jsonb, p_modo_inventario text, p_ubicacion_destino_id uuid, p_metodo_entrega character varying, p_metodo_pago character varying, p_clave_idempotencia uuid, p_minutos_expiracion integer",
+        "definition_md5": "2e2e459c6debc81cae3588eb05e3aecf",
+        "security_definer": true,
+        "service_role_execute": true,
+        "authenticated_execute": true
+      },
+      {
+        "name": "ecommerce_stock_omnicanal",
+        "result": "jsonb",
+        "schema": "public",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "anon_execute": true,
+        "identity_args": "p_producto_ids uuid[], p_ubicacion_destino_id uuid",
+        "definition_md5": "b5956c0c7d0c110058a51a9236b9567e",
+        "security_definer": false,
+        "service_role_execute": true,
+        "authenticated_execute": true
+      },
+      {
+        "name": "validar_disponibilidad_presentaciones",
+        "result": "jsonb",
+        "schema": "public",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "anon_execute": true,
+        "identity_args": "p_items jsonb",
+        "definition_md5": "a1e4525c434fc3d40800515fa3936c8c",
+        "security_definer": true,
+        "service_role_execute": true,
+        "authenticated_execute": true
+      }
+    ],
+    "schemas": [
+      {
+        "role": "anon",
+        "private_usage": true
+      },
+      {
+        "role": "authenticated",
+        "private_usage": true
+      },
+      {
+        "role": "service_role",
+        "private_usage": true
+      }
+    ],
+    "columns": [
+      {
+        "type": "uuid",
+        "table": "categorias",
+        "column": "id",
+        "nullable": "NO"
+      },
+      {
+        "type": "character varying",
+        "table": "categorias",
+        "column": "nombre",
+        "nullable": "NO"
+      },
+      {
+        "type": "character varying",
+        "table": "categorias",
+        "column": "slug",
+        "nullable": "NO"
+      },
+      {
+        "type": "text",
+        "table": "categorias",
+        "column": "descripcion",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "categorias",
+        "column": "categoria_padre_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "categorias",
+        "column": "imagen_url",
+        "nullable": "YES"
+      },
+      {
+        "type": "character varying",
+        "table": "categorias",
+        "column": "icono",
+        "nullable": "YES"
+      },
+      {
+        "type": "integer",
+        "table": "categorias",
+        "column": "orden",
+        "nullable": "NO"
+      },
+      {
+        "type": "boolean",
+        "table": "categorias",
+        "column": "activo",
+        "nullable": "NO"
+      },
+      {
+        "type": "boolean",
+        "table": "categorias",
+        "column": "visible_pos",
+        "nullable": "NO"
+      },
+      {
+        "type": "boolean",
+        "table": "categorias",
+        "column": "visible_ecommerce",
+        "nullable": "NO"
+      },
+      {
+        "type": "boolean",
+        "table": "categorias",
+        "column": "destacada",
+        "nullable": "NO"
+      },
+      {
+        "type": "character varying",
+        "table": "categorias",
+        "column": "seo_title",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "categorias",
+        "column": "seo_description",
+        "nullable": "YES"
+      },
+      {
+        "type": "timestamp with time zone",
+        "table": "categorias",
+        "column": "fecha_creacion",
+        "nullable": "NO"
+      },
+      {
+        "type": "timestamp with time zone",
+        "table": "categorias",
+        "column": "fecha_actualizacion",
+        "nullable": "NO"
+      },
+      {
+        "type": "boolean",
+        "table": "configuracion_ecommerce",
+        "column": "id",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "configuracion_ecommerce",
+        "column": "ubicacion_ecommerce_id",
+        "nullable": "NO"
+      },
+      {
+        "type": "timestamp with time zone",
+        "table": "configuracion_ecommerce",
+        "column": "actualizado_en",
+        "nullable": "NO"
+      },
+      {
+        "type": "numeric",
+        "table": "configuracion_ecommerce",
+        "column": "max_cantidad_por_linea",
+        "nullable": "NO"
+      },
+      {
+        "type": "numeric",
+        "table": "configuracion_ecommerce",
+        "column": "umbral_pocas_unidades",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "existencias",
+        "column": "id",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "existencias",
+        "column": "producto_id",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "existencias",
+        "column": "ubicacion_id",
+        "nullable": "NO"
+      },
+      {
+        "type": "numeric",
+        "table": "existencias",
+        "column": "stock_fisico",
+        "nullable": "NO"
+      },
+      {
+        "type": "numeric",
+        "table": "existencias",
+        "column": "stock_reservado",
+        "nullable": "NO"
+      },
+      {
+        "type": "numeric",
+        "table": "existencias",
+        "column": "stock_disponible",
+        "nullable": "NO"
+      },
+      {
+        "type": "numeric",
+        "table": "existencias",
+        "column": "stock_minimo",
+        "nullable": "NO"
+      },
+      {
+        "type": "numeric",
+        "table": "existencias",
+        "column": "stock_maximo",
+        "nullable": "NO"
+      },
+      {
+        "type": "numeric",
+        "table": "existencias",
+        "column": "punto_reorden",
+        "nullable": "NO"
+      },
+      {
+        "type": "boolean",
+        "table": "existencias",
+        "column": "activo",
+        "nullable": "NO"
+      },
+      {
+        "type": "timestamp with time zone",
+        "table": "existencias",
+        "column": "fecha_ultimo_movimiento",
+        "nullable": "YES"
+      },
+      {
+        "type": "timestamp with time zone",
+        "table": "existencias",
+        "column": "fecha_ultimo_conteo",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "existencias",
+        "column": "creado_por",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "existencias",
+        "column": "actualizado_por",
+        "nullable": "YES"
+      },
+      {
+        "type": "timestamp with time zone",
+        "table": "existencias",
+        "column": "fecha_creacion",
+        "nullable": "NO"
+      },
+      {
+        "type": "timestamp with time zone",
+        "table": "existencias",
+        "column": "fecha_actualizacion",
+        "nullable": "NO"
+      },
+      {
+        "type": "numeric",
+        "table": "existencias",
+        "column": "costo_promedio",
+        "nullable": "NO"
+      },
+      {
+        "type": "boolean",
+        "table": "existencias",
+        "column": "costo_validado",
+        "nullable": "NO"
+      },
+      {
+        "type": "text",
+        "table": "existencias",
+        "column": "politica_reabastecimiento",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "existencias",
+        "column": "responsable_reabastecimiento_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "smallint",
+        "table": "existencias",
+        "column": "revision_cada_dias",
+        "nullable": "YES"
+      },
+      {
+        "type": "timestamp with time zone",
+        "table": "existencias",
+        "column": "politica_revisada_en",
+        "nullable": "YES"
+      },
+      {
+        "type": "bigint",
+        "table": "existencias",
+        "column": "politica_revision",
+        "nullable": "NO"
+      },
+      {
+        "type": "text",
+        "table": "existencias",
+        "column": "politica_notas",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "marcas",
+        "column": "id",
+        "nullable": "NO"
+      },
+      {
+        "type": "character varying",
+        "table": "marcas",
+        "column": "nombre",
+        "nullable": "NO"
+      },
+      {
+        "type": "character varying",
+        "table": "marcas",
+        "column": "slug",
+        "nullable": "NO"
+      },
+      {
+        "type": "text",
+        "table": "marcas",
+        "column": "descripcion",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "marcas",
+        "column": "logo_url",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "marcas",
+        "column": "sitio_web",
+        "nullable": "YES"
+      },
+      {
+        "type": "character varying",
+        "table": "marcas",
+        "column": "pais_origen",
+        "nullable": "YES"
+      },
+      {
+        "type": "boolean",
+        "table": "marcas",
+        "column": "activo",
+        "nullable": "NO"
+      },
+      {
+        "type": "boolean",
+        "table": "marcas",
+        "column": "destacada",
+        "nullable": "NO"
+      },
+      {
+        "type": "integer",
+        "table": "marcas",
+        "column": "orden",
+        "nullable": "NO"
+      },
+      {
+        "type": "character varying",
+        "table": "marcas",
+        "column": "seo_title",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "marcas",
+        "column": "seo_description",
+        "nullable": "YES"
+      },
+      {
+        "type": "timestamp with time zone",
+        "table": "marcas",
+        "column": "fecha_creacion",
+        "nullable": "NO"
+      },
+      {
+        "type": "timestamp with time zone",
+        "table": "marcas",
+        "column": "fecha_actualizacion",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "ofertas_producto",
+        "column": "id",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "ofertas_producto",
+        "column": "producto_id",
+        "nullable": "NO"
+      },
+      {
+        "type": "character varying",
+        "table": "ofertas_producto",
+        "column": "nombre",
+        "nullable": "NO"
+      },
+      {
+        "type": "text",
+        "table": "ofertas_producto",
+        "column": "descripcion",
+        "nullable": "YES"
+      },
+      {
+        "type": "numeric",
+        "table": "ofertas_producto",
+        "column": "oferta_porcentaje",
+        "nullable": "NO"
+      },
+      {
+        "type": "timestamp with time zone",
+        "table": "ofertas_producto",
+        "column": "fecha_inicio",
+        "nullable": "NO"
+      },
+      {
+        "type": "timestamp with time zone",
+        "table": "ofertas_producto",
+        "column": "fecha_fin",
+        "nullable": "YES"
+      },
+      {
+        "type": "boolean",
+        "table": "ofertas_producto",
+        "column": "activo",
+        "nullable": "NO"
+      },
+      {
+        "type": "boolean",
+        "table": "ofertas_producto",
+        "column": "aplica_pos",
+        "nullable": "NO"
+      },
+      {
+        "type": "boolean",
+        "table": "ofertas_producto",
+        "column": "aplica_ecommerce",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "ofertas_producto",
+        "column": "creado_por",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "ofertas_producto",
+        "column": "actualizado_por",
+        "nullable": "YES"
+      },
+      {
+        "type": "timestamp with time zone",
+        "table": "ofertas_producto",
+        "column": "fecha_creacion",
+        "nullable": "NO"
+      },
+      {
+        "type": "timestamp with time zone",
+        "table": "ofertas_producto",
+        "column": "fecha_actualizacion",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "producto_presentaciones",
+        "column": "id",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "producto_presentaciones",
+        "column": "producto_id",
+        "nullable": "NO"
+      },
+      {
+        "type": "character varying",
+        "table": "producto_presentaciones",
+        "column": "nombre",
+        "nullable": "NO"
+      },
+      {
+        "type": "numeric",
+        "table": "producto_presentaciones",
+        "column": "cantidad_base",
+        "nullable": "NO"
+      },
+      {
+        "type": "numeric",
+        "table": "producto_presentaciones",
+        "column": "precio",
+        "nullable": "NO"
+      },
+      {
+        "type": "character varying",
+        "table": "producto_presentaciones",
+        "column": "codigo_barras",
+        "nullable": "YES"
+      },
+      {
+        "type": "boolean",
+        "table": "producto_presentaciones",
+        "column": "activo",
+        "nullable": "NO"
+      },
+      {
+        "type": "boolean",
+        "table": "producto_presentaciones",
+        "column": "disponible_pos",
+        "nullable": "NO"
+      },
+      {
+        "type": "boolean",
+        "table": "producto_presentaciones",
+        "column": "disponible_ecommerce",
+        "nullable": "NO"
+      },
+      {
+        "type": "integer",
+        "table": "producto_presentaciones",
+        "column": "orden",
+        "nullable": "NO"
+      },
+      {
+        "type": "timestamp with time zone",
+        "table": "producto_presentaciones",
+        "column": "fecha_creacion",
+        "nullable": "NO"
+      },
+      {
+        "type": "timestamp with time zone",
+        "table": "producto_presentaciones",
+        "column": "fecha_actualizacion",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "producto_presentaciones",
+        "column": "creado_por",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "producto_presentaciones",
+        "column": "actualizado_por",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "productos",
+        "column": "id",
+        "nullable": "NO"
+      },
+      {
+        "type": "character varying",
+        "table": "productos",
+        "column": "codigo_barras",
+        "nullable": "YES"
+      },
+      {
+        "type": "character varying",
+        "table": "productos",
+        "column": "sku",
+        "nullable": "NO"
+      },
+      {
+        "type": "character varying",
+        "table": "productos",
+        "column": "codigo_interno",
+        "nullable": "YES"
+      },
+      {
+        "type": "character varying",
+        "table": "productos",
+        "column": "nombre",
+        "nullable": "NO"
+      },
+      {
+        "type": "character varying",
+        "table": "productos",
+        "column": "nombre_corto",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "productos",
+        "column": "categoria_id",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "productos",
+        "column": "marca_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "productos",
+        "column": "unidad_medida_id",
+        "nullable": "NO"
+      },
+      {
+        "type": "text",
+        "table": "productos",
+        "column": "descripcion_corta",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "productos",
+        "column": "descripcion_larga",
+        "nullable": "YES"
+      },
+      {
+        "type": "character varying",
+        "table": "productos",
+        "column": "presentacion",
+        "nullable": "YES"
+      },
+      {
+        "type": "character varying",
+        "table": "productos",
+        "column": "modelo",
+        "nullable": "YES"
+      },
+      {
+        "type": "character varying",
+        "table": "productos",
+        "column": "color",
+        "nullable": "YES"
+      },
+      {
+        "type": "character varying",
+        "table": "productos",
+        "column": "tamano",
+        "nullable": "YES"
+      },
+      {
+        "type": "character varying",
+        "table": "productos",
+        "column": "material",
+        "nullable": "YES"
+      },
+      {
+        "type": "numeric",
+        "table": "productos",
+        "column": "peso",
+        "nullable": "YES"
+      },
+      {
+        "type": "character varying",
+        "table": "productos",
+        "column": "unidad_peso",
+        "nullable": "YES"
+      },
+      {
+        "type": "numeric",
+        "table": "productos",
+        "column": "ancho",
+        "nullable": "YES"
+      },
+      {
+        "type": "numeric",
+        "table": "productos",
+        "column": "alto",
+        "nullable": "YES"
+      },
+      {
+        "type": "numeric",
+        "table": "productos",
+        "column": "profundidad",
+        "nullable": "YES"
+      },
+      {
+        "type": "character varying",
+        "table": "productos",
+        "column": "unidad_dimensiones",
+        "nullable": "YES"
+      },
+      {
+        "type": "character varying",
+        "table": "productos",
+        "column": "contenido",
+        "nullable": "YES"
+      },
+      {
+        "type": "integer",
+        "table": "productos",
+        "column": "piezas_por_paquete",
+        "nullable": "YES"
+      },
+      {
+        "type": "boolean",
+        "table": "productos",
+        "column": "es_vendible",
+        "nullable": "NO"
+      },
+      {
+        "type": "boolean",
+        "table": "productos",
+        "column": "es_comprable",
+        "nullable": "NO"
+      },
+      {
+        "type": "boolean",
+        "table": "productos",
+        "column": "controla_inventario",
+        "nullable": "NO"
+      },
+      {
+        "type": "boolean",
+        "table": "productos",
+        "column": "venta_fraccionada",
+        "nullable": "NO"
+      },
+      {
+        "type": "boolean",
+        "table": "productos",
+        "column": "requiere_codigo_barras",
+        "nullable": "NO"
+      },
+      {
+        "type": "boolean",
+        "table": "productos",
+        "column": "disponible_pos",
+        "nullable": "NO"
+      },
+      {
+        "type": "boolean",
+        "table": "productos",
+        "column": "publicado_ecommerce",
+        "nullable": "NO"
+      },
+      {
+        "type": "boolean",
+        "table": "productos",
+        "column": "visible_ecommerce",
+        "nullable": "NO"
+      },
+      {
+        "type": "boolean",
+        "table": "productos",
+        "column": "destacado_ecommerce",
+        "nullable": "NO"
+      },
+      {
+        "type": "character varying",
+        "table": "productos",
+        "column": "slug",
+        "nullable": "YES"
+      },
+      {
+        "type": "character varying",
+        "table": "productos",
+        "column": "titulo_seo",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "productos",
+        "column": "descripcion_seo",
+        "nullable": "YES"
+      },
+      {
+        "type": "ARRAY",
+        "table": "productos",
+        "column": "palabras_clave",
+        "nullable": "YES"
+      },
+      {
+        "type": "integer",
+        "table": "productos",
+        "column": "orden_ecommerce",
+        "nullable": "NO"
+      },
+      {
+        "type": "boolean",
+        "table": "productos",
+        "column": "activo",
+        "nullable": "NO"
+      },
+      {
+        "type": "boolean",
+        "table": "productos",
+        "column": "descontinuado",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "productos",
+        "column": "creado_por",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "productos",
+        "column": "actualizado_por",
+        "nullable": "YES"
+      },
+      {
+        "type": "timestamp with time zone",
+        "table": "productos",
+        "column": "fecha_creacion",
+        "nullable": "NO"
+      },
+      {
+        "type": "timestamp with time zone",
+        "table": "productos",
+        "column": "fecha_actualizacion",
+        "nullable": "NO"
+      },
+      {
+        "type": "numeric",
+        "table": "productos",
+        "column": "precio_base",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "productos",
+        "column": "proveedor_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "numeric",
+        "table": "productos",
+        "column": "costo_ultimo",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "ubicaciones",
+        "column": "id",
+        "nullable": "NO"
+      },
+      {
+        "type": "character varying",
+        "table": "ubicaciones",
+        "column": "codigo",
+        "nullable": "NO"
+      },
+      {
+        "type": "character varying",
+        "table": "ubicaciones",
+        "column": "nombre",
+        "nullable": "NO"
+      },
+      {
+        "type": "character varying",
+        "table": "ubicaciones",
+        "column": "tipo",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "ubicaciones",
+        "column": "ubicacion_padre_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "ubicaciones",
+        "column": "direccion",
+        "nullable": "YES"
+      },
+      {
+        "type": "text",
+        "table": "ubicaciones",
+        "column": "descripcion",
+        "nullable": "YES"
+      },
+      {
+        "type": "uuid",
+        "table": "ubicaciones",
+        "column": "responsable_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "boolean",
+        "table": "ubicaciones",
+        "column": "permite_inventario",
+        "nullable": "NO"
+      },
+      {
+        "type": "boolean",
+        "table": "ubicaciones",
+        "column": "permite_venta",
+        "nullable": "NO"
+      },
+      {
+        "type": "boolean",
+        "table": "ubicaciones",
+        "column": "permite_recepcion",
+        "nullable": "NO"
+      },
+      {
+        "type": "boolean",
+        "table": "ubicaciones",
+        "column": "permite_transferencia",
+        "nullable": "NO"
+      },
+      {
+        "type": "boolean",
+        "table": "ubicaciones",
+        "column": "activo",
+        "nullable": "NO"
+      },
+      {
+        "type": "integer",
+        "table": "ubicaciones",
+        "column": "orden",
+        "nullable": "NO"
+      },
+      {
+        "type": "timestamp with time zone",
+        "table": "ubicaciones",
+        "column": "fecha_creacion",
+        "nullable": "NO"
+      },
+      {
+        "type": "timestamp with time zone",
+        "table": "ubicaciones",
+        "column": "fecha_actualizacion",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "unidades_medida",
+        "column": "id",
+        "nullable": "NO"
+      },
+      {
+        "type": "character varying",
+        "table": "unidades_medida",
+        "column": "nombre",
+        "nullable": "NO"
+      },
+      {
+        "type": "character varying",
+        "table": "unidades_medida",
+        "column": "abreviatura",
+        "nullable": "NO"
+      },
+      {
+        "type": "character varying",
+        "table": "unidades_medida",
+        "column": "tipo",
+        "nullable": "NO"
+      },
+      {
+        "type": "smallint",
+        "table": "unidades_medida",
+        "column": "decimales_permitidos",
+        "nullable": "NO"
+      },
+      {
+        "type": "boolean",
+        "table": "unidades_medida",
+        "column": "permite_fraccion",
+        "nullable": "NO"
+      },
+      {
+        "type": "numeric",
+        "table": "unidades_medida",
+        "column": "factor_base",
+        "nullable": "NO"
+      },
+      {
+        "type": "uuid",
+        "table": "unidades_medida",
+        "column": "unidad_base_id",
+        "nullable": "YES"
+      },
+      {
+        "type": "boolean",
+        "table": "unidades_medida",
+        "column": "activo",
+        "nullable": "NO"
+      },
+      {
+        "type": "timestamp with time zone",
+        "table": "unidades_medida",
+        "column": "fecha_creacion",
+        "nullable": "NO"
+      },
+      {
+        "type": "timestamp with time zone",
+        "table": "unidades_medida",
+        "column": "fecha_actualizacion",
+        "nullable": "NO"
+      }
+    ]
+  }
+}
