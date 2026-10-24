@@ -1,0 +1,14 @@
+{
+  "format_version": 1,
+  "migration_file": "supabase/migrations/20261024165634_conectar_puente_catalogo.sql",
+  "migration_sha256": "67c9f954c0c9108341882a5aad2924822112898af3874ce13dcad876d6af457f",
+  "project_ref": "beasfybalepkdlomzazf",
+  "baseline_file": "supabase/baseline/h09-antes-2026-10-24.json",
+  "baseline_sha256": "b63dba3311483742dc7045adba5cffc94682bc5c6aa244af2f2e2cfb3071cb67",
+  "based_on_migration": "20261024114111",
+  "reason": "H09: activar puente mínimo de nueve tablas a Edge autenticada, sin enviar filas privadas ni declarar entrega/publicación al encolar.",
+  "before_after": "Antes: helper/triggers ausentes y secretoVaultsinconfigurar. Después: helperprivado y9triggersAFTERROW conpayload mínimo; instalaciónfalla sin secretoVault válido y precondiciones. No cambios de motorERP, políticas ni lectura de tablas.",
+  "verification": "29pruebasNode/PGlite del SQL(28subcasos+contenedor), Vault/net simulados, sin HTTP real. No aplica a producción hasta completar repositorio/Edge/secreto/hosting y verificar envío/publicación.",
+  "generated_with_cli": "Supabase CLI2.122.0 migration new conectar_puente_catalogo",
+  "status": "preparada; NO aplicada por prerrequisitos externos pendientes"
+}

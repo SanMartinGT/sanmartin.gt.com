@@ -1,0 +1,17 @@
+{
+  "format_version": 1,
+  "migration_file": "supabase/migrations/20261024114111_persistir_snapshots_pedidos.sql",
+  "migration_sha256": "6a436d6ac224af994a3ab53dba607189fb1a5088704b7165443a92b483f29149",
+  "project_ref": "beasfybalepkdlomzazf",
+  "baseline_file": "supabase/baseline/h08-antes-2026-10-24.json",
+  "baseline_sha256": "e7863635082c99bf613d22382e7e46b18067e8a70c39adc5ff409a2d78f92560",
+  "based_on_migration": "20261024025818",
+  "reason": "H08: persistir identidad comercial/unidad y contacto de entrega en pedidos nuevos, sin rellenar vacíos antiguos.",
+  "before_after": "Antes: lectura y emisión reconstruyen unidad/producto actuales; dirección sin destinatario/teléfono. Después: dos JSON snapshots nullable capturados por trigger INSERT e inmutables; lectura/emisión usan snapshot o referencia actual explícita con unidadNULL; corecheckout añade contacto perfil a dirección en ambas modalidades. No backfill ni cambios de precios/stock/hash/replay.",
+  "verification": "321 pruebas Node y3Python pasan;29 SQL H08 (28 subcasos+contenedor) y25 UI H08 incluyendo ERP local; regresiones H01-H07 completas. PostgreSQL18.6/PGlite0.5.11 ejecuta corecheckouts unidades/presentaciones y emitter exactos, snapshots tras cambios/replay, legadoNULL, inmutabilidad, dueño/A-B/anon, rollbackstock y comprobantes/replay. Solo Auth/permisos y omnicanal_respuesta simulados. Build aislado17páginas/1ficha/16URLs pasa; guardSQL25históricos intactos. 5/5 definiciones compiladas yACL coinciden con Supabase; navegador local con legado/nuevo pasa. Supabase17.6 confirma2columnasNULLsinDEFAULT, triggeractivo,7líneas antiguascon snapshotsNULL,0pedidos con contactoH08; contadores3pedidos/7líneas/4reservas/28movimientos iguales alprevio. ACL actuales conservados y helpersinEXECUTEfrontend.",
+  "generated_with_cli": "Supabase CLI2.122.0 migration new persistir_snapshots_pedidos",
+  "cli_generated_file": "supabase/migrations/20261024113413_persistir_snapshots_pedidos.sql",
+  "status": "aplicada en Supabase y verificada; frontend local sin publicar",
+  "applied_version": "20261024114111",
+  "version_reconciliation": "Creada primero por CLI con20261024113413; renombrada al20261024114111 asignado por apply_migration. Sin reparación/escritura manual del historial."
+}

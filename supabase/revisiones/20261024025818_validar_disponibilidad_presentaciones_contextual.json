@@ -1,0 +1,18 @@
+{
+  "format_version": 1,
+  "migration_file": "supabase/migrations/20261024025818_validar_disponibilidad_presentaciones_contextual.sql",
+  "migration_sha256": "72e633f3a301279be4c457a3198982f3d5bb2bcd90231ef0fd47ef1d82913d93",
+  "project_ref": "beasfybalepkdlomzazf",
+  "baseline_file": "supabase/baseline/h05-antes-2026-10-23.json",
+  "baseline_sha256": "f3acb01ba3024d0f2f5900ea6661c1ce1e177c49c9a7ab14ab7ef0252febfd61",
+  "based_on_migration": "20261022013039",
+  "reason": "H05: unificar preflight de unidades/presentaciones y modalidad/destino en servidor, conservando RPC1arg y checkout.",
+  "before_after": "Antes: RPC1arg solo sucursal configurada; OMNICANAL se comprobaba en navegador. Después: núcleo privado STABLE readonly resuelve cantidades/presentaciones y stock elegible por contexto; wrapper público nuevo INVOKER y wrapper1arg compatible. Sin DML, reservas ni cambios al checkout.",
+  "verification": "39 pruebas SQL reales en PostgreSQL18.6/PGlite0.5.11 con6dependencias exactas y fixtures; 23 pruebas cliente de contrato; 190 pruebas Node totales y3Python pasan; guard H01/H02. Base viva PostgreSQL17.6: anon/authenticated READ ONLY SUCURSAL/OMNICANAL y firma antigua; API pública real3HTTP200. Huellas9funciones deSQLlocal coinciden con servidor; creación/resolución operacional sin cambios. No hay presentaciones activas publicadas para ensayo vivo de paquetes: se aceptaron en fixtures SQL. Sin creación de pedidos/reservas.",
+  "generated_with_cli": "Supabase CLI2.122.0 migration new validar_disponibilidad_presentaciones_contextual",
+  "cli_generated_file": "supabase/migrations/20261024024829_validar_disponibilidad_presentaciones_contextual.sql",
+  "status": "aplicada y verificada en Supabase; frontend local listo, sin publicar",
+  "applied_version": "20261024025818",
+  "version_reconciliation": "Archivo creado primero por CLI2.122.0; después se adopta el prefijo real asignado por apply_migration para que el archivo local coincida con la historia remota. No se reparó ni escribió historia manualmente.",
+  "sql_bytes_reconciled": "UTF-8/LF: el archivo local coincide byte a byte con el SQL enviado por apply_migration. Se normalizaron terminaciones Windows CRLF, sin cambiar sentencias."
+}
