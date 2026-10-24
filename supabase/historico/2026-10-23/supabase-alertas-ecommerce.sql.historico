@@ -1,0 +1,77 @@
+-- Ejecuta este script UNA sola vez en Supabase SQL Editor.
+-- Mantiene el control administrativo para ejecutar alertas manualmente,
+-- pero permite que una transacción interna de checkout actualice alertas.
+
+create or replace function public.generar_alertas_inventario()
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  item record;
+  v_estado varchar;
+  v_creadas integer := 0;
+  v_resueltas integer := 0;
+  v_filas integer := 0;
+  v_checkout_interno boolean := coalesce(current_setting('sanmartin.ecommerce_checkout', true), 'false') = 'true';
+begin
+  -- Sólo el checkout marca esta variable dentro de su función SECURITY DEFINER
+  -- y únicamente durante la transacción activa.
+  if auth.uid() is not null
+     and not v_checkout_interno
+     and not tiene_permiso('existencias.ver'::text) then
+    raise exception 'No tienes permiso para generar alertas de inventario.' using errcode = '42501';
+  end if;
+
+  for item in
+    select id, producto_id, ubicacion_id, stock_disponible, stock_minimo, stock_maximo
+    from public.existencias
+    where activo = true
+  loop
+    if auth.uid() is not null
+       and not v_checkout_interno
+       and not tiene_acceso_ubicacion(item.ubicacion_id) then
+      continue;
+    end if;
+
+    v_estado := case
+      when coalesce(item.stock_disponible, 0) <= 0 then 'SIN_STOCK'
+      when coalesce(item.stock_disponible, 0) <= coalesce(item.stock_minimo, 0)
+        or (coalesce(item.stock_maximo, 0) > 0 and item.stock_disponible <= item.stock_maximo * .40)
+        then 'STOCK_BAJO'
+      else null
+    end;
+
+    if v_estado is null then
+      update public.alertas_inventario
+      set activa = false, resuelta_en = now(), fecha_actualizacion = now()
+      where existencia_id = item.id and activa = true;
+      get diagnostics v_filas = row_count;
+      v_resueltas := v_resueltas + v_filas;
+    else
+      update public.alertas_inventario
+      set activa = false, resuelta_en = now(), fecha_actualizacion = now()
+      where existencia_id = item.id and activa = true and estado <> v_estado;
+      get diagnostics v_filas = row_count;
+      v_resueltas := v_resueltas + v_filas;
+
+      if not exists (
+        select 1 from public.alertas_inventario
+        where existencia_id = item.id and estado = v_estado and activa = true
+      ) then
+        insert into public.alertas_inventario(
+          existencia_id, producto_id, ubicacion_id, estado,
+          stock_disponible, stock_minimo, stock_maximo
+        ) values (
+          item.id, item.producto_id, item.ubicacion_id, v_estado,
+          item.stock_disponible, item.stock_minimo, item.stock_maximo
+        );
+        v_creadas := v_creadas + 1;
+      end if;
+    end if;
+  end loop;
+
+  return jsonb_build_object('creadas', v_creadas, 'resueltas', v_resueltas);
+end;
+$$;
