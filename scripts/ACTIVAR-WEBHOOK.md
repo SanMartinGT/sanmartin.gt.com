@@ -2,11 +2,15 @@
 
 Estado al 24 de octubre de 2026: Edge `catalogo-actualizado` v2 desplegada y código
 local probado. La automatización completa NO está activada ni verificada todavía.
-El repositorio configurado anteriormente está vacío; el usuario utilizará otro y
-su URL está pendiente. El alojamiento PHP/HTML de `sanmartingmca.com` ya quedó
-preparado en el plan existente. La primera publicación manual está verificada
-por HTTPS: tres fichas y 26 archivos críticos coinciden con el artefacto local.
-Falta conectar la ejecución automática con GitHub y sus secretos.
+El usuario confirmó [SanMartinGT/sanmartin.gt.com](https://github.com/SanMartinGT/sanmartin.gt.com),
+rama `main`. En este corte de carga hay 77 archivos de raíz y `scripts/`
+en `main`, y cinco archivos de `supabase/` en proceso. La fuente revisada
+de 132 archivos todavía está en carga; no se ha verificado una ejecución
+de Actions. El alojamiento PHP/HTML de `sanmartingmca.com` está preparado
+en el plan existente y la primera publicación manual está verificada por
+HTTPS: tres fichas y 26 archivos críticos coinciden con el artefacto local.
+Siguen pendientes los secretos de GitHub/Supabase, el secreto Vault, los
+triggers y la aceptación completa del flujo automático.
 
 ## Un solo mecanismo de eventos
 
@@ -29,9 +33,11 @@ Un fallo de notificación conserva la edición/compra y exige reconstrucción ma
 
 ## Configuración necesaria
 
-1. Confirmar el repositorio GitHub real y su rama predeterminada, con acceso de
-   escritura para subir la fuente revisada y `.github/workflows/publicar.yml`.
-   El workflow debe existir en la rama predeterminada para repository_dispatch.
+1. Completar la carga de los 132 archivos revisados en `main` de
+   `SanMartinGT/sanmartin.gt.com`, incluidos `.github/workflows/publicar.yml`,
+   `supabase/`, `assets/` y los archivos ocultos. Verificar después su
+   primera ejecución de Actions. El workflow debe existir en la rama
+   predeterminada para `repository_dispatch`; la carga parcial no basta.
 2. Configurar en GitHub SITE_URL=`https://sanmartingmca.com/` y los secrets
    HOSTINGER_FTP_SERVER, HOSTINGER_FTP_USERNAME y HOSTINGER_FTP_PASSWORD. Puerto,
    directorio y protocolo se toman de las variables del workflow; FTPS con
@@ -39,7 +45,7 @@ Un fallo de notificación conserva la edición/compra y exige reconstrucción ma
    resolver un certificado incorrecto: usar el hostname indicado por el proveedor.
 3. Habilitar HOSTINGER_DEPLOY_ENABLED=`true` solamente con el sitio preparado y
    la publicación manual verificada. Sin esa variable solo se genera un artefacto.
-4. Configurar en Supabase Edge Secrets GITHUB_REPOSITORY con el repositorio real,
+4. Configurar en Supabase Edge Secrets GITHUB_REPOSITORY=`SanMartinGT/sanmartin.gt.com`,
    GITHUB_DISPATCH_TOKEN limitado a ese repositorio (Contents read/write para
    repository_dispatch), y CATALOGO_WEBHOOK_SECRET con una clave privada aleatoria
    de 32–256 caracteres sin espacios. Crear en Vault catalogo_webhook_secret con
