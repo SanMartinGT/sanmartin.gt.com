@@ -1,0 +1,216 @@
+{
+  "format_version": 1,
+  "project_ref": "beasfybalepkdlomzazf",
+  "archived_on": "2026-10-23",
+  "expected_legacy_count": 25,
+  "baseline_file": "supabase/baseline/h01-2026-10-23.json",
+  "baseline_sha256": "33bf21dcb2699ec52ffc7e094f47587b90b1f7763f3aee37cb1207225ed45a1d",
+  "files": [
+    {
+      "original_path": "supabase-alertas-ecommerce.sql",
+      "archived_path": "supabase/historico/2026-10-23/supabase-alertas-ecommerce.sql.historico",
+      "bytes": 2817,
+      "sha256": "467524157caa2801e867bc0801839ee1bf136532901751087606e505ad1184c2",
+      "reason": "Histórico de instalación; no ejecutar ni usar como migración. Alertas de inventario.",
+      "current_contract": "generar_alertas_inventario y motor de alertas con autorización; no restaurar función histórica."
+    },
+    {
+      "original_path": "supabase-alertas-operativas.sql",
+      "archived_path": "supabase/historico/2026-10-23/supabase-alertas-operativas.sql.historico",
+      "bytes": 5231,
+      "sha256": "6e7c83e307795effb068f3efd87426e02d9b55639fd1c2af2fa53eb43356de0d",
+      "reason": "Histórico de instalación; no ejecutar ni usar como migración. Colas y triggers de alertas.",
+      "current_contract": "Triggers vivos de pedidos con INSERT diferido y total final; conservar los contratos actuales de alertas."
+    },
+    {
+      "original_path": "supabase-anuncios-editoriales-ecommerce.sql",
+      "archived_path": "supabase/historico/2026-10-23/supabase-anuncios-editoriales-ecommerce.sql.historico",
+      "bytes": 2284,
+      "sha256": "cae9407601220879a2f8178c97f55bf000c2f8631915e6773b4844f7328da6d4",
+      "reason": "Histórico de instalación; no ejecutar ni usar como migración. Contenido editorial.",
+      "current_contract": "Tabla/políticas actuales de anuncios_editoriales_ecommerce; cambios solo por delta específico."
+    },
+    {
+      "original_path": "supabase-anuncios-inicio-ecommerce.sql",
+      "archived_path": "supabase/historico/2026-10-23/supabase-anuncios-inicio-ecommerce.sql.historico",
+      "bytes": 2600,
+      "sha256": "f30574126ca1087da7653e26eec445b34bb188e93fc958d2ac5511dba0eccc0d",
+      "reason": "Histórico de instalación; no ejecutar ni usar como migración. Anuncios de inicio y Storage.",
+      "current_contract": "Tabla/políticas/bucket actuales; configuracion.editar y sesión activa según políticas vivas."
+    },
+    {
+      "original_path": "supabase-banners-ecommerce.sql",
+      "archived_path": "supabase/historico/2026-10-23/supabase-banners-ecommerce.sql.historico",
+      "bytes": 2256,
+      "sha256": "c9d174881ea72e82f2846ca80b35e2fcb546afb7fb631e06d5c811a4ee4805b7",
+      "reason": "Histórico de instalación; no ejecutar ni usar como migración. Banners y permisos.",
+      "current_contract": "banners_ecommerce y políticas actuales; no restaurar permiso banners.editar del archivo."
+    },
+    {
+      "original_path": "supabase-banners-temas.sql",
+      "archived_path": "supabase/historico/2026-10-23/supabase-banners-temas.sql.historico",
+      "bytes": 380,
+      "sha256": "2572c364df56823b7ff3722863642d81655bef6e78a3b15b3efffb7fed8bbf4e",
+      "reason": "Histórico de instalación; no ejecutar ni usar como migración. Temas de banners.",
+      "current_contract": "Restricción de tema instalada; comparar CHECK vivo antes de ampliar opciones."
+    },
+    {
+      "original_path": "supabase-calidad-catalogo.sql",
+      "archived_path": "supabase/historico/2026-10-23/supabase-calidad-catalogo.sql.historico",
+      "bytes": 1791,
+      "sha256": "0c4dd5b43b5998aa94ce4109c8e5d60cbdd1c15606ef40f40a66f7afae45245c",
+      "reason": "Histórico de instalación; no ejecutar ni usar como migración. Auditoría interna de catálogo.",
+      "current_contract": "auditoria_calidad_catalogo_ecommerce sin SELECT público; preservar cierre administrativo."
+    },
+    {
+      "original_path": "supabase-carrito-checkout.sql",
+      "archived_path": "supabase/historico/2026-10-23/supabase-carrito-checkout.sql.historico",
+      "bytes": 8829,
+      "sha256": "8485ff2db1ac9fd83c94120961f9bfe9258618836df5da42817cdc84088bda2d",
+      "reason": "Histórico de instalación; no ejecutar ni usar como migración. Checkout, stock y configuración.",
+      "current_contract": "crear_pedido_checkout y crear_pedido_checkout_presentaciones; clave durable, motor privado, estados separados."
+    },
+    {
+      "original_path": "supabase-carritos-cuenta.sql",
+      "archived_path": "supabase/historico/2026-10-23/supabase-carritos-cuenta.sql.historico",
+      "bytes": 686,
+      "sha256": "e0b3e45e0452bd033fc26875afcaccabe09afa90ca6f90ffc934ae179ed4496d",
+      "reason": "Histórico de instalación; no ejecutar ni usar como migración. Carrito de cuenta.",
+      "current_contract": "carritos_ecommerce con forma actual y propiedad; no reconstruir tabla desde CREATE TABLE IF NOT EXISTS antiguo."
+    },
+    {
+      "original_path": "supabase-catalogo-ecommerce-read.sql",
+      "archived_path": "supabase/historico/2026-10-23/supabase-catalogo-ecommerce-read.sql.historico",
+      "bytes": 1897,
+      "sha256": "c3e4d23b0da269d6032f1afec7e257b181660597e1d6408f0221c3dda19a3149",
+      "reason": "Histórico de instalación; no ejecutar ni usar como migración. Lecturas de catálogo y eventos.",
+      "current_contract": "Vistas/RLS/grants actuales; no usar este script para instalar permisos o Realtime en bloque."
+    },
+    {
+      "original_path": "supabase-catalogo-publico-seguro.sql",
+      "archived_path": "supabase/historico/2026-10-23/supabase-catalogo-publico-seguro.sql.historico",
+      "bytes": 1663,
+      "sha256": "9ca8ad3582a06bdee7325ee12fa8799e3427bfce1600121b025e3232e6e27fa9",
+      "reason": "Histórico de instalación; no ejecutar ni usar como migración. Proyección pública y grants.",
+      "current_contract": "catalogo_productos con unidades y filtros actuales; conservar permisos administrativos y por columna."
+    },
+    {
+      "original_path": "supabase-categorias-ecommerce.sql",
+      "archived_path": "supabase/historico/2026-10-23/supabase-categorias-ecommerce.sql.historico",
+      "bytes": 675,
+      "sha256": "e8d3ef1b2eca3ee2c7f6f784332536808af156f781f42aacaa60b21a9b863982",
+      "reason": "Histórico de instalación; no ejecutar ni usar como migración. Categorías públicas.",
+      "current_contract": "Políticas actuales de categorías activas/visibles; delta específico si cambia modelo de acceso."
+    },
+    {
+      "original_path": "supabase-clientes-ecommerce.sql",
+      "archived_path": "supabase/historico/2026-10-23/supabase-clientes-ecommerce.sql.historico",
+      "bytes": 2717,
+      "sha256": "b78891027379d569807c47c93fc7a37d2f00b03c8689db5ad9cea5c2145a4a39",
+      "reason": "Histórico de instalación; no ejecutar ni usar como migración. Perfil cliente y favoritos.",
+      "current_contract": "Registro de perfil y favoritos actuales; edición propia mediante actualizar_mi_perfil."
+    },
+    {
+      "original_path": "supabase-detalle-pedidos-cliente.sql",
+      "archived_path": "supabase/historico/2026-10-23/supabase-detalle-pedidos-cliente.sql.historico",
+      "bytes": 836,
+      "sha256": "b1272ea078d986c4324b2db9c13f6065333d77f5e7362728c852d5885b8548f4",
+      "reason": "Histórico de instalación; no ejecutar ni usar como migración. Detalle del dueño.",
+      "current_contract": "Políticas actuales de pedidos/líneas y erp_detalle_productos_pedido autorizado por dueño."
+    },
+    {
+      "original_path": "supabase-disponibilidad-ecommerce.sql",
+      "archived_path": "supabase/historico/2026-10-23/supabase-disponibilidad-ecommerce.sql.historico",
+      "bytes": 1375,
+      "sha256": "f080d3ea9f6722b56a5fa28581996e2acc33647547609377b8e9254d652e0f47",
+      "reason": "Histórico de instalación; no ejecutar ni usar como migración. Disponibilidad.",
+      "current_contract": "estado_disponibilidad_ecommerce, validar_disponibilidad_presentaciones y ecommerce_stock_omnicanal actuales."
+    },
+    {
+      "original_path": "supabase-ecommerce-authenticated-read.sql",
+      "archived_path": "supabase/historico/2026-10-23/supabase-ecommerce-authenticated-read.sql.historico",
+      "bytes": 705,
+      "sha256": "da5756c3397db93fe580ad8e186834a1ecff60ae1f2d62f90693d01188a9e5c4",
+      "reason": "Histórico de instalación; no ejecutar ni usar como migración. Lecturas del comprador.",
+      "current_contract": "Políticas vivas de catálogo para anon/authenticated, separadas de permisos de empleados."
+    },
+    {
+      "original_path": "supabase-marcas-ecommerce-read.sql",
+      "archived_path": "supabase/historico/2026-10-23/supabase-marcas-ecommerce-read.sql.historico",
+      "bytes": 722,
+      "sha256": "a4d279c746295978d8f144843dc624ded1b20cb63c469379b6a184da845c651a",
+      "reason": "Histórico de instalación; no ejecutar ni usar como migración. Marcas públicas.",
+      "current_contract": "Políticas y publicación de marcas actuales; no reejecutar instalación de políticas."
+    },
+    {
+      "original_path": "supabase-newsletter.sql",
+      "archived_path": "supabase/historico/2026-10-23/supabase-newsletter.sql.historico",
+      "bytes": 1528,
+      "sha256": "06938b41297ec04b77d2dac282b623735287b92921b0c5e5f0730418d68ae958",
+      "reason": "Histórico de instalación; no ejecutar ni usar como migración. Suscripciones.",
+      "current_contract": "suscribir_newsletter y tabla cerrada; no conceder acceso directo a la lista."
+    },
+    {
+      "original_path": "supabase-ofertas-validacion.sql",
+      "archived_path": "supabase/historico/2026-10-23/supabase-ofertas-validacion.sql.historico",
+      "bytes": 1184,
+      "sha256": "5d301fb0a80cb553f85cf6a1ff1ee4c957ea61a742d80111b2be91088d473e34",
+      "reason": "Histórico de instalación; no ejecutar ni usar como migración. Ofertas y validación.",
+      "current_contract": "Restricciones/validación de ofertas vigentes, incluida corrección de consistencia de ofertas."
+    },
+    {
+      "original_path": "supabase-perfiles-seguridad.sql",
+      "archived_path": "supabase/historico/2026-10-23/supabase-perfiles-seguridad.sql.historico",
+      "bytes": 3580,
+      "sha256": "ecf7c8b84d1a47201d195f84db148f898400bbefc528ac66f7e259c6f9b10feb",
+      "reason": "Histórico de instalación; no ejecutar ni usar como migración. Permisos de perfil.",
+      "current_contract": "actualizar_mi_perfil con campos permitidos y administración de personal actual; no revocar privilegios compartidos en bloque."
+    },
+    {
+      "original_path": "supabase-producto-detalle-publico.sql",
+      "archived_path": "supabase/historico/2026-10-23/supabase-producto-detalle-publico.sql.historico",
+      "bytes": 763,
+      "sha256": "acebee966109470c0dfcdc910e9a41df4d24d18586d92d21b1940841fd6c8dc6",
+      "reason": "Histórico de instalación; no ejecutar ni usar como migración. Ficha pública.",
+      "current_contract": "catalogo_producto_detalle actual con campos de unidad y filtros de publicación."
+    },
+    {
+      "original_path": "supabase-productos-comprados-juntos.sql",
+      "archived_path": "supabase/historico/2026-10-23/supabase-productos-comprados-juntos.sql.historico",
+      "bytes": 1529,
+      "sha256": "a79a197c9605c289913a7c8c7eea149e0088bcd5a699a26a629488e793094b6c",
+      "reason": "Histórico de instalación; no ejecutar ni usar como migración. Recomendaciones.",
+      "current_contract": "RPC actual filtra pago PAGADO y entrega ENTREGADO; conservar filtros de productos publicados."
+    },
+    {
+      "original_path": "supabase-registro-clientes-fix.sql",
+      "archived_path": "supabase/historico/2026-10-23/supabase-registro-clientes-fix.sql.historico",
+      "bytes": 960,
+      "sha256": "fb9698d84e391214a6668291ebde95bde8fb5ec0ba9664c4ccf2649f0479be90",
+      "reason": "Histórico de instalación; no ejecutar ni usar como migración. Trigger de registro.",
+      "current_contract": "Trigger y función de perfil cliente vigentes; no reinstalar otra versión por duplicado."
+    },
+    {
+      "original_path": "supabase-reservas-pedidos.sql",
+      "archived_path": "supabase/historico/2026-10-23/supabase-reservas-pedidos.sql.historico",
+      "bytes": 3176,
+      "sha256": "e35f746e3068f4450011a56bbc3c7db89366d1d74912e7ef28accc6a3ddd7f8c",
+      "reason": "Histórico de instalación; no ejecutar ni usar como migración. Reservas y ciclo de pedido.",
+      "current_contract": "erp_transicionar_pedido y motor privado de reservas; no reinstalar trigger por CONFIRMADO."
+    },
+    {
+      "original_path": "supabase-reservas-seguridad.sql",
+      "archived_path": "supabase/historico/2026-10-23/supabase-reservas-seguridad.sql.historico",
+      "bytes": 425,
+      "sha256": "7938fd2f40640376fb2e0bd688f9feafe6d9124763adae77d08b8fec14822165",
+      "reason": "Histórico de instalación; no ejecutar ni usar como migración. Ejecución y expiración.",
+      "current_contract": "Wrappers/permisos y cron actuales; no modificar autorización ni scheduler con el ejemplo antiguo."
+    }
+  ],
+  "proposals": [
+    {
+      "path": "scripts/activar-webhook-catalogo.sql",
+      "state": "proposal_not_applied"
+    }
+  ]
+}
