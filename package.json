@@ -1,0 +1,11 @@
+{
+  "name": "san-martin-ecommerce-checks",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:sql": "node scripts/probar-disponibilidad-sql.mjs"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.11"
+  }
+}

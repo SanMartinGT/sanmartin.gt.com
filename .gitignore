@@ -1,0 +1,5 @@
+_site/
+work/
+.env
+.env.*
+node_modules/

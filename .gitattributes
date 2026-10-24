@@ -1,0 +1,6 @@
+# Mantener estable el SQL aplicado y preservar los bytes de las fichas con hashes.
+/supabase/migrations/*.sql text eol=lf
+/supabase/revisiones/*.json -text
+/supabase/baseline/*.json -text
+/supabase/contratos/*.json -text
+/supabase/historico/** -text
