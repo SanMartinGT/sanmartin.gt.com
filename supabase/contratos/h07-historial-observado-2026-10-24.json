@@ -1,0 +1,104 @@
+{
+  "kind": "h07_read_only_owner_detail_contract",
+  "project_ref": "beasfybalepkdlomzazf",
+  "observed_on": "2026-10-24",
+  "rpc": "erp_detalle_productos_pedido",
+  "argument": "p_pedido_id uuid",
+  "description": "Contrato existente sin DDL: sesión autorizada y dueño o personal autorizado por permiso/sucursal; productos actuales por ID sin filtro del catálogo público. No son snapshots comerciales inmutables (H08).",
+  "functions": [
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "md5": "0e33a2bf5f0ed64f8d86a3a0ee30e70f",
+      "name": "erp_detalle_productos_pedido",
+      "result": "jsonb",
+      "schema": "public",
+      "identity": "p_pedido_id uuid",
+      "definition": "CREATE OR REPLACE FUNCTION public.erp_detalle_productos_pedido(p_pedido_id uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\r\nDECLARE pedido public.pedidos_ecommerce%rowtype; resultado jsonb;\r\nBEGIN\r\n IF auth.uid() IS NULL OR public.erp_sesion_autorizada() IS DISTINCT FROM true THEN\r\n  RAISE EXCEPTION 'Sesión autorizada requerida' USING ERRCODE='42501'; END IF;\r\n SELECT * INTO pedido FROM public.pedidos_ecommerce WHERE id=p_pedido_id;\r\n IF NOT FOUND OR NOT(coalesce(pedido.cliente_id=auth.uid(),false) OR\r\n  (public.tiene_permiso('pedidos.ver') AND erp_private.tiene_acceso_ubicacion_historica(pedido.ubicacion_id))) THEN\r\n  RAISE EXCEPTION 'Pedido no disponible para esta cuenta y sucursal' USING ERRCODE='42501'; END IF;\r\n SELECT coalesce(jsonb_agg(jsonb_build_object('id',d.id,'pedido_id',d.pedido_id,'producto_id',d.producto_id,\r\n  'cantidad',d.cantidad,'precio_unitario',d.precio_unitario,'total_linea',d.total_linea,'presentacion_id',d.presentacion_id,'presentacion_nombre',d.presentacion_nombre,'cantidad_presentaciones',d.cantidad_presentaciones,'factor_presentacion',d.factor_presentacion,'precio_presentacion',d.precio_presentacion,\r\n  'unidad_medida_snapshot',jsonb_build_object('nombre',um.nombre,'abreviatura',um.abreviatura,'permite_fraccion',um.permite_fraccion,'decimales_permitidos',um.decimales_permitidos),\r\n  'productos',jsonb_build_object('id',p.id,'nombre',p.nombre,'sku',p.sku)) ORDER BY d.id),'[]'::jsonb)\r\n INTO resultado FROM public.pedidos_ecommerce_detalle d JOIN public.productos p ON p.id=d.producto_id JOIN public.unidades_medida um ON um.id=p.unidad_medida_id WHERE d.pedido_id=pedido.id;\r\n RETURN resultado;\r\nEND; $function$\n",
+      "volatility": "v",
+      "security_definer": true
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "md5": "2e9d0aef4abd61823bd81c34b7e17400",
+      "name": "erp_sesion_autorizada",
+      "schema": "public",
+      "identity": "",
+      "definition": "CREATE OR REPLACE FUNCTION public.erp_sesion_autorizada()\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n select erp_private.actor_session_authorized((select auth.uid()),(select auth.jwt())->>'session_id',(select auth.jwt())->>'aal');\n$function$\n"
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "md5": "6909ebf863171ca46bfd6e8a1aa93d91",
+      "name": "erp_usuario_activo",
+      "schema": "public",
+      "identity": "",
+      "definition": "CREATE OR REPLACE FUNCTION public.erp_usuario_activo()\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n  select public.erp_sesion_autorizada() and auth.uid() is not null and exists (\n    select 1\n    from public.perfiles p\n    where p.id = auth.uid()\n      and p.activo = true\n      and p.estado = 'ACTIVO'\n      and (\n        p.rol_id is null\n        or exists (\n          select 1 from public.roles r\n          where r.id = p.rol_id and r.activo = true\n        )\n      )\n  );\n$function$\n"
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+      "md5": "e5868505c636a14582ec7fd0160d8c72",
+      "name": "tiene_acceso_ubicacion_historica",
+      "schema": "erp_private",
+      "identity": "p_ubicacion uuid",
+      "definition": "CREATE OR REPLACE FUNCTION erp_private.tiene_acceso_ubicacion_historica(p_ubicacion uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\r\n SELECT public.erp_usuario_activo() AND EXISTS(\r\n  SELECT 1 FROM public.perfiles p JOIN public.roles r ON r.id=p.rol_id AND r.activo\r\n   JOIN public.ubicaciones u ON u.id=p_ubicacion\r\n  WHERE p.id=(SELECT auth.uid()) AND p.activo AND p.estado='ACTIVO'\r\n   AND (r.codigo='ADMINISTRADOR' OR\r\n    (r.codigo='VENTA_POS' AND u.permite_venta AND (p.id_sucursal_principal=u.id OR\r\n     (p.puede_cambiar_sucursal AND EXISTS(SELECT 1 FROM public.usuario_ubicaciones x WHERE x.usuario_id=p.id AND x.ubicacion_id=u.id)))) OR\r\n    (r.codigo<>'VENTA_POS' AND EXISTS(SELECT 1 FROM public.usuario_ubicaciones x WHERE x.usuario_id=p.id AND x.ubicacion_id=u.id)))\r\n ); $function$\n"
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "md5": "ff55814bb096b682993ced8c7a2656d8",
+      "name": "tiene_permiso",
+      "schema": "public",
+      "identity": "p_permiso_codigo text",
+      "definition": "CREATE OR REPLACE FUNCTION public.tiene_permiso(p_permiso_codigo text)\n RETURNS boolean\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nBEGIN\n\n    RETURN public.erp_sesion_autorizada() AND public.usuario_tiene_permiso(\n        (SELECT auth.uid()),\n        p_permiso_codigo\n    );\n\nEND;\n$function$\n"
+    }
+  ],
+  "permissions": {
+    "anon": false,
+    "public": false,
+    "authenticated": true
+  },
+  "policies": [
+    {
+      "cmd": "SELECT",
+      "qual": "((cliente_id = ( SELECT auth.uid() AS uid)) AND erp_usuario_activo())",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "pedidos_ecommerce",
+      "policyname": "cliente ve sus pedidos",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(erp_usuario_activo() AND tiene_permiso('pedidos.ver'::text) AND erp_private.tiene_acceso_ubicacion_historica(ubicacion_id))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "pedidos_ecommerce",
+      "policyname": "pedidos_ecommerce_select",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(erp_usuario_activo() AND (EXISTS ( SELECT 1\n   FROM pedidos_ecommerce pedido\n  WHERE ((pedido.id = pedidos_ecommerce_detalle.pedido_id) AND (pedido.cliente_id = ( SELECT auth.uid() AS uid))))))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "pedidos_ecommerce_detalle",
+      "policyname": "cliente_read_own_order_lines",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(erp_usuario_activo() AND tiene_permiso('pedidos.ver'::text) AND (EXISTS ( SELECT 1\n   FROM pedidos_ecommerce p\n  WHERE ((p.id = pedidos_ecommerce_detalle.pedido_id) AND erp_private.tiene_acceso_ubicacion_historica(p.ubicacion_id)))))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "pedidos_ecommerce_detalle",
+      "policyname": "pedidos_ecommerce_detalle_select",
+      "schemaname": "public",
+      "with_check": null
+    }
+  ]
+}

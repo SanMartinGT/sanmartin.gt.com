@@ -1,0 +1,2296 @@
+{
+  "kind": "h08_read_only_snapshot_dependencies",
+  "project_ref": "beasfybalepkdlomzazf",
+  "observed_on": "2026-10-24",
+  "purpose": "Diagnóstico y fixture de los cuerpos anteriores exactos; no es instalador ni backfill.",
+  "functions": [
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "md5": "26c75937c6357a45f4a94ff83eb5ca06",
+      "name": "crear_pedido_checkout",
+      "result": "jsonb",
+      "schema": "public",
+      "identity": "p_items jsonb, p_modo_inventario text, p_ubicacion_destino_id uuid, p_metodo_entrega character varying, p_metodo_pago character varying, p_clave_idempotencia uuid, p_minutos_expiracion integer",
+      "definition": "CREATE OR REPLACE FUNCTION public.crear_pedido_checkout(p_items jsonb, p_modo_inventario text, p_ubicacion_destino_id uuid, p_metodo_entrega character varying, p_metodo_pago character varying, p_clave_idempotencia uuid, p_minutos_expiracion integer DEFAULT 30)\n RETURNS jsonb\n LANGUAGE sql\n SET search_path TO ''\nAS $function$\n SELECT erp_private.crear_pedido_checkout(p_items,p_modo_inventario,p_ubicacion_destino_id,p_metodo_entrega,p_metodo_pago,p_clave_idempotencia,p_minutos_expiracion);\n$function$\n"
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "md5": "150dbd79ca4716e0a4f8decc9cd7f1c6",
+      "name": "crear_pedido_checkout",
+      "result": "jsonb",
+      "schema": "erp_private",
+      "identity": "p_items jsonb, p_modo_inventario text, p_ubicacion_destino_id uuid, p_metodo_entrega character varying, p_metodo_pago character varying, p_clave_idempotencia uuid, p_minutos_expiracion integer",
+      "definition": "CREATE OR REPLACE FUNCTION erp_private.crear_pedido_checkout(p_items jsonb, p_modo_inventario text, p_ubicacion_destino_id uuid, p_metodo_entrega character varying, p_metodo_pago character varying, p_clave_idempotencia uuid, p_minutos_expiracion integer DEFAULT 30)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\r\n\r\ndeclare\r\n\r\n  cliente uuid:=auth.uid(); perfil public.perfiles%rowtype; destino public.ubicaciones%rowtype; configurada uuid;\r\n\r\n  anterior public.pedidos_ecommerce%rowtype; item record; producto record; fuente record;\r\n\r\n  pedido_id uuid; numero_pedido varchar; reserva_id uuid; traslado_id uuid; numero_traslado text;\r\n\r\n  solicitado numeric; tomar numeric; v_total numeric:=0; v_costo_envio numeric:=0; precio numeric; descuento numeric; maximo numeric:=100;\r\n\r\n  direccion jsonb; normalizados jsonb; hash_solicitud text; vencimiento timestamptz; productos_ids uuid[]; existencias_ids uuid[];\r\n\r\nbegin\r\n\r\n  if cliente is null or not public.erp_sesion_autorizada() or not public.erp_usuario_activo() then raise exception 'Inicia sesión con una cuenta activa para confirmar tu pedido' using errcode='42501'; end if;\r\n\r\n  if p_modo_inventario is null or p_modo_inventario not in('SUCURSAL','OMNICANAL') then raise exception 'Modo de inventario inválido'; end if;\r\n  if p_clave_idempotencia is null then raise exception 'Envía una clave de idempotencia para confirmar el pedido'; end if;\r\n\r\n  if p_minutos_expiracion is null or p_minutos_expiracion<1 or p_minutos_expiracion>1440 then raise exception 'La reserva debe vencer entre 1 y 1440 minutos'; end if;\r\n\r\n  if p_metodo_entrega is null or p_metodo_entrega not in('RETIRO_TIENDA','DOMICILIO') then raise exception 'Selecciona retiro en tienda o envío a domicilio'; end if;\r\n\r\n  if p_metodo_pago is distinct from 'CONTRA_ENTREGA' then raise exception 'Selecciona pago contra entrega'; end if;\r\n\r\n  if p_items is null or jsonb_typeof(p_items)<>'array' or jsonb_array_length(p_items) not between 1 and 100 then raise exception 'El carrito debe contener de 1 a 100 líneas'; end if;\r\n\r\n  if exists(select 1 from jsonb_array_elements(p_items) x\r\n\r\n    where jsonb_typeof(x)<>'object' or jsonb_typeof(x->'cantidad') is distinct from 'number'\r\n\r\n      or jsonb_typeof(x->'producto_id') is distinct from 'string'\r\n\r\n      or round((x->>'cantidad')::numeric,3)<>(x->>'cantidad')::numeric\r\n      or (x->>'cantidad')::numeric<=0 or (x->>'cantidad')::numeric::text in('NaN','Infinity','-Infinity')) then\r\n\r\n    raise exception 'Cada línea necesita producto_id y cantidad numérica positiva con máximo 3 decimales'; end if;\r\n\r\n  select jsonb_agg(jsonb_build_object('producto_id',producto_id,'cantidad',cantidad) order by producto_id),\r\n\r\n    array_agg(producto_id order by producto_id) into normalizados,productos_ids\r\n\r\n    from (select producto_id,trim_scale(sum(cantidad)) cantidad from jsonb_to_recordset(p_items) x(producto_id uuid,cantidad numeric) group by producto_id) q;\r\n\r\n  if p_modo_inventario='SUCURSAL' then\r\n    select ubicacion_ecommerce_id into configurada from public.configuracion_ecommerce where id=true;\r\n    if configurada is null then raise exception 'Configura la sucursal de ecommerce'; end if;\r\n    if p_ubicacion_destino_id is not null and p_ubicacion_destino_id is distinct from configurada then raise exception 'La modalidad SUCURSAL usa la sucursal configurada de ecommerce'; end if;\r\n    p_ubicacion_destino_id:=configurada;\r\n  end if;\r\n  if exists(select 1 from public.perfiles p where p.id=cliente and p.rol_id is not null) then\r\n    perform erp_private.require_staff('pedidos.crear',p_ubicacion_destino_id);\r\n  end if;\r\n  hash_solicitud:=md5(jsonb_build_object('items',normalizados,'destino',p_ubicacion_destino_id,'modo',p_modo_inventario,\r\n\r\n    'entrega',p_metodo_entrega,'pago',p_metodo_pago,'minutos',p_minutos_expiracion)::text);\r\n\r\n  perform pg_advisory_xact_lock(hashtextextended('checkout:'||cliente::text||':'||p_clave_idempotencia::text,0));\r\n\r\n  select * into anterior from public.pedidos_ecommerce where cliente_id=cliente and clave_idempotencia=p_clave_idempotencia for update;\r\n\r\n  if found then\r\n\r\n    if anterior.solicitud_omnicanal_hash is distinct from hash_solicitud then raise exception 'La clave ya se usó para un pedido diferente'; end if;\r\n\r\n    return erp_private.omnicanal_respuesta(anterior.id);\r\n\r\n  end if;\r\n\r\n  select * into destino from public.ubicaciones where id=p_ubicacion_destino_id and activo\r\n\r\n    and permite_inventario and permite_venta;\r\n\r\n  if not found then raise exception 'Selecciona una sucursal habilitada para inventario y venta'; end if;\r\n\r\n  select * into perfil from public.perfiles where id=cliente;\r\n\r\n  if p_metodo_entrega='DOMICILIO' and (nullif(btrim(perfil.direccion_completa),'') is null or nullif(btrim(perfil.departamento),'') is null or nullif(btrim(perfil.municipio),'') is null) then\r\n\r\n    raise exception 'Agrega tu dirección de entrega antes de finalizar el pedido'; end if;\r\n\r\n  direccion:=case when p_metodo_entrega='DOMICILIO' then jsonb_build_object('nombre',perfil.nombre_direccion,'departamento',perfil.departamento,'municipio',perfil.municipio,'direccion_completa',perfil.direccion_completa,'referencia',perfil.referencia_direccion)\r\n\r\n    else jsonb_build_object('tipo','RETIRO_TIENDA','ubicacion_id',destino.id,'sucursal',destino.nombre) end;\r\n\r\n  select greatest(1,coalesce(max_cantidad_por_linea,100)) into maximo from public.configuracion_ecommerce where id=true;\r\n\r\n  maximo:=coalesce(maximo,100);\r\n\r\n  -- Orden único: producto/unidad antes de existencias, igual que POS y compras.\r\n  perform p.id from public.productos p where p.id=any(productos_ids) order by p.id for no key update;\r\n  perform um.id from public.unidades_medida um where exists(select 1 from public.productos p where p.id=any(productos_ids) and p.unidad_medida_id=um.id) order by um.id for share;\r\n  select coalesce(array_agg(q.id),'{}'::uuid[]) into existencias_ids from (\r\n\r\n    select e.id from public.existencias e join public.ubicaciones u on u.id=e.ubicacion_id\r\n\r\n    where e.producto_id=any(productos_ids) and e.activo and u.activo and u.permite_inventario\r\n\r\n      and (u.id=destino.id or (p_modo_inventario='OMNICANAL' and destino.permite_recepcion and destino.permite_transferencia and u.permite_transferencia))\r\n\r\n    order by e.producto_id,e.ubicacion_id,e.id for update of e\r\n\r\n  ) q;\r\n\r\n  vencimiento:=clock_timestamp()+make_interval(mins=>p_minutos_expiracion);\r\n\r\n  perform set_config('sanmartin.ecommerce_checkout','true',true);\r\n  numero_pedido:=case when p_modo_inventario='OMNICANAL' then 'OMNI-' else 'EC-' end||to_char(current_date,'YYYYMMDD')||'-'||nextval('public.pedidos_ecommerce_numero_seq')::text;\r\n\r\n  insert into public.pedidos_ecommerce(numero,ubicacion_id,total,cliente_id,direccion_envio,costo_envio,metodo_entrega,metodo_pago,modo_inventario,clave_idempotencia,solicitud_omnicanal_hash,fecha_expiracion_reserva)\r\n\r\n    values(numero_pedido,destino.id,0,cliente,direccion,0,p_metodo_entrega,p_metodo_pago,p_modo_inventario,p_clave_idempotencia,hash_solicitud,vencimiento) returning id into pedido_id;\r\n\r\n  for item in select * from jsonb_to_recordset(normalizados) x(producto_id uuid,cantidad numeric) order by producto_id loop\r\n\r\n    select p.*,u.permite_fraccion,greatest(0,least(3,u.decimales_permitidos)) decimales into producto\r\n\r\n      from public.productos p join public.unidades_medida u on u.id=p.unidad_medida_id and u.activo\r\n\r\n      join public.categorias c on c.id=p.categoria_id and c.activo and c.visible_ecommerce\r\n\r\n      where p.id=item.producto_id and p.activo and not p.descontinuado and p.es_vendible and p.es_comprable and p.controla_inventario and p.publicado_ecommerce and p.visible_ecommerce\r\n      and (p.marca_id is null or exists(select 1 from public.marcas marca where marca.id=p.marca_id and marca.activo));\r\n\r\n    if not found then raise exception 'Uno de los productos ya no está disponible para la venta'; end if;\r\n\r\n    perform erp_private.validar_cantidad_producto(item.producto_id,item.cantidad);\r\n    if item.cantidad is null or item.cantidad<=0 or item.cantidad::text in('NaN','Infinity','-Infinity') or item.cantidad>maximo then raise exception 'Cantidad inválida para %; máximo por producto %',producto.nombre,maximo; end if;\r\n\r\n    if exists(select 1 from jsonb_to_recordset(p_items) raw(producto_id uuid,cantidad numeric) where raw.producto_id=producto.id and round(raw.cantidad,case when producto.venta_fraccionada and producto.permite_fraccion then producto.decimales else 0 end)<>raw.cantidad) then raise exception 'Cada línea debe respetar la unidad antes de consolidarse' using errcode='22023'; end if;\r\n    if not (producto.venta_fraccionada and producto.permite_fraccion) and item.cantidad<>trunc(item.cantidad) then raise exception '% solo se vende en unidades completas',producto.nombre; end if;\r\n\r\n    if producto.venta_fraccionada and producto.permite_fraccion and round(item.cantidad,producto.decimales::integer)<>item.cantidad then raise exception '% permite como máximo % decimales',producto.nombre,producto.decimales; end if;\r\n\r\n    if producto.precio_base<0 or producto.precio_base::text in('NaN','Infinity','-Infinity') then raise exception 'Precio inválido para %',producto.nombre; end if;\r\n\r\n    if exists(select 1 from public.ofertas_producto oferta where oferta.producto_id=producto.id and oferta.activo and oferta.aplica_ecommerce and oferta.fecha_inicio<=now() and (oferta.fecha_fin is null or oferta.fecha_fin>=now()) and (oferta.oferta_porcentaje<0 or oferta.oferta_porcentaje>100 or oferta.oferta_porcentaje::text in('NaN','Infinity','-Infinity'))) then raise exception 'Oferta inválida para %',producto.nombre; end if;\r\n    select max(oferta_porcentaje) into descuento from public.ofertas_producto\r\n\r\n      where producto_id=producto.id and activo and aplica_ecommerce and fecha_inicio<=now() and (fecha_fin is null or fecha_fin>=now());\r\n\r\n    if descuento is not null and (descuento<0 or descuento>100 or descuento::text in('NaN','Infinity','-Infinity')) then raise exception 'Oferta inválida para %',producto.nombre; end if;\r\n\r\n    precio:=round(producto.precio_base*(1-coalesce(descuento,0)/100),2);\r\n\r\n    insert into public.pedidos_ecommerce_detalle(pedido_id,producto_id,cantidad,precio_unitario,total_linea)\r\n\r\n      values(pedido_id,producto.id,item.cantidad,precio,round(item.cantidad*precio,2));\r\n\r\n    v_total:=v_total+round(item.cantidad*precio,2); solicitado:=item.cantidad;\r\n\r\n    -- Ya bloqueadas todas las filas en orden de producto/ubicación; ahora asignar\r\n\r\n    -- primero el stock de la sucursal elegida, luego las fuentes por orden/código.\r\n\r\n    for fuente in select e.*,u.nombre ubicacion_nombre,u.codigo ubicacion_codigo\r\n\r\n      from public.existencias e join public.ubicaciones u on u.id=e.ubicacion_id\r\n\r\n      where e.id=any(existencias_ids) and e.producto_id=producto.id and e.activo and e.stock_disponible>0 and u.activo and u.permite_inventario\r\n\r\n        and (u.id=destino.id or (p_modo_inventario='OMNICANAL' and destino.permite_recepcion and destino.permite_transferencia and u.permite_transferencia))\r\n\r\n      order by (e.ubicacion_id=destino.id) desc,u.orden,u.codigo,e.ubicacion_id loop\r\n\r\n      exit when solicitado<=0;\r\n\r\n      tomar:=least(solicitado,fuente.stock_disponible);\r\n\r\n      update public.existencias set stock_reservado=stock_reservado+tomar,stock_disponible=stock_disponible-tomar,\r\n\r\n        fecha_ultimo_movimiento=now(),actualizado_por=cliente where id=fuente.id and stock_disponible>=tomar;\r\n\r\n      if not found then raise exception 'El inventario cambió; vuelve a confirmar tu carrito'; end if;\r\n\r\n      insert into public.reservas(producto_id,ubicacion_id,cantidad,estado,origen,referencia_tipo,referencia_id,referencia_numero,fecha_expiracion,creado_por)\r\n\r\n        values(producto.id,fuente.ubicacion_id,tomar,'ACTIVA','ECOMMERCE','pedido_ecommerce',pedido_id,numero_pedido,vencimiento,cliente) returning id into reserva_id;\r\n\r\n      insert into public.movimientos(producto_id,ubicacion_id,tipo_movimiento,cantidad,stock_anterior,stock_posterior,origen,referencia_tipo,referencia_id,referencia_numero,grupo_movimiento_id,usuario_id)\r\n\r\n        values(producto.id,fuente.ubicacion_id,'RESERVA',tomar,fuente.stock_disponible,fuente.stock_disponible-tomar,'ECOMMERCE','pedido_ecommerce',pedido_id,numero_pedido,pedido_id,cliente);\r\n\r\n      if fuente.ubicacion_id<>destino.id then\r\n\r\n        traslado_id:=gen_random_uuid(); numero_traslado:='TR-OMNI-'||substring(traslado_id::text,1,8)||'-'||substring(traslado_id::text,25,12);\r\n\r\n        insert into public.transferencias_omnicanal(id,numero,pedido_id,producto_id,cantidad,ubicacion_origen_id,ubicacion_destino_id,reserva_origen_id)\r\n\r\n          values(traslado_id,numero_traslado,pedido_id,producto.id,tomar,fuente.ubicacion_id,destino.id,reserva_id);\r\n\r\n        insert into public.notificaciones_omnicanal(pedido_id,transferencia_id,tipo,titulo,mensaje,ubicacion_origen_id,ubicacion_destino_id,creado_por)\r\n\r\n          values(pedido_id,traslado_id,'TRANSFERENCIA_GENERADA','Transferencia automática pendiente',\r\n\r\n            format('Pedido %s: trasladar %s unidades de %s desde %s a %s. Stock reservado hasta %s.',numero_pedido,tomar,producto.nombre,fuente.ubicacion_nombre,destino.nombre,vencimiento),\r\n\r\n            fuente.ubicacion_id,destino.id,cliente);\r\n\r\n      end if;\r\n\r\n      solicitado:=solicitado-tomar;\r\n\r\n    end loop;\r\n\r\n    if solicitado>0 then raise exception 'Stock insuficiente en la red para %; faltan % unidades',producto.nombre,solicitado; end if;\r\n\r\n  end loop;\r\n\r\n  if p_metodo_entrega='DOMICILIO' and v_total<100 then raise exception 'El pedido mínimo para envío a domicilio es de Q100.00'; end if;\r\n\r\n  if p_metodo_entrega='RETIRO_TIENDA' and v_total<1 then raise exception 'El pedido mínimo para recoger en tienda es de Q1.00'; end if;\r\n\r\n  if p_metodo_entrega='DOMICILIO' and v_total<=200 then v_costo_envio:=25; end if;\r\n\r\n  update public.pedidos_ecommerce set total=v_total+v_costo_envio,costo_envio=v_costo_envio where id=pedido_id;\r\n\r\n  return erp_private.omnicanal_respuesta(pedido_id);\r\n\r\nend;\r\n\r\n$function$\n"
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}",
+      "md5": "2e2e459c6debc81cae3588eb05e3aecf",
+      "name": "crear_pedido_checkout_presentaciones",
+      "result": "jsonb",
+      "schema": "public",
+      "identity": "p_items jsonb, p_modo_inventario text, p_ubicacion_destino_id uuid, p_metodo_entrega character varying, p_metodo_pago character varying, p_clave_idempotencia uuid, p_minutos_expiracion integer",
+      "definition": "CREATE OR REPLACE FUNCTION public.crear_pedido_checkout_presentaciones(p_items jsonb, p_modo_inventario text, p_ubicacion_destino_id uuid, p_metodo_entrega character varying, p_metodo_pago character varying, p_clave_idempotencia uuid, p_minutos_expiracion integer DEFAULT 30)\n RETURNS jsonb\n LANGUAGE sql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n SELECT erp_private.crear_pedido_checkout_presentaciones(p_items,p_modo_inventario,p_ubicacion_destino_id,p_metodo_entrega,p_metodo_pago,p_clave_idempotencia,p_minutos_expiracion);\n$function$\n"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "md5": "c0e7d6953f489cd3d15c037e27064557",
+      "name": "crear_pedido_checkout_presentaciones",
+      "result": "jsonb",
+      "schema": "erp_private",
+      "identity": "p_items jsonb, p_modo_inventario text, p_ubicacion_destino_id uuid, p_metodo_entrega character varying, p_metodo_pago character varying, p_clave_idempotencia uuid, p_minutos_expiracion integer",
+      "definition": "CREATE OR REPLACE FUNCTION erp_private.crear_pedido_checkout_presentaciones(p_items jsonb, p_modo_inventario text, p_ubicacion_destino_id uuid, p_metodo_entrega character varying, p_metodo_pago character varying, p_clave_idempotencia uuid, p_minutos_expiracion integer DEFAULT 30)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\r\n\r\ndeclare\r\n\r\n  cliente uuid:=auth.uid(); perfil public.perfiles%rowtype; destino public.ubicaciones%rowtype; configurada uuid;\r\n\r\n  anterior public.pedidos_ecommerce%rowtype; item record; producto record; fuente record;\r\n\r\n  pedido_id uuid; numero_pedido varchar; reserva_id uuid; traslado_id uuid; numero_traslado text;\r\n\r\n  solicitado numeric; tomar numeric; v_total numeric:=0; v_costo_envio numeric:=0; precio numeric; descuento numeric; maximo numeric:=100;\r\n\r\n  resolved jsonb; baseqty numeric; factor numeric; direccion jsonb; normalizados jsonb; hash_solicitud text; vencimiento timestamptz; productos_ids uuid[]; existencias_ids uuid[];\r\n\r\nbegin\r\n\r\n  if cliente is null or not public.erp_sesion_autorizada() or not public.erp_usuario_activo() then raise exception 'Inicia sesión con una cuenta activa para confirmar tu pedido' using errcode='42501'; end if;\r\n\r\n  if p_modo_inventario is null or p_modo_inventario not in('SUCURSAL','OMNICANAL') then raise exception 'Modo de inventario inválido'; end if;\r\n  if p_clave_idempotencia is null then raise exception 'Envía una clave de idempotencia para confirmar el pedido'; end if;\r\n\r\n  if p_minutos_expiracion is null or p_minutos_expiracion<1 or p_minutos_expiracion>1440 then raise exception 'La reserva debe vencer entre 1 y 1440 minutos'; end if;\r\n\r\n  if p_metodo_entrega is null or p_metodo_entrega not in('RETIRO_TIENDA','DOMICILIO') then raise exception 'Selecciona retiro en tienda o envío a domicilio'; end if;\r\n\r\n  if p_metodo_pago is distinct from 'CONTRA_ENTREGA' then raise exception 'Selecciona pago contra entrega'; end if;\r\n\r\n  if p_items is null or jsonb_typeof(p_items)<>'array' or jsonb_array_length(p_items) not between 1 and 100 then raise exception 'El carrito debe contener de 1 a 100 líneas'; end if;\r\n\r\n  if exists(select 1 from jsonb_array_elements(p_items) x\r\n\r\n    where jsonb_typeof(x)<>'object' or jsonb_typeof(x->'cantidad') is distinct from 'number'\r\n\r\n      or jsonb_typeof(x->'producto_id') is distinct from 'string'\r\n\r\n      or round((x->>'cantidad')::numeric,3)<>(x->>'cantidad')::numeric\r\n      or (x->>'cantidad')::numeric<=0 or (x->>'cantidad')::numeric::text in('NaN','Infinity','-Infinity')) then\r\n\r\n    raise exception 'Cada línea necesita producto_id y cantidad numérica positiva con máximo 3 decimales'; end if;\r\n\r\n  normalizados:=erp_private.normalizar_lineas_presentaciones(p_items,100);\n  select array_agg(distinct producto_id order by producto_id) into productos_ids from jsonb_to_recordset(normalizados)x(producto_id uuid);\n\n  if p_modo_inventario='SUCURSAL' then\r\n    select ubicacion_ecommerce_id into configurada from public.configuracion_ecommerce where id=true;\r\n    if configurada is null then raise exception 'Configura la sucursal de ecommerce'; end if;\r\n    if p_ubicacion_destino_id is not null and p_ubicacion_destino_id is distinct from configurada then raise exception 'La modalidad SUCURSAL usa la sucursal configurada de ecommerce'; end if;\r\n    p_ubicacion_destino_id:=configurada;\r\n  end if;\r\n  if exists(select 1 from public.perfiles p where p.id=cliente and p.rol_id is not null) then\r\n    perform erp_private.require_staff('pedidos.crear',p_ubicacion_destino_id);\r\n  end if;\r\n  hash_solicitud:=md5(jsonb_build_object('version','PRESENTACIONES_V1','items',normalizados,'destino',p_ubicacion_destino_id,'modo',p_modo_inventario,\r\n\r\n    'entrega',p_metodo_entrega,'pago',p_metodo_pago,'minutos',p_minutos_expiracion)::text);\r\n\r\n  perform pg_advisory_xact_lock(hashtextextended('checkout:'||cliente::text||':'||p_clave_idempotencia::text,0));\r\n\r\n  select * into anterior from public.pedidos_ecommerce where cliente_id=cliente and clave_idempotencia=p_clave_idempotencia for update;\r\n\r\n  if found then\r\n\r\n    if anterior.solicitud_omnicanal_hash is distinct from hash_solicitud then raise exception 'La clave ya se usó para un pedido diferente'; end if;\r\n\r\n    return erp_private.omnicanal_respuesta(anterior.id);\r\n\r\n  end if;\r\n\r\n  select * into destino from public.ubicaciones where id=p_ubicacion_destino_id and activo\r\n\r\n    and permite_inventario and permite_venta;\r\n\r\n  if not found then raise exception 'Selecciona una sucursal habilitada para inventario y venta'; end if;\r\n\r\n  select * into perfil from public.perfiles where id=cliente;\r\n\r\n  if p_metodo_entrega='DOMICILIO' and (nullif(btrim(perfil.direccion_completa),'') is null or nullif(btrim(perfil.departamento),'') is null or nullif(btrim(perfil.municipio),'') is null) then\r\n\r\n    raise exception 'Agrega tu dirección de entrega antes de finalizar el pedido'; end if;\r\n\r\n  direccion:=case when p_metodo_entrega='DOMICILIO' then jsonb_build_object('nombre',perfil.nombre_direccion,'departamento',perfil.departamento,'municipio',perfil.municipio,'direccion_completa',perfil.direccion_completa,'referencia',perfil.referencia_direccion)\r\n\r\n    else jsonb_build_object('tipo','RETIRO_TIENDA','ubicacion_id',destino.id,'sucursal',destino.nombre) end;\r\n\r\n  select greatest(1,coalesce(max_cantidad_por_linea,100)) into maximo from public.configuracion_ecommerce where id=true;\r\n\r\n  maximo:=coalesce(maximo,100);\r\n\r\n  -- Orden único: producto/unidad antes de existencias, igual que POS y compras.\r\n  perform p.id from public.productos p where p.id=any(productos_ids) order by p.id for no key update;\r\n  perform um.id from public.unidades_medida um where exists(select 1 from public.productos p where p.id=any(productos_ids) and p.unidad_medida_id=um.id) order by um.id for share;\r\n  select coalesce(array_agg(q.id),'{}'::uuid[]) into existencias_ids from (\r\n\r\n    select e.id from public.existencias e join public.ubicaciones u on u.id=e.ubicacion_id\r\n\r\n    where e.producto_id=any(productos_ids) and e.activo and u.activo and u.permite_inventario\r\n\r\n      and (u.id=destino.id or (p_modo_inventario='OMNICANAL' and destino.permite_recepcion and destino.permite_transferencia and u.permite_transferencia))\r\n\r\n    order by e.producto_id,e.ubicacion_id,e.id for update of e\r\n\r\n  ) q;\r\n\r\n  vencimiento:=clock_timestamp()+make_interval(mins=>p_minutos_expiracion);\r\n\r\n  perform set_config('sanmartin.ecommerce_checkout','true',true);\r\n  numero_pedido:=case when p_modo_inventario='OMNICANAL' then 'OMNI-' else 'EC-' end||to_char(current_date,'YYYYMMDD')||'-'||nextval('public.pedidos_ecommerce_numero_seq')::text;\r\n\r\n  insert into public.pedidos_ecommerce(numero,ubicacion_id,total,cliente_id,direccion_envio,costo_envio,metodo_entrega,metodo_pago,modo_inventario,clave_idempotencia,solicitud_omnicanal_hash,fecha_expiracion_reserva)\r\n\r\n    values(numero_pedido,destino.id,0,cliente,direccion,0,p_metodo_entrega,p_metodo_pago,p_modo_inventario,p_clave_idempotencia,hash_solicitud,vencimiento) returning id into pedido_id;\r\n\r\n  for item in select * from jsonb_to_recordset(normalizados) x(producto_id uuid,presentacion_id uuid,cantidad numeric) order by producto_id,presentacion_id nulls first loop\r\n\r\n    select p.*,u.permite_fraccion,greatest(0,least(3,u.decimales_permitidos)) decimales into producto\r\n\r\n      from public.productos p join public.unidades_medida u on u.id=p.unidad_medida_id and u.activo\r\n\r\n      join public.categorias c on c.id=p.categoria_id and c.activo and c.visible_ecommerce\r\n\r\n      where p.id=item.producto_id and p.activo and not p.descontinuado and p.es_vendible and p.es_comprable and p.controla_inventario and p.publicado_ecommerce and p.visible_ecommerce\r\n      and (p.marca_id is null or exists(select 1 from public.marcas marca where marca.id=p.marca_id and marca.activo));\r\n\r\n    if not found then raise exception 'Uno de los productos ya no está disponible para la venta'; end if;\r\n\r\n    if item.cantidad>maximo then raise exception 'Cantidad de unidades o presentaciones superior al máximo por línea %',maximo; end if;\n    resolved:=erp_private.resolver_linea_presentacion(producto.id,item.presentacion_id,item.cantidad,'ECOMMERCE');\n    baseqty:=(resolved->>'cantidad_base')::numeric; factor:=(resolved->>'factor')::numeric; precio:=(resolved->>'precio')::numeric;\n    insert into public.pedidos_ecommerce_detalle(pedido_id,producto_id,cantidad,precio_unitario,total_linea,presentacion_id,presentacion_nombre,cantidad_presentaciones,factor_presentacion,precio_presentacion)\n    values(pedido_id,producto.id,baseqty,precio/factor,round(item.cantidad*precio,2),item.presentacion_id,resolved->>'presentacion_nombre',\n      case when item.presentacion_id is not null then item.cantidad end,case when item.presentacion_id is not null then factor end,case when item.presentacion_id is not null then precio end);\n    v_total:=v_total+round(item.cantidad*precio,2); solicitado:=baseqty;\n\n    -- Ya bloqueadas todas las filas en orden de producto/ubicación; ahora asignar\r\n\r\n    -- primero el stock de la sucursal elegida, luego las fuentes por orden/código.\r\n\r\n    for fuente in select e.*,u.nombre ubicacion_nombre,u.codigo ubicacion_codigo\r\n\r\n      from public.existencias e join public.ubicaciones u on u.id=e.ubicacion_id\r\n\r\n      where e.id=any(existencias_ids) and e.producto_id=producto.id and e.activo and e.stock_disponible>0 and u.activo and u.permite_inventario\r\n\r\n        and (u.id=destino.id or (p_modo_inventario='OMNICANAL' and destino.permite_recepcion and destino.permite_transferencia and u.permite_transferencia))\r\n\r\n      order by (e.ubicacion_id=destino.id) desc,u.orden,u.codigo,e.ubicacion_id loop\r\n\r\n      exit when solicitado<=0;\r\n\r\n      tomar:=least(solicitado,fuente.stock_disponible);\r\n\r\n      update public.existencias set stock_reservado=stock_reservado+tomar,stock_disponible=stock_disponible-tomar,\r\n\r\n        fecha_ultimo_movimiento=now(),actualizado_por=cliente where id=fuente.id and stock_disponible>=tomar;\r\n\r\n      if not found then raise exception 'El inventario cambió; vuelve a confirmar tu carrito'; end if;\r\n\r\n      insert into public.reservas(producto_id,ubicacion_id,cantidad,estado,origen,referencia_tipo,referencia_id,referencia_numero,fecha_expiracion,creado_por)\r\n\r\n        values(producto.id,fuente.ubicacion_id,tomar,'ACTIVA','ECOMMERCE','pedido_ecommerce',pedido_id,numero_pedido,vencimiento,cliente) returning id into reserva_id;\r\n\r\n      insert into public.movimientos(producto_id,ubicacion_id,tipo_movimiento,cantidad,stock_anterior,stock_posterior,origen,referencia_tipo,referencia_id,referencia_numero,grupo_movimiento_id,usuario_id)\r\n\r\n        values(producto.id,fuente.ubicacion_id,'RESERVA',tomar,fuente.stock_disponible,fuente.stock_disponible-tomar,'ECOMMERCE','pedido_ecommerce',pedido_id,numero_pedido,pedido_id,cliente);\r\n\r\n      if fuente.ubicacion_id<>destino.id then\r\n\r\n        traslado_id:=gen_random_uuid(); numero_traslado:='TR-OMNI-'||substring(traslado_id::text,1,8)||'-'||substring(traslado_id::text,25,12);\r\n\r\n        insert into public.transferencias_omnicanal(id,numero,pedido_id,producto_id,cantidad,ubicacion_origen_id,ubicacion_destino_id,reserva_origen_id)\r\n\r\n          values(traslado_id,numero_traslado,pedido_id,producto.id,tomar,fuente.ubicacion_id,destino.id,reserva_id);\r\n\r\n        insert into public.notificaciones_omnicanal(pedido_id,transferencia_id,tipo,titulo,mensaje,ubicacion_origen_id,ubicacion_destino_id,creado_por)\r\n\r\n          values(pedido_id,traslado_id,'TRANSFERENCIA_GENERADA','Transferencia automática pendiente',\r\n\r\n            format('Pedido %s: trasladar %s unidades de %s desde %s a %s. Stock reservado hasta %s.',numero_pedido,tomar,producto.nombre,fuente.ubicacion_nombre,destino.nombre,vencimiento),\r\n\r\n            fuente.ubicacion_id,destino.id,cliente);\r\n\r\n      end if;\r\n\r\n      solicitado:=solicitado-tomar;\r\n\r\n    end loop;\r\n\r\n    if solicitado>0 then raise exception 'Stock insuficiente en la red para %; faltan % unidades',producto.nombre,solicitado; end if;\r\n\r\n  end loop;\r\n\r\n  if p_metodo_entrega='DOMICILIO' and v_total<100 then raise exception 'El pedido mínimo para envío a domicilio es de Q100.00'; end if;\r\n\r\n  if p_metodo_entrega='RETIRO_TIENDA' and v_total<1 then raise exception 'El pedido mínimo para recoger en tienda es de Q1.00'; end if;\r\n\r\n  if p_metodo_entrega='DOMICILIO' and v_total<=200 then v_costo_envio:=25; end if;\r\n\r\n  update public.pedidos_ecommerce set total=v_total+v_costo_envio,costo_envio=v_costo_envio where id=pedido_id;\r\n\r\n  return erp_private.omnicanal_respuesta(pedido_id);\r\n\r\nend;\r\n\r\n$function$\n"
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "md5": "8be5cd59178848fe98f30a01def77c22",
+      "name": "crear_pedido_ecommerce",
+      "result": "jsonb",
+      "schema": "public",
+      "identity": "p_items jsonb, p_metodo_entrega character varying, p_metodo_pago character varying",
+      "definition": "CREATE OR REPLACE FUNCTION public.crear_pedido_ecommerce(p_items jsonb, p_metodo_entrega character varying, p_metodo_pago character varying)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nBEGIN\n PERFORM erp_private.require_commerce_contract();\n RETURN erp_private.crear_pedido_checkout(p_items,'SUCURSAL',NULL,p_metodo_entrega,p_metodo_pago,gen_random_uuid(),15);\nEND; $function$\n"
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "md5": "7426f4fdd3992ee55ea7ae1a035772c0",
+      "name": "crear_pedido_omnicanal",
+      "result": "jsonb",
+      "schema": "public",
+      "identity": "p_items jsonb, p_ubicacion_destino_id uuid, p_metodo_entrega character varying, p_metodo_pago character varying, p_clave_idempotencia uuid, p_minutos_expiracion integer",
+      "definition": "CREATE OR REPLACE FUNCTION public.crear_pedido_omnicanal(p_items jsonb, p_ubicacion_destino_id uuid, p_metodo_entrega character varying, p_metodo_pago character varying, p_clave_idempotencia uuid, p_minutos_expiracion integer DEFAULT 30)\n RETURNS jsonb\n LANGUAGE sql\n SET search_path TO ''\nAS $function$\r\n  select erp_private.crear_pedido_omnicanal(p_items,p_ubicacion_destino_id,p_metodo_entrega,p_metodo_pago,p_clave_idempotencia,p_minutos_expiracion);\r\n$function$\n"
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "md5": "1cbc9235202767f6a75ded93d5db8f51",
+      "name": "crear_pedido_omnicanal",
+      "result": "jsonb",
+      "schema": "erp_private",
+      "identity": "p_items jsonb, p_ubicacion_destino_id uuid, p_metodo_entrega character varying, p_metodo_pago character varying, p_clave_idempotencia uuid, p_minutos_expiracion integer",
+      "definition": "CREATE OR REPLACE FUNCTION erp_private.crear_pedido_omnicanal(p_items jsonb, p_ubicacion_destino_id uuid, p_metodo_entrega character varying, p_metodo_pago character varying, p_clave_idempotencia uuid, p_minutos_expiracion integer DEFAULT 30)\n RETURNS jsonb\n LANGUAGE sql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n SELECT erp_private.crear_pedido_checkout(p_items,'OMNICANAL',p_ubicacion_destino_id,p_metodo_entrega,p_metodo_pago,p_clave_idempotencia,p_minutos_expiracion);\n$function$\n"
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "md5": "0e33a2bf5f0ed64f8d86a3a0ee30e70f",
+      "name": "erp_detalle_productos_pedido",
+      "result": "jsonb",
+      "schema": "public",
+      "identity": "p_pedido_id uuid",
+      "definition": "CREATE OR REPLACE FUNCTION public.erp_detalle_productos_pedido(p_pedido_id uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\r\nDECLARE pedido public.pedidos_ecommerce%rowtype; resultado jsonb;\r\nBEGIN\r\n IF auth.uid() IS NULL OR public.erp_sesion_autorizada() IS DISTINCT FROM true THEN\r\n  RAISE EXCEPTION 'Sesión autorizada requerida' USING ERRCODE='42501'; END IF;\r\n SELECT * INTO pedido FROM public.pedidos_ecommerce WHERE id=p_pedido_id;\r\n IF NOT FOUND OR NOT(coalesce(pedido.cliente_id=auth.uid(),false) OR\r\n  (public.tiene_permiso('pedidos.ver') AND erp_private.tiene_acceso_ubicacion_historica(pedido.ubicacion_id))) THEN\r\n  RAISE EXCEPTION 'Pedido no disponible para esta cuenta y sucursal' USING ERRCODE='42501'; END IF;\r\n SELECT coalesce(jsonb_agg(jsonb_build_object('id',d.id,'pedido_id',d.pedido_id,'producto_id',d.producto_id,\r\n  'cantidad',d.cantidad,'precio_unitario',d.precio_unitario,'total_linea',d.total_linea,'presentacion_id',d.presentacion_id,'presentacion_nombre',d.presentacion_nombre,'cantidad_presentaciones',d.cantidad_presentaciones,'factor_presentacion',d.factor_presentacion,'precio_presentacion',d.precio_presentacion,\r\n  'unidad_medida_snapshot',jsonb_build_object('nombre',um.nombre,'abreviatura',um.abreviatura,'permite_fraccion',um.permite_fraccion,'decimales_permitidos',um.decimales_permitidos),\r\n  'productos',jsonb_build_object('id',p.id,'nombre',p.nombre,'sku',p.sku)) ORDER BY d.id),'[]'::jsonb)\r\n INTO resultado FROM public.pedidos_ecommerce_detalle d JOIN public.productos p ON p.id=d.producto_id JOIN public.unidades_medida um ON um.id=p.unidad_medida_id WHERE d.pedido_id=pedido.id;\r\n RETURN resultado;\r\nEND; $function$\n"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "md5": "455e417b7b2c195bf928a22a8ef9c7c9",
+      "name": "emitir_comprobante_cobrado",
+      "schema": "erp_private",
+      "identity": "p_pedido_id uuid",
+      "definition": "CREATE OR REPLACE FUNCTION erp_private.emitir_comprobante_cobrado(p_pedido_id uuid)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\r\n\r\ndeclare\r\n\r\n  v_pedido public.pedidos_ecommerce%rowtype;\r\n\r\n  v_id uuid;\r\n\r\n  v_config jsonb;\r\n\r\n  v_empresa jsonb;\r\n\r\n  v_zona_horaria text;\r\n\r\n  v_cliente jsonb;\r\n\r\n  v_lineas jsonb;\r\n\r\nbegin\r\n\r\n  select * into v_pedido\r\n\r\n  from public.pedidos_ecommerce\r\n\r\n  where id = p_pedido_id\r\n\r\n  for update;\r\n\r\n  if not found or v_pedido.estado_pago <> 'PAGADO' OR v_pedido.estado <> 'PAGADO' then\r\n\r\n    raise exception 'Solo se emiten comprobantes para pedidos con pago confirmado.';\r\n\r\n  end if;\r\n\r\n\r\n\r\n  select id into v_id\r\n\r\n  from public.facturas_ecommerce\r\n\r\n  where pedido_id = p_pedido_id;\r\n\r\n  if v_id is not null then\r\n\r\n    return v_id;\r\n\r\n  end if;\r\n\r\n\r\n\r\n  select coalesce(jsonb_object_agg(clave, valor->>'valor'), '{}'::jsonb)\r\n\r\n    into v_config\r\n\r\n  from public.configuracion_erp\r\n\r\n  where clave in (\r\n\r\n    'empresa_nombre', 'empresa_nit', 'empresa_correo', 'empresa_telefono',\r\n\r\n    'empresa_direccion', 'zona_horaria'\r\n\r\n  );\r\n\r\n  v_empresa := jsonb_build_object(\r\n\r\n    'empresa_nombre', coalesce(nullif(btrim(v_config->>'empresa_nombre'), ''), 'San Martín'),\r\n\r\n    'empresa_nit', coalesce(nullif(btrim(v_config->>'empresa_nit'), ''), '42299039'),\r\n\r\n    'empresa_correo', coalesce(nullif(btrim(v_config->>'empresa_correo'), ''), 'sanmartinlibreriapapeleria@gmail.com'),\r\n\r\n    'empresa_telefono', coalesce(nullif(btrim(v_config->>'empresa_telefono'), ''), '+502 4902-7035'),\r\n\r\n    'empresa_direccion', coalesce(nullif(btrim(v_config->>'empresa_direccion'), ''),\r\n\r\n      '5ta c. 7-01 col. Belén apto. A av. La Brigada z. 7, Mixco, Guatemala')\r\n\r\n  );\r\n\r\n  -- La pantalla de configuración sólo ofrece esta zona. Se guarda en la\r\n\r\n  -- instantánea para que un cambio futuro no altere la hora de emisión.\r\n\r\n  v_zona_horaria := case\r\n\r\n    when v_config->>'zona_horaria' = 'America/Guatemala' then 'America/Guatemala'\r\n\r\n    else 'America/Guatemala'\r\n\r\n  end;\r\n\r\n\r\n\r\n  select jsonb_build_object(\r\n\r\n    'nombre', concat_ws(' ', nombre, segundo_nombre, apellido, segundo_apellido),\r\n\r\n    'correo', correo, 'telefono', telefono,\r\n\r\n    'direccion_completa', direccion_completa,\r\n\r\n    'municipio', municipio, 'departamento', departamento,\r\n\r\n    'referencia_direccion', referencia_direccion\r\n\r\n  ) into v_cliente\r\n\r\n  from public.perfiles\r\n\r\n  where id = v_pedido.cliente_id;\r\n\r\n\r\n\r\n  select coalesce(jsonb_agg(jsonb_build_object(\r\n\r\n    'sku', p.sku, 'nombre', p.nombre, 'medida', u.abreviatura,\r\n\r\n    'cantidad', d.cantidad, 'precio_unitario', d.precio_unitario,\r\n    'unidad_medida_snapshot',jsonb_build_object('nombre',u.nombre,'abreviatura',u.abreviatura,'permite_fraccion',u.permite_fraccion,'decimales_permitidos',u.decimales_permitidos),\r\n\r\n    'presentacion_id',d.presentacion_id,'presentacion_nombre',d.presentacion_nombre,\n    'cantidad_presentaciones',d.cantidad_presentaciones,'factor_presentacion',d.factor_presentacion,'precio_presentacion',d.precio_presentacion,\n    'total_linea', d.total_linea\r\n\r\n  ) order by d.id), '[]'::jsonb)\r\n\r\n  into v_lineas\r\n\r\n  from public.pedidos_ecommerce_detalle d\r\n\r\n  join public.productos p on p.id = d.producto_id\r\n\r\n  left join public.unidades_medida u on u.id = p.unidad_medida_id\r\n\r\n  where d.pedido_id = p_pedido_id;\r\n\r\n\r\n\r\n  insert into public.facturas_ecommerce\r\n\r\n    (pedido_id, ubicacion_id, fecha_emision, datos)\r\n\r\n  values (\r\n\r\n    p_pedido_id,\r\n\r\n    v_pedido.ubicacion_id,\r\n\r\n    coalesce(v_pedido.fecha_pago, now()),\r\n\r\n    jsonb_build_object(\r\n\r\n      'empresa', v_empresa,\r\n\r\n      'moneda', 'GTQ',\r\n\r\n      'zona_horaria', v_zona_horaria,\r\n\r\n      'cliente', coalesce(v_cliente, '{}'::jsonb),\r\n\r\n      'pedido', to_jsonb(v_pedido),\r\n\r\n      'lineas', v_lineas\r\n\r\n    )\r\n\r\n  ) returning id into v_id;\r\n\r\n  return v_id;\r\n\r\nend;\r\n\r\n$function$\n"
+    },
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+      "md5": "04bb2ddc4aa95877f0187b10095cea99",
+      "name": "erp_buscar_pedidos",
+      "schema": "public",
+      "identity": "p_busqueda text, p_pago text, p_entrega text, p_offset integer, p_limite integer",
+      "definition": "CREATE OR REPLACE FUNCTION public.erp_buscar_pedidos(p_busqueda text DEFAULT ''::text, p_pago text DEFAULT ''::text, p_entrega text DEFAULT ''::text, p_offset integer DEFAULT 0, p_limite integer DEFAULT 50)\n RETURNS jsonb\n LANGUAGE plpgsql\n STABLE\n SET search_path TO ''\nAS $function$\nDECLARE term text:=btrim(coalesce(p_busqueda,'')); result jsonb;\nBEGIN\n IF auth.uid() IS NULL OR NOT public.erp_sesion_autorizada() OR NOT public.tiene_permiso('pedidos.ver') THEN\n  RAISE EXCEPTION 'No tiene permiso para consultar pedidos' USING ERRCODE='42501';\n END IF;\n IF p_offset IS NULL OR p_offset<0 OR p_limite IS NULL OR p_limite NOT BETWEEN 1 AND 100 OR length(term)>250\n  OR coalesce(p_pago,'') NOT IN('','PENDIENTE','PAGADO','REEMBOLSO_PENDIENTE')\n  OR coalesce(p_entrega,'') NOT IN('','PENDIENTE','PREPARADO','ENVIADO','ENTREGADO','RETORNO_PENDIENTE','RETORNADO','CANCELADO') THEN\n  RAISE EXCEPTION 'Filtros o paginación inválidos' USING ERRCODE='22023';\n END IF;\n WITH filtered AS MATERIALIZED (\n  SELECT p.*,jsonb_build_object('nombre',u.nombre) ubicaciones FROM public.pedidos_ecommerce p\n  LEFT JOIN public.ubicaciones u ON u.id=p.ubicacion_id\n  WHERE (coalesce(p_pago,'')='' OR p.estado_pago=p_pago)\n   AND (coalesce(p_entrega,'')='' OR p.estado_entrega=p_entrega)\n   AND (term='' OR position(lower(term) IN lower(p.numero))>0)\n ), page AS (SELECT * FROM filtered ORDER BY fecha_creacion DESC,id OFFSET p_offset LIMIT p_limite)\n SELECT jsonb_build_object('rows',coalesce((SELECT jsonb_agg(to_jsonb(p) ORDER BY p.fecha_creacion DESC,p.id) FROM page p),'[]'::jsonb),\n  'count',(SELECT count(*) FROM filtered)) INTO result;\n RETURN result;\nEND; $function$\n"
+    }
+  ],
+  "columns": [
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "pedidos_ecommerce",
+      "column_name": "id",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "pedidos_ecommerce",
+      "column_name": "numero",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "pedidos_ecommerce",
+      "column_name": "ubicacion_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "pedidos_ecommerce",
+      "column_name": "estado",
+      "is_nullable": "NO",
+      "column_default": "'RESERVADO'::character varying"
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "pedidos_ecommerce",
+      "column_name": "total",
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "pedidos_ecommerce",
+      "column_name": "observaciones",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "pedidos_ecommerce",
+      "column_name": "fecha_creacion",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "pedidos_ecommerce",
+      "column_name": "fecha_pago",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "pedidos_ecommerce",
+      "column_name": "fecha_cancelacion",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "pedidos_ecommerce",
+      "column_name": "cliente_id",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "jsonb",
+      "data_type": "jsonb",
+      "table_name": "pedidos_ecommerce",
+      "column_name": "direccion_envio",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "pedidos_ecommerce",
+      "column_name": "costo_envio",
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "pedidos_ecommerce",
+      "column_name": "metodo_entrega",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "pedidos_ecommerce",
+      "column_name": "metodo_pago",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "pedidos_ecommerce",
+      "column_name": "estado_entrega",
+      "is_nullable": "NO",
+      "column_default": "'PENDIENTE'::text"
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "pedidos_ecommerce",
+      "column_name": "fecha_preparado",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "pedidos_ecommerce",
+      "column_name": "fecha_envio",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "pedidos_ecommerce",
+      "column_name": "fecha_entrega",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "pedidos_ecommerce",
+      "column_name": "modo_inventario",
+      "is_nullable": "NO",
+      "column_default": "'SUCURSAL'::text"
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "pedidos_ecommerce",
+      "column_name": "clave_idempotencia",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "pedidos_ecommerce",
+      "column_name": "solicitud_omnicanal_hash",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "pedidos_ecommerce",
+      "column_name": "fecha_expiracion_reserva",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "pedidos_ecommerce",
+      "column_name": "estado_pago",
+      "is_nullable": "NO",
+      "column_default": "'PENDIENTE'::text"
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "pedidos_ecommerce",
+      "column_name": "fecha_salida_inventario",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "pedidos_ecommerce",
+      "column_name": "fecha_retorno",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "pedidos_ecommerce",
+      "column_name": "incidencia_entrega",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "pedidos_ecommerce",
+      "column_name": "motivo_incidencia",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "pedidos_ecommerce",
+      "column_name": "cobrado_por",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "pedidos_ecommerce",
+      "column_name": "monto_cobrado",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "pedidos_ecommerce",
+      "column_name": "referencia_pago",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "pedidos_ecommerce_detalle",
+      "column_name": "id",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "pedidos_ecommerce_detalle",
+      "column_name": "pedido_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "pedidos_ecommerce_detalle",
+      "column_name": "producto_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "pedidos_ecommerce_detalle",
+      "column_name": "cantidad",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "pedidos_ecommerce_detalle",
+      "column_name": "precio_unitario",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "pedidos_ecommerce_detalle",
+      "column_name": "total_linea",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "pedidos_ecommerce_detalle",
+      "column_name": "presentacion_id",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "pedidos_ecommerce_detalle",
+      "column_name": "presentacion_nombre",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "pedidos_ecommerce_detalle",
+      "column_name": "cantidad_presentaciones",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "pedidos_ecommerce_detalle",
+      "column_name": "factor_presentacion",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "pedidos_ecommerce_detalle",
+      "column_name": "precio_presentacion",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "perfiles",
+      "column_name": "id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "perfiles",
+      "column_name": "nombre",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "perfiles",
+      "column_name": "apellido",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "perfiles",
+      "column_name": "correo",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "perfiles",
+      "column_name": "telefono",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "perfiles",
+      "column_name": "avatar_url",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "perfiles",
+      "column_name": "rol_id",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "perfiles",
+      "column_name": "estado",
+      "is_nullable": "NO",
+      "column_default": "'ACTIVO'::character varying"
+    },
+    {
+      "udt_name": "bool",
+      "data_type": "boolean",
+      "table_name": "perfiles",
+      "column_name": "activo",
+      "is_nullable": "NO",
+      "column_default": "true"
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "perfiles",
+      "column_name": "fecha_creacion",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "perfiles",
+      "column_name": "fecha_actualizacion",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "udt_name": "bool",
+      "data_type": "boolean",
+      "table_name": "perfiles",
+      "column_name": "boletin",
+      "is_nullable": "NO",
+      "column_default": "false"
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "perfiles",
+      "column_name": "segundo_nombre",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "perfiles",
+      "column_name": "segundo_apellido",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "perfiles",
+      "column_name": "nombre_direccion",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "perfiles",
+      "column_name": "departamento",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "perfiles",
+      "column_name": "municipio",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "perfiles",
+      "column_name": "direccion_completa",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "perfiles",
+      "column_name": "referencia_direccion",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "perfiles",
+      "column_name": "codigo_empleado",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "perfiles",
+      "column_name": "id_empleado",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "perfiles",
+      "column_name": "id_sucursal_principal",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "bool",
+      "data_type": "boolean",
+      "table_name": "perfiles",
+      "column_name": "puede_cambiar_sucursal",
+      "is_nullable": "NO",
+      "column_default": "false"
+    },
+    {
+      "udt_name": "date",
+      "data_type": "date",
+      "table_name": "perfiles",
+      "column_name": "fecha_ingreso",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "date",
+      "data_type": "date",
+      "table_name": "perfiles",
+      "column_name": "fecha_baja",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "perfiles",
+      "column_name": "id_supervisor",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "perfiles",
+      "column_name": "ultimo_acceso",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "productos",
+      "column_name": "id",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "productos",
+      "column_name": "codigo_barras",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "productos",
+      "column_name": "sku",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "productos",
+      "column_name": "codigo_interno",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "productos",
+      "column_name": "nombre",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "productos",
+      "column_name": "nombre_corto",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "productos",
+      "column_name": "categoria_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "productos",
+      "column_name": "marca_id",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "productos",
+      "column_name": "unidad_medida_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "productos",
+      "column_name": "descripcion_corta",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "productos",
+      "column_name": "descripcion_larga",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "productos",
+      "column_name": "presentacion",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "productos",
+      "column_name": "modelo",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "productos",
+      "column_name": "color",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "productos",
+      "column_name": "tamano",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "productos",
+      "column_name": "material",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "productos",
+      "column_name": "peso",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "productos",
+      "column_name": "unidad_peso",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "productos",
+      "column_name": "ancho",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "productos",
+      "column_name": "alto",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "productos",
+      "column_name": "profundidad",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "productos",
+      "column_name": "unidad_dimensiones",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "productos",
+      "column_name": "contenido",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "int4",
+      "data_type": "integer",
+      "table_name": "productos",
+      "column_name": "piezas_por_paquete",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "bool",
+      "data_type": "boolean",
+      "table_name": "productos",
+      "column_name": "es_vendible",
+      "is_nullable": "NO",
+      "column_default": "true"
+    },
+    {
+      "udt_name": "bool",
+      "data_type": "boolean",
+      "table_name": "productos",
+      "column_name": "es_comprable",
+      "is_nullable": "NO",
+      "column_default": "true"
+    },
+    {
+      "udt_name": "bool",
+      "data_type": "boolean",
+      "table_name": "productos",
+      "column_name": "controla_inventario",
+      "is_nullable": "NO",
+      "column_default": "true"
+    },
+    {
+      "udt_name": "bool",
+      "data_type": "boolean",
+      "table_name": "productos",
+      "column_name": "venta_fraccionada",
+      "is_nullable": "NO",
+      "column_default": "false"
+    },
+    {
+      "udt_name": "bool",
+      "data_type": "boolean",
+      "table_name": "productos",
+      "column_name": "requiere_codigo_barras",
+      "is_nullable": "NO",
+      "column_default": "false"
+    },
+    {
+      "udt_name": "bool",
+      "data_type": "boolean",
+      "table_name": "productos",
+      "column_name": "disponible_pos",
+      "is_nullable": "NO",
+      "column_default": "true"
+    },
+    {
+      "udt_name": "bool",
+      "data_type": "boolean",
+      "table_name": "productos",
+      "column_name": "publicado_ecommerce",
+      "is_nullable": "NO",
+      "column_default": "false"
+    },
+    {
+      "udt_name": "bool",
+      "data_type": "boolean",
+      "table_name": "productos",
+      "column_name": "visible_ecommerce",
+      "is_nullable": "NO",
+      "column_default": "true"
+    },
+    {
+      "udt_name": "bool",
+      "data_type": "boolean",
+      "table_name": "productos",
+      "column_name": "destacado_ecommerce",
+      "is_nullable": "NO",
+      "column_default": "false"
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "productos",
+      "column_name": "slug",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "productos",
+      "column_name": "titulo_seo",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "productos",
+      "column_name": "descripcion_seo",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "_text",
+      "data_type": "ARRAY",
+      "table_name": "productos",
+      "column_name": "palabras_clave",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "int4",
+      "data_type": "integer",
+      "table_name": "productos",
+      "column_name": "orden_ecommerce",
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "udt_name": "bool",
+      "data_type": "boolean",
+      "table_name": "productos",
+      "column_name": "activo",
+      "is_nullable": "NO",
+      "column_default": "true"
+    },
+    {
+      "udt_name": "bool",
+      "data_type": "boolean",
+      "table_name": "productos",
+      "column_name": "descontinuado",
+      "is_nullable": "NO",
+      "column_default": "false"
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "productos",
+      "column_name": "creado_por",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "productos",
+      "column_name": "actualizado_por",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "productos",
+      "column_name": "fecha_creacion",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "productos",
+      "column_name": "fecha_actualizacion",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "productos",
+      "column_name": "precio_base",
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "productos",
+      "column_name": "proveedor_id",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "productos",
+      "column_name": "costo_ultimo",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "unidades_medida",
+      "column_name": "id",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "unidades_medida",
+      "column_name": "nombre",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "unidades_medida",
+      "column_name": "abreviatura",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "unidades_medida",
+      "column_name": "tipo",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "int2",
+      "data_type": "smallint",
+      "table_name": "unidades_medida",
+      "column_name": "decimales_permitidos",
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "udt_name": "bool",
+      "data_type": "boolean",
+      "table_name": "unidades_medida",
+      "column_name": "permite_fraccion",
+      "is_nullable": "NO",
+      "column_default": "false"
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "unidades_medida",
+      "column_name": "factor_base",
+      "is_nullable": "NO",
+      "column_default": "1"
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "unidades_medida",
+      "column_name": "unidad_base_id",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "bool",
+      "data_type": "boolean",
+      "table_name": "unidades_medida",
+      "column_name": "activo",
+      "is_nullable": "NO",
+      "column_default": "true"
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "unidades_medida",
+      "column_name": "fecha_creacion",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "unidades_medida",
+      "column_name": "fecha_actualizacion",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "udt_name": "bool",
+      "data_type": "boolean",
+      "table_name": "configuracion_ecommerce",
+      "column_name": "id",
+      "is_nullable": "NO",
+      "column_default": "true"
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "configuracion_ecommerce",
+      "column_name": "ubicacion_ecommerce_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "configuracion_ecommerce",
+      "column_name": "actualizado_en",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "configuracion_ecommerce",
+      "column_name": "max_cantidad_por_linea",
+      "is_nullable": "NO",
+      "column_default": "100"
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "configuracion_ecommerce",
+      "column_name": "umbral_pocas_unidades",
+      "is_nullable": "NO",
+      "column_default": "5"
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "existencias",
+      "column_name": "id",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "existencias",
+      "column_name": "producto_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "existencias",
+      "column_name": "ubicacion_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "existencias",
+      "column_name": "stock_fisico",
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "existencias",
+      "column_name": "stock_reservado",
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "existencias",
+      "column_name": "stock_disponible",
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "existencias",
+      "column_name": "stock_minimo",
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "existencias",
+      "column_name": "stock_maximo",
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "existencias",
+      "column_name": "punto_reorden",
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "udt_name": "bool",
+      "data_type": "boolean",
+      "table_name": "existencias",
+      "column_name": "activo",
+      "is_nullable": "NO",
+      "column_default": "true"
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "existencias",
+      "column_name": "fecha_ultimo_movimiento",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "existencias",
+      "column_name": "fecha_ultimo_conteo",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "existencias",
+      "column_name": "creado_por",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "existencias",
+      "column_name": "actualizado_por",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "existencias",
+      "column_name": "fecha_creacion",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "existencias",
+      "column_name": "fecha_actualizacion",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "existencias",
+      "column_name": "costo_promedio",
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "udt_name": "bool",
+      "data_type": "boolean",
+      "table_name": "existencias",
+      "column_name": "costo_validado",
+      "is_nullable": "NO",
+      "column_default": "false"
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "existencias",
+      "column_name": "politica_reabastecimiento",
+      "is_nullable": "NO",
+      "column_default": "'PENDIENTE'::text"
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "existencias",
+      "column_name": "responsable_reabastecimiento_id",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "int2",
+      "data_type": "smallint",
+      "table_name": "existencias",
+      "column_name": "revision_cada_dias",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "existencias",
+      "column_name": "politica_revisada_en",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "int8",
+      "data_type": "bigint",
+      "table_name": "existencias",
+      "column_name": "politica_revision",
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "existencias",
+      "column_name": "politica_notas",
+      "is_nullable": "NO",
+      "column_default": "''::text"
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "movimientos",
+      "column_name": "id",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "movimientos",
+      "column_name": "producto_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "movimientos",
+      "column_name": "ubicacion_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "movimientos",
+      "column_name": "tipo_movimiento",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "movimientos",
+      "column_name": "cantidad",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "movimientos",
+      "column_name": "stock_anterior",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "movimientos",
+      "column_name": "stock_posterior",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "movimientos",
+      "column_name": "costo_unitario",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "movimientos",
+      "column_name": "valor_total",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "movimientos",
+      "column_name": "origen",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "movimientos",
+      "column_name": "referencia_tipo",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "movimientos",
+      "column_name": "referencia_id",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "movimientos",
+      "column_name": "referencia_numero",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "movimientos",
+      "column_name": "grupo_movimiento_id",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "movimientos",
+      "column_name": "observaciones",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "movimientos",
+      "column_name": "usuario_id",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "movimientos",
+      "column_name": "fecha_movimiento",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "movimientos",
+      "column_name": "fecha_creacion",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "udt_name": "bool",
+      "data_type": "boolean",
+      "table_name": "movimientos",
+      "column_name": "costo_validado",
+      "is_nullable": "NO",
+      "column_default": "false"
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "notificaciones_omnicanal",
+      "column_name": "id",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "notificaciones_omnicanal",
+      "column_name": "pedido_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "notificaciones_omnicanal",
+      "column_name": "transferencia_id",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "notificaciones_omnicanal",
+      "column_name": "tipo",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "notificaciones_omnicanal",
+      "column_name": "titulo",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "notificaciones_omnicanal",
+      "column_name": "mensaje",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "notificaciones_omnicanal",
+      "column_name": "ubicacion_origen_id",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "notificaciones_omnicanal",
+      "column_name": "ubicacion_destino_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "notificaciones_omnicanal",
+      "column_name": "creado_en",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "notificaciones_omnicanal",
+      "column_name": "creado_por",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "reservas",
+      "column_name": "id",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "reservas",
+      "column_name": "producto_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "reservas",
+      "column_name": "ubicacion_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "reservas",
+      "column_name": "cantidad",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "reservas",
+      "column_name": "estado",
+      "is_nullable": "NO",
+      "column_default": "'ACTIVA'::character varying"
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "reservas",
+      "column_name": "origen",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "reservas",
+      "column_name": "referencia_tipo",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "reservas",
+      "column_name": "referencia_id",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "reservas",
+      "column_name": "referencia_numero",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "reservas",
+      "column_name": "fecha_reserva",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "reservas",
+      "column_name": "fecha_expiracion",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "reservas",
+      "column_name": "fecha_liberacion",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "reservas",
+      "column_name": "fecha_consumo",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "reservas",
+      "column_name": "creado_por",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "reservas",
+      "column_name": "actualizado_por",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "reservas",
+      "column_name": "fecha_creacion",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "reservas",
+      "column_name": "fecha_actualizacion",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "transferencias_omnicanal",
+      "column_name": "id",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "transferencias_omnicanal",
+      "column_name": "numero",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "transferencias_omnicanal",
+      "column_name": "pedido_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "transferencias_omnicanal",
+      "column_name": "producto_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "transferencias_omnicanal",
+      "column_name": "cantidad",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "transferencias_omnicanal",
+      "column_name": "ubicacion_origen_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "transferencias_omnicanal",
+      "column_name": "ubicacion_destino_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "transferencias_omnicanal",
+      "column_name": "reserva_origen_id",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "transferencias_omnicanal",
+      "column_name": "reserva_destino_id",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "transferencias_omnicanal",
+      "column_name": "estado",
+      "is_nullable": "NO",
+      "column_default": "'PENDIENTE'::text"
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "transferencias_omnicanal",
+      "column_name": "costo_unitario",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "transferencias_omnicanal",
+      "column_name": "salida_movimiento_id",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "transferencias_omnicanal",
+      "column_name": "entrada_movimiento_id",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "transferencias_omnicanal",
+      "column_name": "creada_en",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "transferencias_omnicanal",
+      "column_name": "enviada_en",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "transferencias_omnicanal",
+      "column_name": "recibida_en",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "transferencias_omnicanal",
+      "column_name": "cancelada_en",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "transferencias_omnicanal",
+      "column_name": "enviada_por",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "transferencias_omnicanal",
+      "column_name": "recibida_por",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "bool",
+      "data_type": "boolean",
+      "table_name": "transferencias_omnicanal",
+      "column_name": "costo_validado_origen",
+      "is_nullable": "NO",
+      "column_default": "false"
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "ubicaciones",
+      "column_name": "id",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "ubicaciones",
+      "column_name": "codigo",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "ubicaciones",
+      "column_name": "nombre",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "varchar",
+      "data_type": "character varying",
+      "table_name": "ubicaciones",
+      "column_name": "tipo",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "ubicaciones",
+      "column_name": "ubicacion_padre_id",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "ubicaciones",
+      "column_name": "direccion",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "ubicaciones",
+      "column_name": "descripcion",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "ubicaciones",
+      "column_name": "responsable_id",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "udt_name": "bool",
+      "data_type": "boolean",
+      "table_name": "ubicaciones",
+      "column_name": "permite_inventario",
+      "is_nullable": "NO",
+      "column_default": "true"
+    },
+    {
+      "udt_name": "bool",
+      "data_type": "boolean",
+      "table_name": "ubicaciones",
+      "column_name": "permite_venta",
+      "is_nullable": "NO",
+      "column_default": "false"
+    },
+    {
+      "udt_name": "bool",
+      "data_type": "boolean",
+      "table_name": "ubicaciones",
+      "column_name": "permite_recepcion",
+      "is_nullable": "NO",
+      "column_default": "false"
+    },
+    {
+      "udt_name": "bool",
+      "data_type": "boolean",
+      "table_name": "ubicaciones",
+      "column_name": "permite_transferencia",
+      "is_nullable": "NO",
+      "column_default": "true"
+    },
+    {
+      "udt_name": "bool",
+      "data_type": "boolean",
+      "table_name": "ubicaciones",
+      "column_name": "activo",
+      "is_nullable": "NO",
+      "column_default": "true"
+    },
+    {
+      "udt_name": "int4",
+      "data_type": "integer",
+      "table_name": "ubicaciones",
+      "column_name": "orden",
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "ubicaciones",
+      "column_name": "fecha_creacion",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "ubicaciones",
+      "column_name": "fecha_actualizacion",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    }
+  ],
+  "constraints": [
+    {
+      "name": "pedidos_ecommerce_alerta_nuevo_confirmado",
+      "table": "pedidos_ecommerce",
+      "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+    },
+    {
+      "name": "pedidos_ecommerce_cliente_id_fkey",
+      "table": "pedidos_ecommerce",
+      "definition": "FOREIGN KEY (cliente_id) REFERENCES auth.users(id)"
+    },
+    {
+      "name": "pedidos_ecommerce_cobrado_por_fkey",
+      "table": "pedidos_ecommerce",
+      "definition": "FOREIGN KEY (cobrado_por) REFERENCES auth.users(id)"
+    },
+    {
+      "name": "pedidos_ecommerce_estado_check",
+      "table": "pedidos_ecommerce",
+      "definition": "CHECK (((estado)::text = ANY ((ARRAY['RESERVADO'::character varying, 'PAGADO'::character varying, 'CANCELADO'::character varying])::text[])))"
+    },
+    {
+      "name": "pedidos_ecommerce_numero_key",
+      "table": "pedidos_ecommerce",
+      "definition": "UNIQUE (numero)"
+    },
+    {
+      "name": "pedidos_ecommerce_pkey",
+      "table": "pedidos_ecommerce",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "pedidos_ecommerce_ubicacion_id_fkey",
+      "table": "pedidos_ecommerce",
+      "definition": "FOREIGN KEY (ubicacion_id) REFERENCES ubicaciones(id)"
+    },
+    {
+      "name": "pedidos_estado_entrega_check",
+      "table": "pedidos_ecommerce",
+      "definition": "CHECK ((estado_entrega = ANY (ARRAY['PENDIENTE'::text, 'PREPARADO'::text, 'ENVIADO'::text, 'ENTREGADO'::text, 'RETORNO_PENDIENTE'::text, 'RETORNADO'::text, 'CANCELADO'::text])))"
+    },
+    {
+      "name": "pedidos_estado_pago_check",
+      "table": "pedidos_ecommerce",
+      "definition": "CHECK ((estado_pago = ANY (ARRAY['PENDIENTE'::text, 'PAGADO'::text, 'REEMBOLSO_PENDIENTE'::text])))"
+    },
+    {
+      "name": "pedidos_modo_inventario_check",
+      "table": "pedidos_ecommerce",
+      "definition": "CHECK ((modo_inventario = ANY (ARRAY['SUCURSAL'::text, 'OMNICANAL'::text])))"
+    },
+    {
+      "name": "pedidos_monto_cobrado_check",
+      "table": "pedidos_ecommerce",
+      "definition": "CHECK (((monto_cobrado IS NULL) OR ((monto_cobrado >= (0)::numeric) AND ((monto_cobrado)::text <> ALL (ARRAY['NaN'::text, 'Infinity'::text, '-Infinity'::text])))))"
+    },
+    {
+      "name": "pedidos_ecommerce_detalle_cantidad_check",
+      "table": "pedidos_ecommerce_detalle",
+      "definition": "CHECK ((cantidad > (0)::numeric))"
+    },
+    {
+      "name": "pedidos_ecommerce_detalle_pedido_id_fkey",
+      "table": "pedidos_ecommerce_detalle",
+      "definition": "FOREIGN KEY (pedido_id) REFERENCES pedidos_ecommerce(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "pedidos_ecommerce_detalle_pkey",
+      "table": "pedidos_ecommerce_detalle",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "pedidos_ecommerce_detalle_presentacion_id_fkey",
+      "table": "pedidos_ecommerce_detalle",
+      "definition": "FOREIGN KEY (presentacion_id) REFERENCES producto_presentaciones(id)"
+    },
+    {
+      "name": "pedidos_ecommerce_detalle_producto_id_fkey",
+      "table": "pedidos_ecommerce_detalle",
+      "definition": "FOREIGN KEY (producto_id) REFERENCES productos(id)"
+    }
+  ],
+  "triggers": [
+    {
+      "name": "auditar_pedidos_comerciales",
+      "table": "pedidos_ecommerce",
+      "enabled": "O",
+      "function": "registrar_auditoria()",
+      "definition": "CREATE TRIGGER auditar_pedidos_comerciales AFTER INSERT OR DELETE OR UPDATE ON public.pedidos_ecommerce FOR EACH ROW EXECUTE FUNCTION registrar_auditoria()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.registrar_auditoria()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nDECLARE v_old jsonb; v_new jsonb; v_row jsonb; v_id uuid; v_key jsonb;\n        v_actor uuid; v_origen text;\nBEGIN\n  IF TG_OP='DELETE' THEN v_old:=to_jsonb(OLD); v_row:=v_old;\n  ELSE v_new:=to_jsonb(NEW); v_row:=v_new;\n    IF TG_OP='UPDATE' THEN v_old:=to_jsonb(OLD); END IF;\n  END IF;\n  -- No presupone old.id/new.id: rol_permisos, usuario_ubicaciones y config no\n  -- tienen un ID UUID. El identificador histórico sigue poblado cuando es UUID.\n  IF v_row->>'id' ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN\n    v_id:=(v_row->>'id')::uuid;\n  END IF;\n  SELECT coalesce(jsonb_object_agg(a.attname,v_row->a.attname),'{}'::jsonb)\n    INTO v_key\n    FROM pg_catalog.pg_constraint c\n    CROSS JOIN LATERAL unnest(c.conkey) k(attnum)\n    JOIN pg_catalog.pg_attribute a ON a.attrelid=c.conrelid AND a.attnum=k.attnum\n    WHERE c.conrelid=TG_RELID AND c.contype='p';\n  v_actor:=erp_private.audit_actor();\n  v_origen:=CASE\n    WHEN v_actor IS NOT NULL AND auth.uid() IS NOT NULL THEN 'SESION'\n    WHEN v_actor IS NOT NULL THEN 'SERVICIO_VERIFICADO'\n    WHEN coalesce(auth.role(),'')='service_role' THEN 'SERVICIO'\n    ELSE 'SISTEMA' END;\n  INSERT INTO public.auditoria(tabla,accion,registro_id,registro_clave,\n    datos_anteriores,datos_nuevos,usuario_id,actor_origen)\n  VALUES(TG_TABLE_NAME,TG_OP,v_id,v_key,v_old,v_new,v_actor,v_origen);\n  IF TG_OP='DELETE' THEN RETURN OLD; ELSE RETURN NEW; END IF;\nEND;\n$function$\n"
+    },
+    {
+      "name": "factura_ecommerce_pago_confirmado",
+      "table": "pedidos_ecommerce",
+      "enabled": "O",
+      "function": "erp_factura_al_confirmar_pago()",
+      "definition": "CREATE TRIGGER factura_ecommerce_pago_confirmado AFTER UPDATE OF estado_pago ON public.pedidos_ecommerce FOR EACH ROW EXECUTE FUNCTION erp_factura_al_confirmar_pago()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.erp_factura_al_confirmar_pago()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nBEGIN\n IF new.estado_pago='PAGADO' AND old.estado_pago IS DISTINCT FROM 'PAGADO' THEN\n  PERFORM erp_private.emitir_comprobante_cobrado(new.id);\n END IF;\n RETURN new;\nEND; $function$\n"
+    },
+    {
+      "name": "pedidos_ecommerce_alerta_nuevo_confirmado",
+      "table": "pedidos_ecommerce",
+      "enabled": "O",
+      "function": "encolar_alerta_pedido_ecommerce()",
+      "definition": "CREATE CONSTRAINT TRIGGER pedidos_ecommerce_alerta_nuevo_confirmado AFTER INSERT ON public.pedidos_ecommerce DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION encolar_alerta_pedido_ecommerce()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.encolar_alerta_pedido_ecommerce()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nDECLARE pedido_final record;\nBEGIN\n IF tg_op='INSERT' THEN\n  SELECT p.id,p.numero,p.total,p.metodo_entrega,p.ubicacion_id INTO pedido_final\n   FROM public.pedidos_ecommerce p WHERE p.id=new.id;\n  IF NOT FOUND THEN RETURN new; END IF;\n  INSERT INTO public.notificaciones_operativas_ecommerce(tipo,prioridad,pedido_id,ubicacion_id,payload)\n   VALUES('PEDIDO_NUEVO','ALTA',pedido_final.id,pedido_final.ubicacion_id,\n    jsonb_build_object('numero',pedido_final.numero,'total',pedido_final.total,'metodo_entrega',pedido_final.metodo_entrega));\n END IF;\n RETURN new;\nEND; $function$\n"
+    },
+    {
+      "name": "pedidos_ecommerce_alertas_operativas",
+      "table": "pedidos_ecommerce",
+      "enabled": "O",
+      "function": "encolar_alerta_pedido_ecommerce()",
+      "definition": "CREATE TRIGGER pedidos_ecommerce_alertas_operativas AFTER UPDATE OF estado ON public.pedidos_ecommerce FOR EACH ROW EXECUTE FUNCTION encolar_alerta_pedido_ecommerce()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.encolar_alerta_pedido_ecommerce()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nDECLARE pedido_final record;\nBEGIN\n IF tg_op='INSERT' THEN\n  SELECT p.id,p.numero,p.total,p.metodo_entrega,p.ubicacion_id INTO pedido_final\n   FROM public.pedidos_ecommerce p WHERE p.id=new.id;\n  IF NOT FOUND THEN RETURN new; END IF;\n  INSERT INTO public.notificaciones_operativas_ecommerce(tipo,prioridad,pedido_id,ubicacion_id,payload)\n   VALUES('PEDIDO_NUEVO','ALTA',pedido_final.id,pedido_final.ubicacion_id,\n    jsonb_build_object('numero',pedido_final.numero,'total',pedido_final.total,'metodo_entrega',pedido_final.metodo_entrega));\n END IF;\n RETURN new;\nEND; $function$\n"
+    },
+    {
+      "name": "etapa3_cantidades_pedidos_ecommerce_detalle",
+      "table": "pedidos_ecommerce_detalle",
+      "enabled": "O",
+      "function": "erp_private.validar_cantidades_fila()",
+      "definition": "CREATE TRIGGER etapa3_cantidades_pedidos_ecommerce_detalle BEFORE INSERT OR UPDATE OF cantidad ON public.pedidos_ecommerce_detalle FOR EACH ROW EXECUTE FUNCTION erp_private.validar_cantidades_fila('cantidad')",
+      "function_definition": "CREATE OR REPLACE FUNCTION erp_private.validar_cantidades_fila()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\r\nDECLARE j jsonb:=to_jsonb(NEW); campo text; producto uuid:=(j->>'producto_id')::uuid;\r\nBEGIN\r\n FOREACH campo IN ARRAY TG_ARGV LOOP\r\n  IF j->campo IS NOT NULL AND j->campo<>'null'::jsonb THEN\r\n   PERFORM erp_private.validar_cantidad_producto(producto,(j->>campo)::numeric,true);\r\n  END IF;\r\n END LOOP;\r\n RETURN NEW;\r\nEND; $function$\n"
+    }
+  ],
+  "policies": [
+    {
+      "cmd": "SELECT",
+      "qual": "((cliente_id = ( SELECT auth.uid() AS uid)) AND erp_usuario_activo())",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "pedidos_ecommerce",
+      "policyname": "cliente ve sus pedidos",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(erp_usuario_activo() AND tiene_permiso('pedidos.ver'::text) AND erp_private.tiene_acceso_ubicacion_historica(ubicacion_id))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "pedidos_ecommerce",
+      "policyname": "pedidos_ecommerce_select",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(erp_usuario_activo() AND (EXISTS ( SELECT 1\n   FROM pedidos_ecommerce pedido\n  WHERE ((pedido.id = pedidos_ecommerce_detalle.pedido_id) AND (pedido.cliente_id = ( SELECT auth.uid() AS uid))))))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "pedidos_ecommerce_detalle",
+      "policyname": "cliente_read_own_order_lines",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(erp_usuario_activo() AND tiene_permiso('pedidos.ver'::text) AND (EXISTS ( SELECT 1\n   FROM pedidos_ecommerce p\n  WHERE ((p.id = pedidos_ecommerce_detalle.pedido_id) AND erp_private.tiene_acceso_ubicacion_historica(p.ubicacion_id)))))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "pedidos_ecommerce_detalle",
+      "policyname": "pedidos_ecommerce_detalle_select",
+      "schemaname": "public",
+      "with_check": null
+    }
+  ],
+  "grants": [
+    {
+      "grantee": "anon",
+      "table_name": "pedidos_ecommerce",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "pedidos_ecommerce",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "pedidos_ecommerce",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "pedidos_ecommerce",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "pedidos_ecommerce",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "pedidos_ecommerce",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "pedidos_ecommerce",
+      "privilege_type": "INSERT"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "pedidos_ecommerce",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "pedidos_ecommerce",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "pedidos_ecommerce",
+      "privilege_type": "DELETE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "pedidos_ecommerce",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "pedidos_ecommerce",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "pedidos_ecommerce",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "pedidos_ecommerce_detalle",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "pedidos_ecommerce_detalle",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "pedidos_ecommerce_detalle",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "pedidos_ecommerce_detalle",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "pedidos_ecommerce_detalle",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "pedidos_ecommerce_detalle",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "pedidos_ecommerce_detalle",
+      "privilege_type": "INSERT"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "pedidos_ecommerce_detalle",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "pedidos_ecommerce_detalle",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "pedidos_ecommerce_detalle",
+      "privilege_type": "DELETE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "pedidos_ecommerce_detalle",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "pedidos_ecommerce_detalle",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "pedidos_ecommerce_detalle",
+      "privilege_type": "TRIGGER"
+    }
+  ]
+}
