@@ -1,0 +1,3 @@
+# El webhook autentica exclusivamente mediante x-webhook-secret.
+[functions.catalogo-actualizado]
+verify_jwt = false
