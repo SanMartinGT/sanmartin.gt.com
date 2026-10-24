@@ -1,0 +1,143 @@
+name: Generar SEO y publicar en Hostinger (opcional)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: '17 * * * *'
+  repository_dispatch:
+    types: [catalogo_actualizado]
+permissions:
+  contents: read
+
+concurrency:
+  group: hostinger-production
+  cancel-in-progress: false
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SITE_URL: ${{ vars.SITE_URL }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verificar SQL históricos y flujo de pedidos (H01/H02)
+        run: node scripts/verificar-sql-vigente.mjs
+      - name: Probar protección de SQL y publicación (sin servicios)
+        run: |
+          node scripts/probar-sql-vigente.mjs
+          node scripts/probar-reglas-pedidos-sql.mjs
+          python scripts/probar-publicacion-sql.py
+      - name: Probar aislamiento y fusión de carritos (H03)
+        run: |
+          node scripts/probar-carrito-cuenta.mjs
+          node scripts/probar-carrito-integracion.mjs
+          node scripts/probar-presentaciones.mjs
+      - name: Probar modalidad, sucursal y disponibilidad (H04)
+        run: |
+          node scripts/probar-checkout-contexto.mjs
+          node scripts/probar-checkout-omnicanal.mjs
+          node scripts/probar-checkout-integracion.mjs
+      - name: Probar imágenes de favoritos y texto de categoría (H06)
+        run: node scripts/probar-renderizado-seguro.mjs
+      - name: Probar historial y recompra por dueño (H07)
+        run: node scripts/probar-pedidos-cuenta.mjs
+      - name: Probar snapshots y contacto en la interfaz (H08)
+        run: node scripts/probar-snapshots-ui.mjs
+      - name: Probar webhook y evidencia de publicación (H09)
+        run: |
+          node scripts/probar-webhook-catalogo.mjs
+          node scripts/probar-evidencia-publicacion.mjs
+          python scripts/probar-destino-hostinger.py
+      - name: Instalar runtime de aceptación SQL
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Probar contrato SQL contextual (H05, PostgreSQL aislado)
+        run: npm run test:sql
+      - name: Probar detalle autorizado existente (H07, PostgreSQL aislado)
+        run: node scripts/probar-historial-sql.mjs
+      - name: Probar persistencia de snapshots (H08, PostgreSQL aislado)
+        run: node scripts/probar-snapshots-sql.mjs
+      - name: Probar triggers del puente en PostgreSQL aislado (H09)
+        run: node scripts/probar-puente-sql.mjs
+      - name: Preparar sitio para Hostinger
+        run: node scripts/preparar-sitio.mjs
+      - name: Generar fichas SEO desde Supabase
+        run: node scripts/generar-seo-productos.mjs
+      - name: Verificar HTML y sitemap
+        run: node scripts/verificar-seo.mjs
+      - name: Crear evidencia correlacionada del sitio
+        env:
+          EVENTO_CATALOGO_ID: ${{ github.event.client_payload.evento_id || '' }}
+        run: node scripts/crear-evidencia-publicacion.mjs
+      - name: Guardar sitio generado
+        uses: actions/upload-artifact@v4
+        with:
+          name: sitio-hostinger
+          path: _site/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+      - name: Comprobar identidad del destino existente por FTPS y HTTPS
+        if: ${{ vars.HOSTINGER_DEPLOY_ENABLED == 'true' }}
+        env:
+          HOSTINGER_FTP_SERVER: ${{ secrets.HOSTINGER_FTP_SERVER }}
+          HOSTINGER_FTP_USERNAME: ${{ secrets.HOSTINGER_FTP_USERNAME }}
+          HOSTINGER_FTP_PASSWORD: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
+          HOSTINGER_FTP_PORT: ${{ vars.HOSTINGER_FTP_PORT || '21' }}
+          HOSTINGER_FTP_DIR: ${{ vars.HOSTINGER_FTP_DIR || '/public_html/' }}
+          HOSTINGER_FTP_PROTOCOL: ${{ vars.HOSTINGER_FTP_PROTOCOL || 'ftps' }}
+        run: python scripts/comprobar-destino-hostinger.py
+      - name: Publicar en Hostinger
+        id: hosting
+        if: ${{ vars.HOSTINGER_DEPLOY_ENABLED == 'true' }}
+        env:
+          HOSTINGER_FTP_SERVER: ${{ secrets.HOSTINGER_FTP_SERVER }}
+          HOSTINGER_FTP_USERNAME: ${{ secrets.HOSTINGER_FTP_USERNAME }}
+          HOSTINGER_FTP_PASSWORD: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
+          HOSTINGER_FTP_PORT: ${{ vars.HOSTINGER_FTP_PORT || '21' }}
+          HOSTINGER_FTP_DIR: ${{ vars.HOSTINGER_FTP_DIR || '/public_html/' }}
+          HOSTINGER_FTP_PROTOCOL: ${{ vars.HOSTINGER_FTP_PROTOCOL || 'ftps' }}
+        run: python scripts/publicar-hostinger.py --site-dir _site
+      - name: Verificar archivos publicados por HTTPS
+        id: verificar_hosting
+        if: ${{ vars.HOSTINGER_DEPLOY_ENABLED == 'true' }}
+        run: node scripts/verificar-publicacion-remota.mjs
+      - name: Registrar publicación omitida
+        if: ${{ vars.HOSTINGER_DEPLOY_ENABLED != 'true' }}
+        run: node scripts/verificar-publicacion-remota.mjs --skip
+      - name: Guardar evidencia de verificación
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidencia-publicacion
+          path: |
+            _site/publicacion.json
+            work/publicacion-verificada.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Resumir alcance comprobado
+        if: always()
+        env:
+          HOSTINGER_DEPLOY_ENABLED: ${{ vars.HOSTINGER_DEPLOY_ENABLED == 'true' }}
+          HOSTING_OUTCOME: ${{ steps.hosting.outcome }}
+          VERIFY_OUTCOME: ${{ steps.verificar_hosting.outcome }}
+        run: |
+          {
+            echo '### Generación y publicación del catálogo'
+            echo ''
+            echo "Ejecución: $GITHUB_RUN_ID; commit: $GITHUB_SHA"
+            if [ "$HOSTINGER_DEPLOY_ENABLED" != 'true' ]; then
+              echo 'Hostinger omitido. Solo se generó un artefacto; el puente completo no queda verificado.'
+            elif [ "$HOSTING_OUTCOME" = 'success' ] && [ "$VERIFY_OUTCOME" = 'success' ]; then
+              echo 'Transferencia terminada y archivos críticos comprobados por HTTPS con la evidencia de esta ejecución.'
+            else
+              echo 'No se confirmó la publicación completa. Revisar los pasos de transferencia y verificación HTTPS.'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
