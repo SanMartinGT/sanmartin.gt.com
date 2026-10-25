@@ -1,8 +1,8 @@
-# San Martín: generar SEO con GitHub Actions y publicación opcional en Hostinger
+# San Martín: SEO y publicación automática en Hostinger
 
 Dominio configurado: **https://sanmartingmca.com/**.
 
-Repositorio confirmado por el usuario: [SanMartinGT/sanmartin.gt.com](https://github.com/SanMartinGT/sanmartin.gt.com), rama `main`. Corte de carga al 24-10-2026: 77 archivos de la raíz y `scripts/` ya están en `main`; cinco archivos de `supabase/` están en proceso. La carga del paquete revisado de 132 archivos todavía no se ha completado. Los secretos, los triggers y la aceptación remota siguen pendientes; este avance no confirma una ejecución de Actions ni publicación automática.
+Repositorio: [SanMartinGT/sanmartin.gt.com](https://github.com/SanMartinGT/sanmartin.gt.com), rama `main`, con la fuente revisada y el workflow cargados. La automatización H09 está activa y probada: un evento de la base pasó por Edge y Actions hasta Hostinger, con su mismo identificador y 26 archivos críticos comprobados por HTTPS. La Edge `catalogo-actualizado` figura ACTIVE en su revisión remota 5 observada, con el código H09 revisado. La evidencia y sus límites se detallan al final de esta guía.
 
 ## Base de datos compartida: SQL históricos retirados (H01)
 
@@ -14,43 +14,45 @@ Antes de generar el sitio, ejecutar `node scripts/verificar-sql-vigente.mjs`. Es
 
 H02 añade una comprobación específica del [contrato de pedidos](supabase/CONTRATO_PEDIDOS.md): los SQL activos no pueden reinstalar los patrones del consumo antiguo por CONFIRMADO. El flujo vigente mantiene preparación de mercancía y cobro separados; la consulta de catálogo confirmó ausente el trigger antiguo.
 
-El workflow genera y valida HTML de productos, categorías, catálogo, sitemap y robots, y guarda el resultado como artefacto descargable. **Por defecto no se conecta ni transfiere archivos a Hostinger**: la publicación solo se ejecuta si la variable de GitHub `HOSTINGER_DEPLOY_ENABLED` tiene el valor `true`. La generación funciona sin secretos FTP.
+El workflow genera y valida HTML de productos, categorías, catálogo, sitemap y robots, y guarda el artefacto descargable. La publicación está habilitada mediante `HOSTINGER_DEPLOY_ENABLED=true`. Si se retira esa variable o se cambia a `false`, sólo se genera el sitio y no se transfiere a Hostinger.
 
-## 1. Preparar el dominio y el alojamiento
+## 1. Dominio y alojamiento configurados
 
-1. En Hostinger, agrega `sanmartingmca.com` como sitio **PHP/HTML personalizado** en tu plan Single. El editor Website Builder usa otro sistema de publicación.
-2. Apunta los DNS del dominio a los valores que indique Hostinger para ese alojamiento. No copies IPs de ejemplo. Activa su certificado SSL para el dominio y `www` si usarás esa variante.
-3. En **Websites → Dashboard → Files → FTP Accounts** consulta servidor, usuario, contraseña y carpeta. Usa el **usuario FTP principal** del sitio, cuya sesión permita acceder a una ruta terminada en `/public_html`. Una cuenta restringida cuya raíz ya sea esa carpeta solo puede mostrar `/` y no es compatible con la validación del publicador actual.
+1. `sanmartingmca.com` está alojado como sitio **PHP/HTML personalizado** en el plan Single existente. El editor Website Builder usa otro sistema de publicación.
+2. El dominio sirve el sitio por HTTPS y se verificaron sus archivos publicados. Si se cambia de servidor, usar los DNS y el certificado indicados por Hostinger para ese destino.
+3. Se configuró una **cuenta FTP dedicada al sitio**, con raíz en la carpeta del dominio, desde donde `/public_html/` es visible. El servidor comprobado es `srv486.hstgr.io:21`. Una cuenta cuya raíz ya sea `public_html` sólo muestra `/` y no es compatible con la validación del publicador actual. Las credenciales permanecen en los secretos de GitHub.
 
 GitHub ejecuta Node y genera el sitio; Hostinger recibe HTML, CSS, JavaScript e imágenes. No necesita ejecutar Node ni disponer de SSH. [Hostinger: FTP y carpeta pública](https://www.hostinger.com/support/1714427-how-to-find-ftp-details-on-hostinger-dashboard-at-hostinger/), [compatibilidad de protocolos y planes](https://www.hostinger.com/support/which-file-transfer-and-server-access-options-are-supported-at-hostinger/).
 
 ## 2. Configurar GitHub Actions
 
-Para generar HTML y guardar el artefacto basta con subir el código y habilitar Actions. Deja `HOSTINGER_DEPLOY_ENABLED` sin definir o en `false` mientras no quieras publicar: los commits, eventos del catálogo, horario y ejecución manual solo generarán el sitio. El resumen de cada ejecución mostrará **Hostinger omitido**.
+Actions está habilitado y publica con `HOSTINGER_DEPLOY_ENABLED=true`. Para generar sólo el artefacto durante un mantenimiento, cambia esa variable a `false`: los commits, eventos del catálogo, horario y ejecución manual seguirán generando el sitio, con **Hostinger omitido** en el resumen.
 
-Cuando decidas habilitar la publicación, abre [SanMartinGT/sanmartin.gt.com](https://github.com/SanMartinGT/sanmartin.gt.com) → **Settings → Secrets and variables → Actions**. Agrega estos **Repository secrets** directamente en GitHub; no los guardes en archivos ni los pegues en el chat:
+Para mantener los secretos ya configurados, abre [SanMartinGT/sanmartin.gt.com](https://github.com/SanMartinGT/sanmartin.gt.com) → **Settings → Secrets and variables → Actions**. Actualízalos directamente en GitHub; no los guardes en archivos ni los pegues en el chat:
 
 | Secret | Valor |
 | --- | --- |
-| `HOSTINGER_FTP_SERVER` | Hostname FTP del alojamiento, sin protocolo ni puerto. |
+| `HOSTINGER_FTP_SERVER` | `srv486.hstgr.io`, sin protocolo ni puerto. |
 | `HOSTINGER_FTP_USERNAME` | Usuario FTP de la tienda. |
 | `HOSTINGER_FTP_PASSWORD` | Contraseña FTP. |
 
-En la pestaña **Variables**, puedes agregar estas **Repository variables**:
+En la pestaña **Variables**, la configuración actual y sus valores de transporte son:
 
-| Variable | Valor predeterminado |
+| Variable | Valor |
 | --- | --- |
-| `HOSTINGER_DEPLOY_ENABLED` | Sin definir: publicación deshabilitada. Solo `true` habilita la transferencia a Hostinger. |
+| `HOSTINGER_DEPLOY_ENABLED` | `true`, habilitado y probado. |
 | `HOSTINGER_FTP_PORT` | `21` |
 | `HOSTINGER_FTP_DIR` | `/public_html/` |
 | `HOSTINGER_FTP_PROTOCOL` | `ftps` |
-| `SITE_URL` | No hace falta: se usa `https://sanmartingmca.com/` desde `entorno.json`. |
+| `SITE_URL` | `https://sanmartingmca.com/`, también definido en `entorno.json`. |
 
-El script intenta **FTPS explícito con certificado verificado** por defecto. Su disponibilidad y hostname deben comprobarse con tu alojamiento. Si el servidor solo admite FTP, configura expresamente `HOSTINGER_FTP_PROTOCOL=ftp`: ese protocolo transmite credenciales y archivos sin cifrar. El script no cambia automáticamente a FTP ni desactiva la validación del certificado. Single no dispone de SFTP/SSH según la documentación actual de Hostinger.
+El workflow exige **FTPS explícito con certificado verificado**. Su guard de destino rechaza cualquier protocolo distinto de `ftps` antes de escribir; no configurar `HOSTINGER_FTP_PROTOCOL=ftp` en esta automatización. El publicador Python conserva parámetros de compatibilidad en su código, pero eso no habilita FTP sin cifrado en el pipeline. No se desactiva la validación del certificado ni se cambia automáticamente de protocolo. Single no dispone de SFTP/SSH según la documentación actual de Hostinger.
 
-La carpeta remota debe ser absoluta, visible desde la sesión del usuario FTP principal y terminar en `/public_html/`; también se permite la ruta completa del sitio que termine así. No se crea una carpeta remota que no exista. No cambies `SITE_URL` a una subcarpeta.
+La carpeta remota debe ser absoluta, visible desde la sesión de la cuenta FTP dedicada y terminar en `/public_html/`; también se permite la ruta completa del sitio que termine así. No se crea una carpeta remota que no exista. No cambies `SITE_URL` a una subcarpeta.
 
 ## 3. Subir el código y generar el sitio
+
+La carga inicial está completada. Para publicar actualizaciones de fuente:
 
 1. Reemplaza los archivos de la raíz del repositorio con esta versión, incluyendo `.github/workflows/publicar.yml`, `scripts/` y `supabase/`. Conserva la carpeta `.github`, aunque tu explorador la oculte. No subas una carpeta contenedora, `work/`, `_site/`, `.env` ni los ZIP.
    Al actualizar un repositorio existente, retira las antiguas copias `supabase-*.sql` de su raíz y conserva el archivo histórico de `supabase/`. Superponer un ZIP no elimina esos SQL viejos; el control H01 fallará si reaparecen.
@@ -59,7 +61,7 @@ La carpeta remota debe ser absoluta, visible desde la sesión del usuario FTP pr
 4. Revisa que preparación, generación y validación terminen correctamente. Descarga `sitio-hostinger` desde **Artifacts** si quieres revisar los archivos; se conserva durante siete días.
 5. Mientras `HOSTINGER_DEPLOY_ENABLED` no sea `true`, el paso **Publicar en Hostinger** queda omitido y el resumen lo confirma. No necesitas configurar ni probar credenciales FTP para este modo.
 
-Para activar la publicación más adelante, completa los datos de Hostinger, establece `HOSTINGER_DEPLOY_ENABLED=true` y ejecuta **Run workflow**. La primera publicación envía todo el sitio. Las siguientes comparan hashes y envían archivos cambiados. Las fichas y categorías retiradas se eliminan únicamente si estaban en el manifiesto anterior y conservan su contenido generado. Nunca se hace una limpieza completa de `public_html`. Después de publicar, comprueba inicio, catálogo, login, una ficha real, `robots.txt` y `sitemap.xml` en el dominio nuevo. Volver a `false` detiene las siguientes transferencias; conserva lo que ya exista en el alojamiento.
+La publicación ya está activa. Antes de escribir, el guard de sólo lectura compara la cuenta FTPS con la evidencia y el hash de `index.html` del sitio HTTPS vigente. Las publicaciones siguientes comparan hashes y envían archivos cambiados. Las fichas y categorías retiradas se eliminan únicamente si estaban en el manifiesto anterior y conservan su contenido generado. Nunca se hace una limpieza completa de `public_html`. Después de publicar se verifican por HTTPS los archivos críticos del artefacto nuevo. Volver a `false` detiene las siguientes transferencias y conserva lo que ya exista en el alojamiento.
 
 Si más adelante eliges una primera carga manual, extrae el contenido de `public_html-hostinger.zip` **dentro** de `public_html`, con `index.html` y `.htaccess` directamente allí. No subas el paquete de código fuente al alojamiento. La carga manual y ejecutar el publicador por terminal son acciones de publicación separadas; la variable anterior solo controla el workflow de Actions.
 
@@ -71,13 +73,13 @@ Si existía un archivo `CNAME`, una rama de publicación antigua, un workflow ad
 
 ## 5. Actualizar al agregar o modificar productos
 
-Sigue [scripts/ACTIVAR-WEBHOOK.md](scripts/ACTIVAR-WEBHOOK.md) para publicar el puente de Supabase y conectar sus Database Webhooks. El token de GitHub queda en los secretos del servidor. Una modificación del catálogo activa `catalogo_actualizado`; Actions lee el catálogo actual, reconstruye sus fichas y sitemap y guarda el artefacto. La transferencia a Hostinger sigue dependiendo de `HOSTINGER_DEPLOY_ENABLED=true`, también cuando el origen es un webhook.
+El puente de [scripts/ACTIVAR-WEBHOOK.md](scripts/ACTIVAR-WEBHOOK.md) ya está instalado con nueve triggers privados de notificación. No crear además Database Webhooks estándar del Dashboard sobre esas tablas. El token de GitHub queda en Edge Secrets. Una modificación del catálogo activa `catalogo_actualizado`; Actions lee el catálogo actual, reconstruye sus fichas y sitemap, guarda el artefacto y publica con `HOSTINGER_DEPLOY_ENABLED=true`.
 
-La activación del puente es un trabajo separado: `scripts/activar-webhook-catalogo.sql` sigue siendo una propuesta, no una migración aplicada ni un paso ejecutado por H01. Cualquier instalación SQL requiere adaptación al esquema vivo según la guía de migraciones.
+La migración del puente aplicada es `20261025043945`. `scripts/activar-webhook-catalogo.sql` sigue siendo una propuesta anterior sin aplicar y no debe ejecutarse. Los cambios futuros de SQL requieren un delta contra el esquema vivo según la guía de migraciones.
 
 Sin ese webhook todavía funcionan los commits, **Run workflow** y la reconstrucción programada cada hora al minuto 17. GitHub puede retrasar los trabajos programados; no hay una promesa de actualización inmediata. El horario también renueva promociones que comienzan o vencen sin editar registros.
 
-Las tres exclusiones manuales de `seo-config.json` ya se retiraron: `excludeProductIds` está vacío. La generación real del 24 de octubre de 2026 produjo **3 fichas, 2 categorías y 20 URLs de sitemap**. Los filtros del catálogo público siguen vigentes. La publicación manual comprobada se documenta al final; la actualización automática aún requiere completar H09.
+Las tres exclusiones manuales de `seo-config.json` ya se retiraron: `excludeProductIds` está vacío. La generación real del 24 de octubre de 2026 produjo **3 fichas, 2 categorías y 20 URLs de sitemap**. Los filtros del catálogo público siguen vigentes. La publicación automática por evento se verificó y se documenta al final.
 
 ## 6. Login y buscadores
 
@@ -173,17 +175,35 @@ comprueba ERP si existe su carpeta hermana; CI del ecommerce indica esos casos
 como omitidos cuando ERP no está presente. Publicar HTML/JS `snapshots-h08-1`
 y actualizar también los dos módulos de pedidos/comprobantes del ERP.
 
-## Puente de catálogo H09 — activación pendiente
+## Puente de catálogo H09 — automático, activo y probado
 
-La Edge v2 añade9tablas y correlación evento_id. El workflow crea evidencia del
+La Edge activa (revisión remota 5 observada) cubre nueve tablas y correlación
+`evento_id`. El código H09 revisado se conserva. El workflow crea evidencia del
 artefacto y verifica por HTTPS los archivos críticos después de FTPS. Si hosting
 está omitido, registra verified=false; un HTTP202 no demuestra publicación.
-La migración20261024165634 está preparada, NO aplicada por falta de secretoVault
-y configuración remota. El repositorio confirmado es `SanMartinGT/sanmartin.gt.com`; su fuente está en carga.
-El alojamiento PHP/HTML del dominio se preparó; no se ha subido el sitio por este
-puente. Seguir únicamente [ACTIVAR-WEBHOOK.md](scripts/ACTIVAR-WEBHOOK.md); no
+La migración `20261025043945` ya está aplicada y registra nueve triggers; el
+archivo inicial de CLI `20261024165634` se renombró sin cambiar sus bytes.
+El repositorio `SanMartinGT/sanmartin.gt.com` contiene la fuente y el workflow.
+Los secretos están configurados y `HOSTINGER_DEPLOY_ENABLED=true`. Se publica
+por FTPS con certificado verificado en `srv486.hstgr.io:21`, mediante una cuenta
+dedicada al sitio y `/public_html/`; `SITE_URL=https://sanmartingmca.com/`.
+La solicitud pg_net 2113 respondió HTTP202 y disparó automáticamente
+la [ejecución 40162772575](https://github.com/SanMartinGT/sanmartin.gt.com/actions/runs/40162772575).
+El evento `0823d672-b9ed-4cf3-99d6-17fe4b338b5d` llegó al artefacto y al sitio;
+HTTPS confirmó `verified:true`, 26 archivos críticos y tres fichas el
+`2026-10-25T04:41:32.931Z` (24-10-2026, 22:41 en Guatemala).
+La prueba fue un UPDATE técnico con valores iguales en configuración y COMMIT:
+los campos conservaron sus valores y se dejó la auditoría normal. No fue una
+edición comercial desde la interfaz del ERP. Seguir
+[ACTIVAR-WEBHOOK.md](scripts/ACTIVAR-WEBHOOK.md); no
 crear además webhooks estándar ni ejecutar la propuesta antigua de7tablas.
 Las3exclusiones SEO ya se retiraron: el buildreal tiene3fichas/2categorías/20URLs.
+El token de GitHub vence el **22 de enero de 2027**; renovarlo y actualizar
+`GITHUB_DISPATCH_TOKEN` en Edge Secrets antes de esa fecha. La recuperación
+horaria también pasó FTPS y verificación HTTPS en la [ejecución programada
+40162843342](https://github.com/SanMartinGT/sanmartin.gt.com/actions/runs/40162843342).
+Esa publicación posterior no tiene `evento_id`; el recibo del evento técnico
+permanece en la ejecución 40162772575. La ejecución manual sigue disponible.
 
 ### Primera publicación manual verificada — 24-10-2026
 
@@ -191,5 +211,6 @@ Se preparó el alojamiento PHP/HTML del plan existente y se extrajo el paquete
 público en public_html. Las3fichas están publicadas y los26archivos críticos
 coinciden por SHA256 con publicacion.json. El ZIP de transporte se conservó
 con prefijo .hostinger-deploy- y responde403; no hay SQL/docs privados en el sitio.
-Esta publicación fue manual por el administrador de archivos: no prueba aún
-ERP→Actions→FTPS automático. Falta completar la fuente en el repositorio confirmado, configurar sus secretos y activar/probar el puente.
+Esta primera publicación fue manual por el administrador de archivos. Después
+se completó y verificó la publicación automática del evento técnico descrito
+arriba, con su mismo identificador desde la base hasta el sitio por HTTPS.

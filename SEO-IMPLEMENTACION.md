@@ -1,10 +1,10 @@
 # Generación SEO y publicación en Hostinger
 
-El dominio configurado es `https://sanmartingmca.com/`. GitHub Actions genera el catálogo y guarda el sitio como artefacto; la publicación en Hostinger es opcional y está deshabilitada por defecto. La puesta en marcha está documentada en [INSTRUCCIONES.md](INSTRUCCIONES.md) y el puente de eventos en [scripts/ACTIVAR-WEBHOOK.md](scripts/ACTIVAR-WEBHOOK.md).
+El dominio configurado es `https://sanmartingmca.com/`. GitHub Actions genera el catálogo, guarda el artefacto y publica automáticamente en Hostinger con `HOSTINGER_DEPLOY_ENABLED=true`. Se comprobó el recorrido desde un evento de la base hasta los archivos servidos por HTTPS. La configuración está documentada en [INSTRUCCIONES.md](INSTRUCCIONES.md) y el puente de eventos en [scripts/ACTIVAR-WEBHOOK.md](scripts/ACTIVAR-WEBHOOK.md).
 
-## Repositorio y carga de fuente — 24-10-2026
+## Repositorio y automatización activa — 24-10-2026
 
-El repositorio confirmado es [SanMartinGT/sanmartin.gt.com](https://github.com/SanMartinGT/sanmartin.gt.com), rama `main`. Corte de esta actualización: 77 archivos de raíz y `scripts/` ya están en `main`; cinco archivos de `supabase/` están en proceso. La carga del paquete de 132 archivos sigue pendiente de completar. Los secretos de GitHub/Supabase, el secreto Vault y los triggers no están configurados; todavía no se ha verificado una ejecución de Actions ni el flujo automático.
+El repositorio es [SanMartinGT/sanmartin.gt.com](https://github.com/SanMartinGT/sanmartin.gt.com), rama `main`, con 134 archivos de fuente revisados y sus marcadores de carpeta. Los secretos de GitHub/Supabase y Vault están configurados; la Edge `catalogo-actualizado` figura ACTIVE en la revisión remota 5 observada con el código H09 revisado y los nueve triggers de la migración `20261025043945` están instalados. El destino FTPS comprobado es `srv486.hstgr.io:21`, con cuenta dedicada al sitio, directorio `/public_html/` y certificado verificado. Los valores de credenciales permanecen fuera de la fuente.
 
 ## Protección de SQL históricos (H01, 23-10-2026)
 
@@ -29,19 +29,21 @@ Las fichas estáticas conservan el carrito y la revalidación de precio/disponib
 
 El workflow **Generar SEO y publicar en Hostinger (opcional)** conserva push a `main`, ejecución manual, cron horario y `repository_dispatch: catalogo_actualizado`. Todos generan, verifican y guardan `_site/` en el artefacto `sitio-hostinger` durante siete días. Sus permisos son `contents: read`; no necesita permisos de hosting de GitHub.
 
-El paso FTP solo se ejecuta con `vars.HOSTINGER_DEPLOY_ENABLED == 'true'`. Si la variable está ausente o deshabilitada, no se solicitan ni usan credenciales FTP, no se transfieren archivos al alojamiento y el resumen de Actions indica **Hostinger omitido**. Habilitar el webhook no cambia esta condición. Para publicar más adelante hay que configurar los secretos FTP y habilitar explícitamente la variable. Este control pertenece al workflow; ejecutar directamente el publicador Python sí publica.
+El paso FTP sólo se ejecuta con `vars.HOSTINGER_DEPLOY_ENABLED == 'true'`, actualmente habilitado y probado. Si la variable se retira o se cambia a `false`, no se usan credenciales FTP ni se transfieren archivos y el resumen indica **Hostinger omitido**. Habilitar el webhook no sustituye esta condición. Este control pertenece al workflow; ejecutar directamente el publicador Python sí publica.
 
-`scripts/publicar-hostinger.py` sube por FTP/FTPS. Usa un manifiesto de hashes en el servidor, transferencia a temporal y renombrado por archivo. Sube el sitemap después de los demás archivos y confirma el manifiesto solo al terminar. Retira únicamente HTML generado de productos/categorías que desaparezca del manifiesto y siga coincidiendo con su hash. Conserva archivos ajenos. No ofrece una actualización atómica de todo el sitio: durante una subida pueden coexistir archivos de dos versiones. Un fallo exige corregir la causa y volver a ejecutar el workflow.
+Antes de escribir por FTPS, `comprobar-destino-hostinger.py` exige que la prueba de publicación y el hash de `index.html` leídos de la cuenta FTP coincidan con el sitio vigente por HTTPS. El guard es de sólo lectura y bloquea un destino diferente; después de publicar se valida el artefacto nuevo por HTTPS.
 
-La función `catalogo-actualizado` autentica un secreto privado, valida eventos de las tablas del catálogo y envía solo tipo/tabla/identificador a GitHub. No consulta ni escribe datos privados del ERP. Los secretos, despliegue y webhooks se configuran en las cuentas correspondientes; su activación permite generar artefactos aunque la publicación en Hostinger siga deshabilitada.
+En el workflow, `scripts/publicar-hostinger.py` sube por **FTPS con certificado verificado** después del guard de destino, que rechaza `HOSTINGER_FTP_PROTOCOL=ftp`. Los parámetros de compatibilidad del publicador no habilitan FTP sin cifrado en esta automatización. Usa un manifiesto de hashes en el servidor, transferencia a temporal y renombrado por archivo. Sube el sitemap después de los demás archivos y confirma el manifiesto solo al terminar. Retira únicamente HTML generado de productos/categorías que desaparezca del manifiesto y siga coincidiendo con su hash. Conserva archivos ajenos. No ofrece una actualización atómica de todo el sitio: durante una subida pueden coexistir archivos de dos versiones. Un fallo exige corregir la causa y volver a ejecutar el workflow.
+
+La función activa `catalogo-actualizado` autentica un secreto privado, valida eventos de las nueve tablas del catálogo y envía sólo evento/tipo/tabla/identificador a GitHub. No consulta ni escribe datos privados del ERP. El token GitHub está limitado al repositorio y vence el **22 de enero de 2027**; renovarlo y actualizar `GITHUB_DISPATCH_TOKEN` en Edge Secrets antes de esa fecha.
 
 Cambiar slug, ocultar o retirar un producto reconstruye el índice y sitemap sin la URL anterior. Un sitemap no contiene combinaciones de parámetros del catálogo. No se crean redirecciones automáticas entre slugs; para conservar posicionamiento al renombrar un producto, agrega una redirección explícita conocida en el servidor.
 
-## Estado verificado
+## Referencia de pruebas previas
 
 El 13 de octubre de 2026, la lectura pública produjo 0 productos elegibles tras las tres exclusiones existentes y 15 URLs válidas. Las pruebas aisladas verificaron productos nuevos/modificados/retirados, slugs, metadatos, precios/ofertas, disponibilidad, sitemap, staging y errores de datos/configuración. La subida se prueba con un servidor simulado y el webhook con respuestas GitHub simuladas.
 
-Estas pruebas aisladas no confirman DNS, certificado SSL, credenciales/protocolo FTP del alojamiento, login en el dominio nuevo, webhooks de base de datos ni una publicación remota. No se modificaron RLS, productos, inventario ni autenticación del servidor en esas pruebas. La activación y las ejecuciones remotas deben comprobarse en sus servicios por separado.
+Esas pruebas aisladas no confirmaban DNS, TLS, FTP ni una publicación remota. No modificaron RLS, productos, inventario ni autenticación del servidor. La aceptación remota posterior de H09 se detalla abajo; no incluye probar login o compra de clientes.
 
 ## Productos habilitados — 24 de octubre de 2026
 
@@ -52,8 +54,8 @@ Se ejecutaron preparación, generación con Supabase real y verificación: **3 f
 2 categorías y 20 URLs de sitemap** para `https://sanmartingmca.com/`.
 `_site/seo-productos.json` incluye los tres slugs, y sus fichas tienen canonical,
 `index, follow`, Product y BreadcrumbList. El build anterior está respaldado.
-Este cambio está generado localmente; no se publicó en Hostinger ni se comprobó
-su indexación en buscadores. La comparación automática integral de cobertura
+Las tres fichas están publicadas en Hostinger y verificadas por HTTPS; no se
+comprobó su indexación en buscadores. La comparación automática integral de cobertura
 del catálogo mantiene su alcance B32 pendiente.
 
 ## Evidencia de publicación H09
@@ -63,13 +65,32 @@ El workflow agrega `crear-evidencia-publicacion.mjs` después de verificar SEO.
 índices, sitemap, robots y JS/CSS. Tras FTPS se ejecuta la comprobación HTTPS:
 no se acepta un manifiesto anterior ni una página aparcada con HTTP200.
 Una ejecución con hosting deshabilitado conserva estado OMITIDA/verified=false.
-La automatización remota permanece pendiente de configuración y aceptación;
+La automatización remota está activa y su aceptación correlacionada se completó;
 [véase la guía actual](scripts/ACTIVAR-WEBHOOK.md).
 
 ### Publicación inicial comprobada — 24-10-2026
 
 El sitio generado se publicó manualmente en Hostinger. La comprobación HTTPS
 validó las3fichas y26archivos críticos contra el mismo publicacion.json local.
-La automatización H09 sigue pendiente de completar la fuente en el repositorio
-confirmado, configurar secretos y activar/probar los triggers. Esta
-verificación manual no demuestra un evento ERP ni una ejecución de Actions.
+Esa verificación inicial fue manual. Después se completó la configuración de
+H09 y la aceptación automática descrita a continuación.
+
+### Evento de base hasta hosting comprobado — 24-10-2026
+
+La solicitud pg_net **2113** recibió HTTP202 con
+`evento_id=0823d672-b9ed-4cf3-99d6-17fe4b338b5d` y disparó la
+[ejecución automática 40162772575](https://github.com/SanMartinGT/sanmartin.gt.com/actions/runs/40162772575).
+El artefacto y el sitio servido conservaron ese evento. La comprobación por
+HTTPS terminó con `verified:true`, **26 archivos críticos y tres fichas**, el
+`2026-10-25T04:41:32.931Z` (24-10-2026, 22:41 en Guatemala).
+
+La prueba hizo un UPDATE técnico con los mismos valores en
+`configuracion_ecommerce` y COMMIT; los campos quedaron iguales y se conservó
+la auditoría normal de la operación. No fue una edición comercial desde la UI
+del ERP ni modificó productos, precios o inventario. Las nueve tablas y los tres
+tipos de evento se verificaron con fixtures, además de este caso remoto.
+La recuperación horaria también se probó: la [ejecución programada
+40162843342](https://github.com/SanMartinGT/sanmartin.gt.com/actions/runs/40162843342)
+terminó con FTPS y verificación HTTPS exitosos. Esa publicación posterior no
+tiene `evento_id`; el recibo histórico del evento técnico permanece en la
+ejecución 40162772575. La ejecución manual sigue disponible como recuperación.
