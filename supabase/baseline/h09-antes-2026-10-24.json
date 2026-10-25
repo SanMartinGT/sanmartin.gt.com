@@ -198,7 +198,123 @@
         "authenticated_create": false
       }
     ],
-    "vault_ready": false,
-    "webhook_helper": null
+    "vault_ready": true,
+    "webhook_helper": null,
+    "transport_security": {
+      "observed_at_utc": "2026-10-24T23:57:53.490435+00:00",
+      "project_ref": "beasfybalepkdlomzazf",
+      "read_only": true,
+      "secret_values_read": false,
+      "queue_headers_or_body_read": false,
+      "data_api_probes": [
+        {
+          "schema": "net",
+          "resource": "http_request_queue",
+          "query": "select=id&limit=0",
+          "api_key_kind": "public_publishable",
+          "http_status": 406,
+          "code": "PGRST106",
+          "message": "Invalid schema: net",
+          "exposed_schemas": [
+            "public",
+            "graphql_public"
+          ]
+        },
+        {
+          "schema": "vault",
+          "resource": "decrypted_secrets",
+          "query": "select=id&limit=0",
+          "api_key_kind": "public_publishable",
+          "http_status": 406,
+          "code": "PGRST106",
+          "message": "Invalid schema: vault",
+          "exposed_schemas": [
+            "public",
+            "graphql_public"
+          ]
+        }
+      ],
+      "client_roles": [
+        {
+          "role": "anon",
+          "can_login": false,
+          "bypassrls": false,
+          "superuser": false,
+          "net_schema_usage": true,
+          "net_queue_table_select": true,
+          "net_queue_headers_select": true,
+          "vault_schema_usage": false,
+          "vault_decrypted_secret_select": false
+        },
+        {
+          "role": "authenticated",
+          "can_login": false,
+          "bypassrls": false,
+          "superuser": false,
+          "net_schema_usage": true,
+          "net_queue_table_select": true,
+          "net_queue_headers_select": true,
+          "vault_schema_usage": false,
+          "vault_decrypted_secret_select": false
+        }
+      ],
+      "queue_acl": {
+        "owner": "supabase_admin",
+        "grantor": "supabase_admin",
+        "public_all_table_privileges": true,
+        "column_acl": null,
+        "row_level_security": false
+      },
+      "postgres_authority": {
+        "superuser": false,
+        "member_supabase_admin": false,
+        "queue_select_with_grant_option": false,
+        "queue_insert_with_grant_option": false
+      },
+      "pg_net_http_functions": {
+        "owner": "supabase_admin",
+        "security_definer": false,
+        "public_execute": true
+      },
+      "sql_exposed_schemas_setting": {
+        "session": null,
+        "pg_db_role_setting_matches": []
+      },
+      "login_roles_observed": [
+        "supabase_functions_admin",
+        "supabase_admin",
+        "authenticator",
+        "supabase_auth_admin",
+        "supabase_storage_admin",
+        "supabase_replication_admin",
+        "supabase_read_only_user",
+        "supabase_etl_admin",
+        "pgbouncer",
+        "postgres"
+      ],
+      "required_before_activation": [
+        "Repeat both live Data API probes and role/privilege metadata checks.",
+        "Require PGRST106 and only public/graphql_public exposed schemas; stop if unavailable or different.",
+        "Keep SQL LOGIN credentials restricted to trusted services; queued request headers are readable to SQL LOGIN roles."
+      ],
+      "limitations": [
+        "SQL metadata does not establish external PostgREST exposed schemas; current SQL setting is unset.",
+        "No secret or queue header values were read; no permissions or remote data changed.",
+        "No assurance that future API settings or LOGIN role grants will remain unchanged."
+      ],
+      "official_reference": "https://supabase.com/docs/guides/troubleshooting/revoking-access-to-pg_net-objects-has-no-effect-0bbc16",
+      "latest_readiness_check": {
+        "observed_at_utc": "2026-10-24T23:58:35.775933+00:00",
+        "catalogo_webhook_secret_count": 1,
+        "catalogo_webhook_secret_valid": true,
+        "helper": null,
+        "webhook_trigger_count": 0,
+        "latest_migration": "20261024114111",
+        "secret_value_stored_in_evidence": false
+      }
+    },
+    "vault_secret_count": 1,
+    "vault_secret_valid": true,
+    "readiness_checked_at_utc": "2026-10-24T23:58:35.775933+00:00"
   }
 }
