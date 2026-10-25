@@ -1,6 +1,6 @@
 # Migraciones diferenciales de San Martín
 
-Actualizado: 23 de octubre de 2026. Proyecto compartido ERP/ecommerce: **beasfybalepkdlomzazf**.
+Actualizado: 24 de octubre de 2026 (Guatemala). Proyecto compartido ERP/ecommerce: **beasfybalepkdlomzazf**.
 
 ## Estado después de H01
 
@@ -143,13 +143,38 @@ privado; actualiza los dos bloques de contacto y las lecturas de identidad.
 No reescribe pedidos ni comprobantes existentes. Comparar baseline/historial
 vivo y generar otro delta para cambios posteriores; no reaplicar este SQL.
 
-## H09 preparado, no aplicado
+## Delta H09 aplicado
 
-`20261024165634_conectar_puente_catalogo.sql` y su ficha son un delta pendiente.
-El baseline actualizado no tiene helper/triggers; el secreto Vault del puente
-ya consta configurado y válido, sin conservar su valor. La migración sigue
-rechazando una configuración incompleta; no aplicarla hasta probar
-Edge/repositorio/hosting. Cubre9tablas y evita coexistir con webhooks estándar.
+`20261025043945_conectar_puente_catalogo.sql` fue aplicado mediante MCP al
+proyecto compartido el 24-10-2026 en Guatemala. Se conserva el archivo generado
+inicialmente por CLI como `20261024165634_conectar_puente_catalogo.sql`,
+renombrado a la versión realmente asignada por Supabase sin cambiar sus bytes.
+La ficha registra ambos nombres, el SHA-256 y las verificaciones posteriores.
+Los comentarios de preparación dentro del SQL aplicado se preservan como parte
+de esos bytes; el estado vigente de aplicación se consulta en la ficha e historia.
+No se escribió ni reparó el historial remoto manualmente.
+
+El baseline previo permanece inmutable: aún describe helper/triggers ausentes
+y secreto Vault configurado y válido, sin conservar su valor. Después de
+aplicar se verificaron el helper privado propietario `postgres`, SECURITY
+DEFINER con search_path vacío, nueve triggers AFTER ROW y ningún EXECUTE del
+helper para clientes. También se completó la aceptación remota: solicitud
+pg_net 2113, HTTP202 y evento `0823d672-b9ed-4cf3-99d6-17fe4b338b5d` iniciaron la
+[ejecución 40162772575](https://github.com/SanMartinGT/sanmartin.gt.com/actions/runs/40162772575)
+de `SanMartinGT/sanmartin.gt.com`. La Edge activa y el workflow publicaron por FTPS
+con certificado verificado; HTTPS confirmó el mismo evento, `verified:true`,
+26 archivos críticos y tres fichas el `2026-10-25T04:41:32.931Z`.
+
+La prueba hizo un UPDATE técnico con los mismos valores en
+`configuracion_ecommerce` y COMMIT; se comprobaron iguales los campos y quedó
+la entrada normal de auditoría. No fue una edición comercial desde la UI del
+ERP. Las nueve tablas se probaron con fixtures para los tres tipos de evento.
+La Edge `catalogo-actualizado` figura ACTIVE en la revisión remota 5 observada
+con el código H09 revisado. La recuperación horaria se verificó en la
+[ejecución programada 40162843342](https://github.com/SanMartinGT/sanmartin.gt.com/actions/runs/40162843342),
+con FTPS y HTTPS exitosos. Esa ejecución posterior no tiene `evento_id`; el
+recibo histórico del evento técnico se conserva en la ejecución 40162772575.
+No reaplicar este delta; preparar otro ante cambios.
 La propuesta `scripts/activar-webhook-catalogo.sql` conserva sus bytes originales
 como referencia de7tablas y no debe ejecutarse para la activación actual.
 
