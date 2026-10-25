@@ -1,7 +1,7 @@
 -- H09: delta preparado contra el catálogo vivo de 24-10-2026, NO aplicado.
 -- Creado primero con Supabase CLI 2.122.0 migration new conectar_puente_catalogo.
 -- Instalar sólo después de configurar y probar Edge, repositorio y publicación.
--- Falta actualmente Vault catalogo_webhook_secret: este guard debe rechazarlo.
+-- Vault catalogo_webhook_secret debe existir y ser válido al aplicar el delta.
 -- No ejecutar además webhooks estándar del Dashboard sobre estas tablas.
 SET LOCAL lock_timeout = '5s';
 SET LOCAL statement_timeout = '30s';
@@ -43,11 +43,20 @@ BEGIN
  IF to_regclass('vault.secrets') IS NULL OR to_regclass('vault.decrypted_secrets') IS NULL
   OR to_regclass('net.http_request_queue') IS NULL THEN RAISE EXCEPTION 'H09: faltan objetos privados de Vault/pg_net'; END IF;
  FOREACH role_name IN ARRAY ARRAY['anon','authenticated'] LOOP
-  IF has_column_privilege(role_name,'vault.decrypted_secrets','decrypted_secret','SELECT')
-   OR has_column_privilege(role_name,'net.http_request_queue','headers','SELECT') THEN
-   RAISE EXCEPTION 'H09: un cliente puede leer secretos o encabezados privados';
+  IF has_column_privilege(role_name,'vault.decrypted_secrets','decrypted_secret','SELECT') THEN
+   RAISE EXCEPTION 'H09: un cliente puede leer secretos descifrados de Vault';
+  END IF;
+  IF EXISTS(SELECT 1 FROM pg_catalog.pg_roles WHERE rolname=role_name AND (rolcanlogin OR rolbypassrls OR rolsuper)) THEN
+   RAISE EXCEPTION 'H09: un rol de cliente tiene acceso directo o privilegios administrativos';
   END IF;
  END LOOP;
+ -- pg_net 0.20.4 concede acceso a su cola a PUBLIC por diseño de la plataforma.
+ -- postgres no es su propietario ni puede retirar esos grants sin romper pg_net.
+ -- Antes de aplicar, una comprobación EXTERNA debe demostrar que la Data API
+ -- expone sólo public/graphql_public y rechaza net/vault con HTTP406/PGRST106.
+ -- Esta sesión SQL no puede probar esa configuración externa. Si no se puede
+ -- verificar, NO aplicar. Los roles SQL con LOGIN son de confianza y pueden leer
+ -- los encabezados transitorios: Vault no vuelve privada la cola de transporte.
  SELECT count(*) INTO secret_count FROM vault.secrets WHERE name='catalogo_webhook_secret';
  IF secret_count<>1 THEN RAISE EXCEPTION 'H09: configurar exactamente un secreto Vault catalogo_webhook_secret antes de activar'; END IF;
  SELECT count(*),bool_and(decrypted_secret IS NOT NULL AND length(decrypted_secret) BETWEEN 32 AND 256 AND decrypted_secret !~ '[[:space:]]')
