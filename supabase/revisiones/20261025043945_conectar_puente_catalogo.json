@@ -8,9 +8,9 @@
   "based_on_migration": "20261024114111",
   "reason": "H09: activar puente mínimo de nueve tablas a Edge autenticada, sin enviar filas privadas ni declarar entrega/publicación al encolar.",
   "before_after": "Antes: helper/triggers ausentes; secreto Vault ya configurado y válido según consulta de metadatos previa, sin conservar su valor. Después: helper privado y nueve triggers AFTER ROW con payload mínimo; instalación falla sin secreto Vault válido, clientes NOLOGIN/sin privilegios administrativos y demás precondiciones. No cambia negocio ni grants de plataforma pg_net.",
-  "verification": "33 pruebas Node/PGlite (32 subcasos + contenedor), Vault/net simulados con grants de pg_net a PUBLIC, sin HTTP real en fixtures. Aceptación externa real: net y vault rechazados por Data API con HTTP406/PGRST106, schemas expuestos sólo public/graphql_public. Repetir consultas justo antes de aplicar; si no se puede comprobar, detener la activación. Aplicada como versión remota 20261025043945 conservando los bytes SQL del archivo CLI original; verificados helper privado, nueve triggers y permisos de ejecución cerrados. La bitácora y el sitio del evento técnico requieren aceptación aparte.",
+  "verification": "33 pruebas Node/PGlite (32 subcasos y contenedor), con Vault/net simulados y grants de pg_net a PUBLIC. Aceptación externa real previa: net y vault rechazados por Data API con HTTP406/PGRST106; sólo public y graphql_public expuestos. Aplicación remota 20261025043945 con los mismos bytes SQL del archivo inicial de CLI; helper privado y nueve triggers verificados. La solicitud pg_net 2113 recibió HTTP202; el evento 0823d672-b9ed-4cf3-99d6-17fe4b338b5d inició la ejecución 40162772575 y llegó al artefacto y al sitio HTTPS, con verified:true, 26 archivos críticos y tres fichas. Después, la recuperación programada 40162843342 pasó FTPS y HTTPS sin evento_id; conserva como recibo histórico del evento la ejecución 40162772575.",
   "generated_with_cli": "Supabase CLI2.122.0 migration new conectar_puente_catalogo",
-  "status": "aplicada; aceptación de evento técnico correlacionado hasta hosting pendiente",
+  "status": "aplicada; aceptación remota por evento de base a Edge/Actions/FTPS/HTTPS completada y recuperación horaria probada",
   "security_scope": {
     "data_api_exposure_verified_externally": true,
     "fresh_external_probes_required_before_apply": true,
@@ -38,5 +38,38 @@
     "advisors_new_h09_findings": false,
     "sql_bytes_preserved": true,
     "migration_history_manually_edited": false
+  },
+  "remote_acceptance": {
+    "status": "verified",
+    "pg_net_request_id": 2113,
+    "edge_response_status": 202,
+    "evento_id": "0823d672-b9ed-4cf3-99d6-17fe4b338b5d",
+    "github_repository": "SanMartinGT/sanmartin.gt.com",
+    "workflow_trigger": "repository_dispatch",
+    "workflow_run_url": "https://github.com/SanMartinGT/sanmartin.gt.com/actions/runs/40162772575",
+    "verified": true,
+    "critical_files": 26,
+    "product_pages": 3,
+    "checked_at_utc": "2026-10-25T04:41:32.931Z",
+    "site_url": "https://sanmartingmca.com/",
+    "transfer_protocol": "ftps",
+    "tls_certificate_verification": true,
+    "technical_test": "UPDATE con los mismos valores en configuracion_ecommerce y COMMIT; campos comprobados iguales; auditoría normal conservada.",
+    "business_fields_unchanged": true,
+    "normal_audit_entry_retained": true,
+    "erp_commercial_ui_edit_tested": false,
+    "edge_observed_remote_revision": 5,
+    "edge_observed_status": "ACTIVE",
+    "edge_code_matches_reviewed_h09_source": true,
+    "scheduled_recovery": {
+      "workflow_run_url": "https://github.com/SanMartinGT/sanmartin.gt.com/actions/runs/40162843342",
+      "trigger": "schedule",
+      "status": "success",
+      "ftps_verified": true,
+      "https_verified": true,
+      "evento_id": null,
+      "historical_event_receipt_run": "https://github.com/SanMartinGT/sanmartin.gt.com/actions/runs/40162772575"
+    },
+    "evidence_scope": "Prueba de un evento técnico confirmado y de una corrida horaria posterior; no garantiza entrega durable o plazo exacto para modificaciones futuras."
   }
 }
