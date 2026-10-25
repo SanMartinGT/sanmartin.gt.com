@@ -1,57 +1,63 @@
 # Activar y comprobar ERP → SEO → Hostinger
 
-Estado al 24 de octubre de 2026: Edge `catalogo-actualizado` v2 desplegada y código
-local probado. La automatización completa NO está activada ni verificada todavía.
-El usuario confirmó [SanMartinGT/sanmartin.gt.com](https://github.com/SanMartinGT/sanmartin.gt.com),
-rama `main`. En este corte de carga hay 77 archivos de raíz y `scripts/`
-en `main`, y cinco archivos de `supabase/` en proceso. La fuente revisada
-de 132 archivos todavía está en carga; no se ha verificado una ejecución
-de Actions. El alojamiento PHP/HTML de `sanmartingmca.com` está preparado
-en el plan existente y la primera publicación manual está verificada por
-HTTPS: tres fichas y 26 archivos críticos coinciden con el artefacto local.
-Siguen pendientes los secretos de GitHub/Supabase, el secreto Vault, los
-triggers y la aceptación completa del flujo automático.
+Estado al 24 de octubre de 2026 en Guatemala: Edge `catalogo-actualizado` ACTIVE,
+revisión remota **5** observada con el código H09 revisado, secretos de
+GitHub/Supabase y Vault configurados, y nueve triggers
+instalados. Las fuentes y el workflow están en `main` de
+[SanMartinGT/sanmartin.gt.com](https://github.com/SanMartinGT/sanmartin.gt.com).
+La automatización está activa y se probó el evento de base → Edge → GitHub
+Actions → FTPS → HTTPS en `https://sanmartingmca.com/`. El mismo `evento_id`
+aparece en la respuesta de Edge y en la evidencia del sitio publicado.
 
 ## Un solo mecanismo de eventos
 
-La migración diferencial preparada es
-`supabase/migrations/20261024165634_conectar_puente_catalogo.sql`.
-No está aplicada. Falla si no existe exactamente un secreto Vault válido llamado
-`catalogo_webhook_secret`, si hay webhooks previos o si difieren los prerrequisitos
-revisados. No crear además webhooks estándar del Dashboard.
+La migración diferencial aplicada es
+`supabase/migrations/20261025043945_conectar_puente_catalogo.sql`.
+Su nombre inicial de CLI fue `20261024165634_conectar_puente_catalogo.sql`;
+el archivo se renombró al ID remoto preservando todos los bytes aplicados.
+La ficha conserva el origen y el baseline previo inmutable. No reaplicarla.
+El guard comprueba secreto Vault válido, ausencia de webhooks previos y demás
+prerrequisitos revisados. No crear además webhooks estándar del Dashboard.
 
 `scripts/activar-webhook-catalogo.sql` conserva la propuesta anterior de siete
 tablas como referencia. No ejecutarla; no sustituye la migración nueva revisada.
 Los históricos bajo `supabase/historico` tampoco se reinstalan.
 
-La captura prevista cubre las nueve dependencias del catálogo: productos,
+La captura instalada cubre las nueve dependencias del catálogo: productos,
 producto_imagenes, ofertas_producto, categorias, marcas, existencias,
 configuracion_ecommerce, producto_presentaciones y unidades_medida.
 Los triggers AFTER ROW de INSERT/UPDATE/DELETE envían solamente tipo, esquema,
 tabla y los IDs actuales/anteriores. No envían filas privadas, costos ni cantidades.
 Un fallo de notificación conserva la edición/compra y exige reconstrucción manual.
 
-## Configuración necesaria
+## Configuración y mantenimiento
 
-1. Completar la carga de los 132 archivos revisados en `main` de
-   `SanMartinGT/sanmartin.gt.com`, incluidos `.github/workflows/publicar.yml`,
-   `supabase/`, `assets/` y los archivos ocultos. Verificar después su
-   primera ejecución de Actions. El workflow debe existir en la rama
-   predeterminada para `repository_dispatch`; la carga parcial no basta.
+1. Conservar la fuente y `.github/workflows/publicar.yml` en `main` de
+   `SanMartinGT/sanmartin.gt.com`, incluidos `supabase/`, `assets/` y archivos
+   ocultos. El workflow debe existir en la rama predeterminada para recibir
+   `repository_dispatch`; verificar CI y el artefacto después de cada cambio.
 2. Configurar en GitHub SITE_URL=`https://sanmartingmca.com/` y los secrets
    HOSTINGER_FTP_SERVER, HOSTINGER_FTP_USERNAME y HOSTINGER_FTP_PASSWORD. Puerto,
-   directorio y protocolo se toman de las variables del workflow; FTPS con
-   certificado verificado es el valor predeterminado. No desactivar TLS para
+   directorio y protocolo se toman de las variables del workflow; el guard exige
+   FTPS con certificado verificado y rechaza `HOSTINGER_FTP_PROTOCOL=ftp` antes
+   de escribir. No desactivar TLS para
    resolver un certificado incorrecto: usar el hostname indicado por el proveedor.
-3. Habilitar HOSTINGER_DEPLOY_ENABLED=`true` solamente con el sitio preparado y
-   la publicación manual verificada. Sin esa variable solo se genera un artefacto.
-4. Configurar en Supabase Edge Secrets GITHUB_REPOSITORY=`SanMartinGT/sanmartin.gt.com`,
+   El destino comprobado es `srv486.hstgr.io:21`, con una cuenta FTP dedicada
+   al sitio y ruta `/public_html/`; las credenciales quedan sólo en los secrets.
+3. HOSTINGER_DEPLOY_ENABLED=`true` está habilitado y probado. Si se retira o se
+   cambia a `false`, el workflow sólo genera un artefacto y no publica en hosting.
+4. Mantener en Supabase Edge Secrets GITHUB_REPOSITORY=`SanMartinGT/sanmartin.gt.com`,
    GITHUB_DISPATCH_TOKEN limitado a ese repositorio (Contents read/write para
    repository_dispatch), y CATALOGO_WEBHOOK_SECRET con una clave privada aleatoria
-   de 32–256 caracteres sin espacios. Crear en Vault catalogo_webhook_secret con
-   exactamente la misma clave. No poner valores en archivos, logs o el chat.
-5. Revalidar el esquema vivo, la ficha y el baseline antes de aplicar el delta.
-   Mantener el helper fuera de RPC públicas y sin EXECUTE para clientes.
+   de 32–256 caracteres sin espacios. Vault debe conservar exactamente un secreto
+   catalogo_webhook_secret con la misma clave; no duplicarlo. No poner valores
+   en archivos, logs o el chat.
+   El token de GitHub vence el **22 de enero de 2027**: renovarlo y actualizar
+   GITHUB_DISPATCH_TOKEN en Edge Secrets antes de esa fecha para conservar el
+   disparo automático por eventos.
+5. Para cambios posteriores, revalidar el esquema vivo y preparar un delta nuevo
+   con su ficha y baseline. Mantener el helper fuera de RPC públicas y sin
+   EXECUTE para clientes; no reinstalar la migración aplicada.
    Repetir consultas de sólo `id` con `limit=0` y `Accept-Profile: net` y `vault`
    usando la publishable key pública: ambas deben rechazar el schema con
    HTTP406/PGRST106 y anunciar sólo `public, graphql_public`. Si no se puede
@@ -89,19 +95,34 @@ Si Hostinger está deshabilitado, `--skip` guarda estado OMITIDA y verified=fals
 La evidencia se adjunta como artefacto de Actions. Solo transferencia y verificación
 HTTPS exitosas permiten afirmar publicación de ese artefacto.
 
-## Aceptación remota pendiente
+## Aceptación remota completada
 
-- Probar rechazo de solicitudes sin secreto, sin crear un dispatch.
-- Enviar un evento sintético mínimo y seguir su evento_id hasta Actions.
-- Comprobar workflow, FTP y verificación HTTPS exitosos, con el mismo evento en
-  la evidencia servida y las tres fichas/sitemap del artefacto.
-- Tras activar los triggers, comprobar una edición normal del ERP. Puede probarse
-  el encolado en una transacción revertida sin dejar cambios de negocio; pg_net
-  no entrega solicitudes revertidas. Esa prueba se distingue del envío confirmado.
-- La lectura de net._http_response debe limitarse a estado/tiempo/ID del evento;
-  no imprimir headers de la cola, secretos descifrados ni respuestas con credenciales.
+La prueba técnica hizo un UPDATE con los mismos valores en
+`configuracion_ecommerce` y confirmó que sus campos quedaron iguales después
+del COMMIT. El trigger de auditoría existente dejó una entrada técnica normal.
+Fue una prueba del evento de la base, sin una edición comercial desde la UI del
+ERP ni cambios de producto, precio o inventario.
 
-El cron horario y las ejecuciones manuales siguen como recuperación. La integración
+- pg_net registró la solicitud **2113** y Edge respondió HTTP202 con
+  `evento_id=0823d672-b9ed-4cf3-99d6-17fe4b338b5d`.
+- Ese evento inició la [ejecución automática 40162772575](https://github.com/SanMartinGT/sanmartin.gt.com/actions/runs/40162772575).
+- El artefacto y la evidencia servida por HTTPS conservaron el mismo evento;
+  la verificación terminó con `verified:true`, **26 archivos críticos y tres
+  fichas**, el `2026-10-25T04:41:32.931Z` (24-10-2026, 22:41 en Guatemala).
+
+Esta aceptación demuestra la cadena completa para ese evento técnico. Las
+pruebas aisladas cubren INSERT/UPDATE/DELETE en las nueve tablas; no se hicieron
+ediciones comerciales reales en todas ellas. Una prueba revertida sólo acredita
+encolado transaccional: pg_net no entrega solicitudes de un ROLLBACK.
+Al consultar `net._http_response`, limitarse a estado/tiempo/ID del evento; no
+imprimir headers de la cola, secretos descifrados ni valores de credenciales.
+
+La recuperación horaria también se probó: la [ejecución programada
+40162843342](https://github.com/SanMartinGT/sanmartin.gt.com/actions/runs/40162843342)
+terminó con FTPS y verificación HTTPS exitosos. Esa ejecución posterior es
+legítima y no tiene `evento_id`; el recibo histórico del evento técnico se
+conserva en la ejecución 40162772575 enlazada arriba. Las ejecuciones manuales
+siguen disponibles como recuperación. La integración
 no garantiza un plazo exacto ni entrega durable por cada modificación. Un fallo
 posterior requiere revisar la evidencia y reejecutar la reconstrucción del catálogo.
 
