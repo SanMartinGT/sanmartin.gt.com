@@ -2,6 +2,8 @@
 
 Dominio configurado: **https://sanmartingmca.com/**.
 
+Repositorio confirmado por el usuario: [SanMartinGT/sanmartin.gt.com](https://github.com/SanMartinGT/sanmartin.gt.com), rama `main`. Corte de carga al 24-10-2026: 77 archivos de la raíz y `scripts/` ya están en `main`; cinco archivos de `supabase/` están en proceso. La carga del paquete revisado de 132 archivos todavía no se ha completado. Los secretos, los triggers y la aceptación remota siguen pendientes; este avance no confirma una ejecución de Actions ni publicación automática.
+
 ## Base de datos compartida: SQL históricos retirados (H01)
 
 Los 25 SQL de instalación que estaban en la raíz fueron archivados sin alterar su contenido en [supabase/historico/](supabase/historico/README.md), con extensión `.sql.historico`. Sus comentarios de «ejecutar una vez» son históricos: no instalarlos sobre la base compartida con el ERP.
@@ -75,7 +77,7 @@ La activación del puente es un trabajo separado: `scripts/activar-webhook-catal
 
 Sin ese webhook todavía funcionan los commits, **Run workflow** y la reconstrucción programada cada hora al minuto 17. GitHub puede retrasar los trabajos programados; no hay una promesa de actualización inmediata. El horario también renueva promociones que comienzan o vencen sin editar registros.
 
-`seo-config.json` conserva tres IDs excluidos del SEO. En la consulta realizada el 13 de octubre de 2026 eran los únicos productos visibles, así que la generación real produjo **0 fichas y 15 URLs de sitemap**. Los productos nuevos publicados aparecerán automáticamente salvo que se excluyan allí. Para incluir esos tres, revisa que sus datos sean los que deseas publicar y quita sus IDs de `excludeProductIds`.
+Las tres exclusiones manuales de `seo-config.json` ya se retiraron: `excludeProductIds` está vacío. La generación real del 24 de octubre de 2026 produjo **3 fichas, 2 categorías y 20 URLs de sitemap**. Los filtros del catálogo público siguen vigentes. La publicación manual comprobada se documenta al final; la actualización automática aún requiere completar H09.
 
 ## 6. Login y buscadores
 
@@ -177,7 +179,7 @@ La Edge v2 añade9tablas y correlación evento_id. El workflow crea evidencia de
 artefacto y verifica por HTTPS los archivos críticos después de FTPS. Si hosting
 está omitido, registra verified=false; un HTTP202 no demuestra publicación.
 La migración20261024165634 está preparada, NO aplicada por falta de secretoVault
-y configuración remota. La URL del repositorio GitHub real está pendiente.
+y configuración remota. El repositorio confirmado es `SanMartinGT/sanmartin.gt.com`; su fuente está en carga.
 El alojamiento PHP/HTML del dominio se preparó; no se ha subido el sitio por este
 puente. Seguir únicamente [ACTIVAR-WEBHOOK.md](scripts/ACTIVAR-WEBHOOK.md); no
 crear además webhooks estándar ni ejecutar la propuesta antigua de7tablas.
@@ -190,4 +192,4 @@ público en public_html. Las3fichas están publicadas y los26archivos críticos
 coinciden por SHA256 con publicacion.json. El ZIP de transporte se conservó
 con prefijo .hostinger-deploy- y responde403; no hay SQL/docs privados en el sitio.
 Esta publicación fue manual por el administrador de archivos: no prueba aún
-ERP→Actions→FTPS automático. Falta el repositorioGitHub real y sus secretos.
+ERP→Actions→FTPS automático. Falta completar la fuente en el repositorio confirmado, configurar sus secretos y activar/probar el puente.

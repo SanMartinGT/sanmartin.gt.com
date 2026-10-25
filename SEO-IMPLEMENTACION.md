@@ -2,6 +2,10 @@
 
 El dominio configurado es `https://sanmartingmca.com/`. GitHub Actions genera el catálogo y guarda el sitio como artefacto; la publicación en Hostinger es opcional y está deshabilitada por defecto. La puesta en marcha está documentada en [INSTRUCCIONES.md](INSTRUCCIONES.md) y el puente de eventos en [scripts/ACTIVAR-WEBHOOK.md](scripts/ACTIVAR-WEBHOOK.md).
 
+## Repositorio y carga de fuente — 24-10-2026
+
+El repositorio confirmado es [SanMartinGT/sanmartin.gt.com](https://github.com/SanMartinGT/sanmartin.gt.com), rama `main`. Corte de esta actualización: 77 archivos de raíz y `scripts/` ya están en `main`; cinco archivos de `supabase/` están en proceso. La carga del paquete de 132 archivos sigue pendiente de completar. Los secretos de GitHub/Supabase, el secreto Vault y los triggers no están configurados; todavía no se ha verificado una ejecución de Actions ni el flujo automático.
+
 ## Protección de SQL históricos (H01, 23-10-2026)
 
 Los 25 instaladores SQL antiguos se conservan sin cambios en `supabase/historico/`, con extensión `.sql.historico` y manifiesto SHA-256. No se ejecutan ni se incluyen en el sitio. [MIGRACIONES.md](supabase/MIGRACIONES.md) describe el procedimiento para futuros deltas contra el esquema vivo y aclara los límites de la instantánea de diagnóstico.
@@ -66,5 +70,6 @@ La automatización remota permanece pendiente de configuración y aceptación;
 
 El sitio generado se publicó manualmente en Hostinger. La comprobación HTTPS
 validó las3fichas y26archivos críticos contra el mismo publicacion.json local.
-La automatización H09 sigue pendiente de repositorio y secretos: esta verificación
-manual no se presenta como prueba de un evento ERP ni de una ejecución Actions.
+La automatización H09 sigue pendiente de completar la fuente en el repositorio
+confirmado, configurar secretos y activar/probar los triggers. Esta
+verificación manual no demuestra un evento ERP ni una ejecución de Actions.
