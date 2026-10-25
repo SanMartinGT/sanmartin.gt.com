@@ -146,8 +146,33 @@ vivo y generar otro delta para cambios posteriores; no reaplicar este SQL.
 ## H09 preparado, no aplicado
 
 `20261024165634_conectar_puente_catalogo.sql` y su ficha son un delta pendiente.
-El baseline inspeccionado no tiene helper/triggers ni secretoVault del puente.
-La migración rechaza esa configuración incompleta; no aplicarla hasta probar
+El baseline actualizado no tiene helper/triggers; el secreto Vault del puente
+ya consta configurado y válido, sin conservar su valor. La migración sigue
+rechazando una configuración incompleta; no aplicarla hasta probar
 Edge/repositorio/hosting. Cubre9tablas y evita coexistir con webhooks estándar.
 La propuesta `scripts/activar-webhook-catalogo.sql` conserva sus bytes originales
 como referencia de7tablas y no debe ejecutarse para la activación actual.
+
+### Prerrequisito externo de seguridad de pg_net (H09)
+
+La comprobación real de la Data API del 24-10-2026 rechazó `Accept-Profile: net`
+y `Accept-Profile: vault` con HTTP406/PGRST106; anunció únicamente `public` y
+`graphql_public`. Las solicitudes pidieron sólo `id` con `limit=0`, sin leer
+secretos ni encabezados. El baseline H09 conserva esa evidencia y sus límites.
+Antes de aplicar el delta se deben repetir ambas consultas y revisar de nuevo
+los roles/permisos. Si no se puede demostrar que esos esquemas siguen fuera de
+la Data API, o aparece otro esquema expuesto sin revisar, detener la activación.
+
+Supabase concede acceso a las tablas de pg_net a `PUBLIC`. En este proyecto
+`postgres` no es propietario ni dispone de grant option para retirar esos
+permisos. No añadir un REVOKE ineficaz ni considerar que una cola alojada en
+pg_net tiene la misma privacidad que Vault. El SQL conserva los controles de
+CREATE en esquemas privados y de SELECT del secreto descifrado de Vault, y
+rechaza LOGIN/BYPASSRLS/SUPERUSER en `anon` o `authenticated`. Esa sesión SQL no
+puede comprobar por sí misma la configuración externa de schemas de PostgREST.
+
+Los roles de conexión SQL se consideran de confianza: pueden leer los headers
+transitorios de pg_net, incluido el secreto del webhook. No crear ni entregar
+roles LOGIN a servicios que no deban tener ese acceso. Las credenciales de
+GitHub permanecen en Edge Secrets; no se ponen en la cola de Postgres.
+Referencia: [permisos de pg_net y límites de REVOKE en Supabase](https://supabase.com/docs/guides/troubleshooting/revoking-access-to-pg_net-objects-has-no-effect-0bbc16).
