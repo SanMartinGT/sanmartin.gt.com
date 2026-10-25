@@ -52,6 +52,19 @@ Un fallo de notificación conserva la edición/compra y exige reconstrucción ma
    exactamente la misma clave. No poner valores en archivos, logs o el chat.
 5. Revalidar el esquema vivo, la ficha y el baseline antes de aplicar el delta.
    Mantener el helper fuera de RPC públicas y sin EXECUTE para clientes.
+   Repetir consultas de sólo `id` con `limit=0` y `Accept-Profile: net` y `vault`
+   usando la publishable key pública: ambas deben rechazar el schema con
+   HTTP406/PGRST106 y anunciar sólo `public, graphql_public`. Si no se puede
+   comprobar o cambia la lista, detener la activación y revisar la Data API.
+
+pg_net concede permisos de tabla a `PUBLIC` como condición de la plataforma.
+El delta no intenta revocarlos: conserva las verificaciones de Vault y esquemas
+privados, y exige `anon`/`authenticated` sin LOGIN ni privilegios administrativos.
+La exposición de schemas de la Data API se acepta fuera de esta sesión SQL.
+Los roles SQL con LOGIN deben ser de confianza: pueden leer los headers
+transitorios de pg_net, incluido `x-webhook-secret`; Vault no vuelve privada esa
+cola. El token de GitHub permanece exclusivamente en Edge Secrets.
+Ver [límites oficiales de permisos de pg_net](https://supabase.com/docs/guides/troubleshooting/revoking-access-to-pg_net-objects-has-no-effect-0bbc16).
 
 La Edge ya conserva verify_jwt=false porque verifica x-webhook-secret por sí misma.
 No se desactivan otras protecciones ni se utiliza una service_role en el navegador.

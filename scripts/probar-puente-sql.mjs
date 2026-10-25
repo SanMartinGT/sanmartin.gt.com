@@ -27,6 +27,10 @@ INSERT INTO pg_catalog.pg_extension(oid,extname,extowner,extnamespace,extrelocat
 CREATE TABLE vault.secrets(id bigint GENERATED ALWAYS AS IDENTITY,name text,value text);
 CREATE VIEW vault.decrypted_secrets AS SELECT id,name,value AS decrypted_secret FROM vault.secrets;
 CREATE TABLE net.http_request_queue(id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,url text,body jsonb,params jsonb,headers jsonb,timeout_milliseconds integer);
+-- pg_net de Supabase concede estos permisos de plataforma a PUBLIC. El control
+-- de schemas expuestos por Data API se acepta aparte mediante HTTP real.
+GRANT USAGE ON SCHEMA net TO PUBLIC,anon,authenticated;
+GRANT ALL ON net.http_request_queue TO PUBLIC;
 CREATE FUNCTION net.http_post(url text,body jsonb,params jsonb,headers jsonb,timeout_milliseconds integer) RETURNS bigint LANGUAGE plpgsql AS $$
 DECLARE request_id bigint;
 BEGIN
@@ -37,7 +41,7 @@ END $$;
 CREATE TABLE public.fixture_audit(event text);
 CREATE FUNCTION public.fixture_existing_trigger() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$BEGIN INSERT INTO public.fixture_audit VALUES(TG_OP); RETURN NULL; END$$;
 `;
-const report={migration:names[0],production_writes:0,network_requests:0,checks:[],limitations:['Vault/pg_net metadata and transport are explicit local stubs; not a production extension/network test.','Rollback verifies the simulated transactional queue only; real pg_net after-COMMIT delivery requires live acceptance.'],failures:[]};
+const report={migration:names[0],production_writes:0,network_requests:0,checks:[],limitations:['Vault/pg_net metadata and transport are explicit local stubs; not a production extension/network test.','Rollback verifies the simulated transactional queue only; real pg_net after-COMMIT delivery requires live acceptance.','Data API exposed schemas cannot be proven in this SQL fixture; fresh external HTTP406/PGRST106 probes for net/vault are required before applying.','pg_net queue headers remain readable by trusted SQL LOGIN roles under Supabase platform grants.'],failures:[]};
 
 test('H09: delta del puente de catálogo en PostgreSQL aislado',async t=>{
  const db=new PGlite();
@@ -63,12 +67,19 @@ test('H09: delta del puente de catálogo en PostgreSQL aislado',async t=>{
   await check('secreto corto se rechaza sin imprimir su valor',async()=>trial(()=>db.query('UPDATE vault.secrets SET value=$1',['corto'])));
   await check('secreto con espacios se rechaza',async()=>trial(()=>db.query('UPDATE vault.secrets SET value=$1',[secret+' '])));
   await check('CREATE para cliente en esquema privado se rechaza',async()=>trial(()=>db.exec('GRANT CREATE ON SCHEMA erp_private TO anon')));
-  await check('lectura del encabezado privado por un cliente se rechaza',async()=>trial(()=>db.exec('GRANT SELECT(headers) ON net.http_request_queue TO authenticated')));
+  await check('LOGIN en anon se rechaza antes de activar',async()=>trial(()=>db.exec('ALTER ROLE anon LOGIN'),/H09: un rol de cliente/));
+  await check('LOGIN en authenticated se rechaza antes de activar',async()=>trial(()=>db.exec('ALTER ROLE authenticated LOGIN'),/H09: un rol de cliente/));
+  await check('BYPASSRLS en anon se rechaza antes de activar',async()=>trial(()=>db.exec('ALTER ROLE anon BYPASSRLS'),/H09: un rol de cliente/));
+  await check('BYPASSRLS en authenticated se rechaza antes de activar',async()=>trial(()=>db.exec('ALTER ROLE authenticated BYPASSRLS'),/H09: un rol de cliente/));
   await check('lectura del secreto descifrado por un cliente se rechaza',async()=>trial(()=>db.exec('GRANT SELECT(decrypted_secret) ON vault.decrypted_secrets TO anon')));
   await check('tipo del ID distinto del baseline se rechaza',async()=>trial(()=>db.exec('ALTER TABLE public.productos ALTER COLUMN id TYPE text USING id::text')));
   await check('extensión distinta del baseline se rechaza',async()=>trial(()=>db.exec("UPDATE pg_extension SET extversion='0.0' WHERE extname='pg_net'")));
   await check('un webhook previo se rechaza para no duplicar disparadores',async()=>trial(()=>db.exec('CREATE TRIGGER catalogo_webhook_notificar AFTER INSERT ON public.productos FOR EACH ROW EXECUTE FUNCTION public.fixture_existing_trigger();')));
   await db.exec('BEGIN');await install();await db.exec('COMMIT');
+  await check('grants de pg_net a PUBLIC se conservan sin afirmar exposición de la Data API',async()=>{
+   const {rows}=await db.query("SELECT has_schema_privilege('anon','net','USAGE') net_usage,has_column_privilege('anon','net.http_request_queue','headers','SELECT') queue_headers,(SELECT rolcanlogin FROM pg_roles WHERE rolname='anon') can_login,has_column_privilege('anon','vault.decrypted_secrets','decrypted_secret','SELECT') vault_secret");
+   assert.deepEqual(rows[0],{net_usage:true,queue_headers:true,can_login:false,vault_secret:false});
+  });
   await check('instala nueve AFTER ROW con cero argumentos conservando otros triggers',async()=>{
    const rows=(await db.query("SELECT tgname,tgtype,tgenabled,tgnargs,octet_length(tgargs) bytes FROM pg_trigger WHERE tgfoid='erp_private.notificar_catalogo_webhook()'::regprocedure")).rows;
    assert.equal(rows.length,9);assert.ok(rows.every(r=>r.tgname==='catalogo_webhook_notificar'&&r.tgtype===29&&r.tgenabled==='O'&&r.tgnargs===0&&r.bytes===0));
